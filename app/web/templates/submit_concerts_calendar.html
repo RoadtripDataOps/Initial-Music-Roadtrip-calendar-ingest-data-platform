@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel">
+    <div class="public-brand-form">
+      <img class="brand-logo brand-logo--header" src="/static/images/music-roadtrip-logo-circle.png" alt="Music Roadtrip logo">
+      <span class="badge success">Music Roadtrip Calendar Intake</span>
+    </div>
+    <span class="badge success">Event Calendar</span>
+    <h1>Send one calendar link</h1>
+    <p>
+      Paste the public event calendar link you want Music Roadtrip to review.
+    </p>
+
+    <form method="post" action="{{ form_action | default('/submit-calendar/url') }}" novalidate>
+      <input type="hidden" name="form_rendered_at" value="{{ form_rendered_at }}">
+      <div aria-hidden="true" style="position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden;">
+        <label for="calendar_website">Website</label>
+        <input id="calendar_website" name="website" tabindex="-1" autocomplete="off" value="">
+      </div>
+
+      <div class="field">
+        <label for="organization_name">Organization name</label>
+        <input id="organization_name" name="organization_name" value="{{ values.get('organization_name', '') }}" autocomplete="organization" required>
+        {% if errors.get("organization_name") %}<div class="error">{{ errors["organization_name"] }}</div>{% endif %}
+      </div>
+      <div class="field">
+        <label for="contact_email">Contact email</label>
+        <input id="contact_email" name="contact_email" type="email" value="{{ values.get('contact_email', '') }}" autocomplete="email" required>
+        {% if errors.get("contact_email") %}<div class="error">{{ errors["contact_email"] }}</div>{% endif %}
+      </div>
+      <div class="field">
+        <label for="calendar_url">Calendar link</label>
+        <input id="calendar_url" name="calendar_url" type="url" placeholder="https://example.org/events" value="{{ values.get('calendar_url', '') }}" required>
+        <p class="notice">Paste the public event calendar link you want Music Roadtrip to review.</p>
+        {% if errors.get("calendar_url") %}<div class="error">{{ errors["calendar_url"] }}</div>{% endif %}
+      </div>
+
+      <details>
+        <summary>Advanced details</summary>
+        <div class="field">
+          <label for="contact_name">Contact name</label>
+          <input id="contact_name" name="contact_name" value="{{ values.get('contact_name', '') }}">
+        </div>
+        <div class="field">
+          <label for="calendar_name">Calendar name</label>
+          <input id="calendar_name" name="calendar_name" value="{{ values.get('calendar_name', '') }}">
+        </div>
+        <div class="field">
+          <label for="city">City</label>
+          <input id="city" name="city" value="{{ values.get('city', '') }}">
+        </div>
+        <div class="field">
+          <label for="state">State</label>
+          <input id="state" name="state" value="{{ values.get('state', '') }}">
+        </div>
+        <div class="field">
+          <label for="country">Country</label>
+          <input id="country" name="country" value="{{ values.get('country', '') }}">
+        </div>
+        <div class="field">
+          <label for="crawl_frequency">Preferred review frequency</label>
+          <input id="crawl_frequency" name="crawl_frequency" placeholder="weekly" value="{{ values.get('crawl_frequency', '') }}">
+        </div>
+        <div class="field">
+          <label for="notes">Notes</label>
+          <textarea id="notes" name="notes">{{ values.get('notes', '') }}</textarea>
+        </div>
+      </details>
+
+      <div class="field checkbox">
+        <input id="authorization_checkbox" name="authorization_checkbox" type="checkbox" value="true" {% if values.get('permission_confirmed') %}checked{% endif %} required>
+        <label for="authorization_checkbox">
+          I confirm I am authorized to submit this calendar.
+        </label>
+        {% if errors.get("permission_confirmed") %}
+          <div></div>
+          <div class="error">{{ errors["permission_confirmed"] }}</div>
+        {% endif %}
+      </div>
+      {% if turnstile_enabled %}
+        <div class="field">
+          <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+          <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"></div>
+          {% if errors.get("turnstile") %}<div class="error">{{ errors["turnstile"] }}</div>{% endif %}
+        </div>
+      {% endif %}
+      <button type="submit">Submit calendar link</button>
+    </form>
+  </section>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel">
+    <h1>Artist Duplicate Review</h1>
+    <p>
+      This read-only queue shows exact normalized-name collisions. Similar names
+      are intentionally not auto-merged.
+    </p>
+  </section>
+
+  {% if duplicate_groups %}
+    {% for group in duplicate_groups %}
+      <section class="panel">
+        <h2>{{ group.normalized_name }} · {{ group.count }} artists</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Artist</th>
+              <th>Type</th>
+              <th>Genres</th>
+              <th>Claims</th>
+              <th>IDs</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for artist in group.artists %}
+              <tr>
+                <td data-label="Artist"><a href="/admin/artists/{{ artist.id }}">{{ artist.display_name }}</a></td>
+                <td data-label="Type">{{ artist.artist_type }}</td>
+                <td data-label="Genres">{{ artist.normalized_genres | join(", ") if artist.normalized_genres else "n/a" }}</td>
+                <td data-label="Claims">{{ artist.source_claim_count }}</td>
+                <td data-label="IDs">
+                  {% if artist.jambase_artist_id %}<span class="badge">JamBase</span>{% endif %}
+                  {% if artist.spotify_artist_id %}<span class="badge">Spotify</span>{% endif %}
+                  {% if artist.ticketmaster_artist_id %}<span class="badge">Ticketmaster</span>{% endif %}
+                  {% if not artist.jambase_artist_id and not artist.spotify_artist_id and not artist.ticketmaster_artist_id %}n/a{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    {% endfor %}
+  {% else %}
+    <section class="empty-state">
+      <h2>No exact duplicate artist names</h2>
+      <p>The registry has no exact normalized-name collisions.</p>
+    </section>
+  {% endif %}
+{% endblock %}

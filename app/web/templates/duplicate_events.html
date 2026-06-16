@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Duplicate Event Review</h1>
+  <p>Review possible duplicate events created by weak or conflicting source matches.</p>
+
+  <section class="panel">
+    {% if groups %}
+      <table>
+        <thead>
+          <tr>
+            <th>Group</th>
+            <th>Status</th>
+            <th>Confidence</th>
+            <th>Members</th>
+            <th>Reason</th>
+            <th>Updated</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for view in groups %}
+            <tr>
+              <td>#{{ view.group.id }}</td>
+              <td><span class="badge">{{ view.group.status }}</span></td>
+              <td>{{ view.group.confidence }}</td>
+              <td>{{ view.members | length }}</td>
+              <td>{{ view.group.reasons | join(", ") if view.group.reasons else "n/a" }}</td>
+              <td>{{ view.group.updated_at.strftime("%Y-%m-%d %H:%M") }}</td>
+              <td><a class="button" href="/admin/duplicate-events/{{ view.group.id }}">Review</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty-state">
+        <h2>No duplicate event groups</h2>
+        <p>Weak and conflicting event matches will appear here for review.</p>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

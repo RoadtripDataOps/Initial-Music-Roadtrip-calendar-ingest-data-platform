@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ summary.title }}</h1>
+  <p class="notice">
+    {{ summary.selected_count }} selected,
+    {{ summary.attempted_count }} attempted,
+    {{ summary.skipped_count }} skipped,
+    {{ summary.successful_count }} successful,
+    {{ summary.failed_count }} failed,
+    {{ summary.events_extracted }} events extracted.
+  </p>
+
+  <section class="actions">
+    <a class="button" href="/admin/crawl-queue">Back to crawl queue</a>
+    <a class="button secondary" href="/admin/master-calendar-sources">Back to master sources</a>
+  </section>
+
+  {% if summary.attempts %}
+    <section>
+      <h2>Crawl Attempts</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Status</th>
+            <th>Crawl run</th>
+            <th>Events extracted</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for result in summary.attempts %}
+            <tr>
+              <td data-label="Source">{{ result.source_name }}</td>
+              <td data-label="Status"><span class="badge {{ result.status }}">{{ result.status }}</span></td>
+              <td data-label="Crawl run"><a href="/admin/crawl-runs/{{ result.crawl_run_id }}">#{{ result.crawl_run_id }}</a></td>
+              <td data-label="Events extracted">{{ result.events_extracted }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% endif %}
+
+  {% if summary.skipped %}
+    <section>
+      <h2>Skipped Sources</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Reason</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for skipped in summary.skipped %}
+            <tr>
+              <td data-label="Source">#{{ skipped.source_id }} {{ skipped.source_name }}</td>
+              <td data-label="Reason">{{ skipped.reason }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .submission-hero {
+      margin-bottom: 28px;
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(242, 212, 11, 0.16), rgba(35, 115, 79, 0.12)),
+        var(--admin-card);
+      box-shadow: var(--shadow);
+    }
+
+    .submission-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 18px;
+      align-items: stretch;
+      max-width: 420px;
+    }
+
+    .submission-card {
+      display: flex;
+      flex-direction: column;
+      min-height: 230px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+      box-shadow: var(--shadow);
+    }
+
+    .submission-card .button {
+      margin-top: auto;
+    }
+
+    .guidance-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .guidance-panel {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+    }
+
+    .choice-table {
+      width: 100%;
+      margin-top: 12px;
+    }
+
+    .choice-table th,
+    .choice-table td {
+      vertical-align: top;
+    }
+
+    .next-list {
+      margin: 12px 0 0;
+      padding-left: 22px;
+    }
+
+    .path-number {
+      display: inline-grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      margin-bottom: 10px;
+      border-radius: 999px;
+      background: #172026;
+      color: #ffffff;
+      font-weight: 800;
+    }
+
+    @media (max-width: 980px) {
+      .submission-grid,
+      .guidance-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <section class="submission-hero">
+    <img class="brand-logo brand-logo--hero" src="/static/images/music-roadtrip-logo-square.png" alt="Music Roadtrip logo">
+    <span class="badge success">Music Roadtrip Event Intake</span>
+    <h1>Submit Events</h1>
+    <p>Upload authorized event spreadsheets for Music Roadtrip review.</p>
+  </section>
+
+  <section class="submission-grid" aria-label="Event submission options">
+    <article class="submission-card">
+      <span class="path-number">A</span>
+      <h2>Upload event spreadsheet</h2>
+      <p>Use this if you already have event details in a spreadsheet, such as event name, date, venue, city, and ticket link.</p>
+      <a class="button" href="/submit-events/file">Upload event spreadsheet</a>
+    </article>
+  </section>
+
+  <section class="guidance-grid">
+    <article class="guidance-panel">
+      <h2>Which option should I choose?</h2>
+      <table class="choice-table">
+        <thead>
+          <tr>
+            <th>What you have</th>
+            <th>Choose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>One website calendar link</td>
+            <td><a href="/submit-calendar/url">Send one calendar link</a></td>
+          </tr>
+          <tr>
+            <td>A spreadsheet with many calendar links</td>
+            <td><a href="/submit-calendar/sources-file">Upload a calendar list</a></td>
+          </tr>
+          <tr>
+            <td>A spreadsheet with actual event details</td>
+            <td>Upload event spreadsheet</td>
+          </tr>
+          <tr>
+            <td>Not sure</td>
+            <td><a href="/submit-calendar/url">Send one calendar link</a>, and Music Roadtrip can review it</td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+
+    <article class="guidance-panel">
+      <h2>What happens next?</h2>
+      <ol class="next-list">
+        <li>Your submission goes to Music Roadtrip for review.</li>
+        <li>We check that the calendar or file is authorized.</li>
+        <li>We clean up event names, dates, venues, ticket links, and images.</li>
+        <li>Approved events may appear in Music Roadtrip after review.</li>
+      </ol>
+    </article>
+  </section>
+{% endblock %}

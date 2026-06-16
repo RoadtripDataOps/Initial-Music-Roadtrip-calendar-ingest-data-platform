@@ -1,0 +1,63 @@
+{
+  "events": [
+    {
+      "eventId": "cs-test-event-1",
+      "name": "Synthetic Licensed Vendor Concert",
+      "description": "Fixture-only licensed vendor event.",
+      "summary": "Synthetic short summary.",
+      "primaryImage": {
+        "largeImageUrl": "https://images.example/licensed-vendor-large.jpg",
+        "mediumImageUrl": "https://images.example/licensed-vendor-medium.jpg",
+        "smallImageUrl": "https://images.example/licensed-vendor-small.jpg"
+      },
+      "labels": ["fixture", "music"],
+      "categories": [{"id": "music", "name": "Music"}],
+      "location": {
+        "locationName": "Licensed Fixture Hall",
+        "address": "400 Licensed Lane",
+        "city": "Memphis",
+        "state": "TN",
+        "country": "US",
+        "latitude": 35.15,
+        "longitude": -90.05
+      },
+      "instances": [
+        {
+          "start": "2026-10-20T20:00:00-05:00",
+          "end": "2026-10-20T22:00:00-05:00"
+        }
+      ],
+      "hasTime": true,
+      "allDay": false,
+      "price": {"minPrice": 30, "maxPrice": 50, "priceCurrency": "USD"},
+      "ticketUrl": "https://tickets.example/licensed-vendor-concert",
+      "url": "https://events.example/licensed-vendor-concert",
+      "links": [
+        {"linkType": "More Info", "linkUrl": "https://venue.example/licensed-vendor-concert"}
+      ],
+      "contact": {"name": "Fixture Contact", "email": "licensed@example.com"}
+    },
+    {
+      "eventId": "cs-test-event-2",
+      "name": "Synthetic Generic Link Concert",
+      "description": "Fixture-only event with no primary ticket URL.",
+      "location": {
+        "locationName": "Generic Link Room",
+        "address": "500 Generic Ave",
+        "city": "Memphis",
+        "state": "TN",
+        "country": "US",
+        "latitude": 35.16,
+        "longitude": -90.06
+      },
+      "start": "2026-10-21T20:00:00-05:00",
+      "end": "2026-10-21T22:00:00-05:00",
+      "hasTime": true,
+      "allDay": false,
+      "url": "https://events.example/generic-link-concert",
+      "links": [
+        {"linkType": "App Link", "linkUrl": "https://link.dice.fm/generic-fixture"}
+      ]
+    }
+  ]
+}

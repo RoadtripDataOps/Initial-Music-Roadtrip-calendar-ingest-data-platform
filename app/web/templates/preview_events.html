@@ -1,0 +1,471 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    body {
+      background: #101011;
+      color: #f3f3f4;
+    }
+
+    header {
+      border-bottom-color: #262629;
+      background: #101011;
+    }
+
+    nav a,
+    nav .logout-form button {
+      color: #f3f3f4;
+    }
+
+    main {
+      width: min(1400px, calc(100% - 32px));
+    }
+
+    p {
+      color: #c8c2c4;
+    }
+
+    .preview-shell {
+      display: grid;
+      grid-template-columns: minmax(360px, 0.9fr) minmax(420px, 1.1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .filter-bar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+      padding: 14px;
+      border: 1px solid #343437;
+      border-radius: 8px;
+      background: #18181a;
+    }
+
+    .filter-bar label {
+      color: #d9d6d7;
+    }
+
+    .filter-bar input {
+      border-color: #4a4245;
+      background: #202023;
+      color: #f3f3f4;
+    }
+
+    .filter-bar .wide-field {
+      grid-column: span 2;
+    }
+
+    .event-list,
+    .profile-pane {
+      border: 1px solid #343437;
+      border-radius: 8px;
+      background: #151516;
+    }
+
+    .event-list {
+      overflow: hidden;
+    }
+
+    .event-row {
+      display: grid;
+      grid-template-columns: 84px 1fr;
+      gap: 14px;
+      padding: 14px;
+      border-bottom: 1px solid #2d2d30;
+      color: #f3f3f4;
+      text-decoration: none;
+    }
+
+    .event-row:last-child {
+      border-bottom: 0;
+    }
+
+    .event-row:hover {
+      background: #1f1f21;
+    }
+
+    .thumb,
+    .hero-image {
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid #333336;
+      border-radius: 8px;
+      background: #242427;
+      color: #aaa5a7;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .thumb {
+      width: 84px;
+      height: 84px;
+    }
+
+    .thumb img,
+    .hero-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .date-pill {
+      display: inline-flex;
+      margin-bottom: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid #e6e3e4;
+      background: transparent;
+      color: #ffffff;
+      font-size: 0.82rem;
+      font-weight: 750;
+    }
+
+    .flag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .flag {
+      display: inline-flex;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: #3b201b;
+      color: #ffb19e;
+      font-size: 0.78rem;
+      font-weight: 750;
+    }
+
+    .profile-pane {
+      padding: 18px;
+      position: sticky;
+      top: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+    }
+
+    .hero-image {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      margin-bottom: 18px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .meta-item {
+      padding: 12px;
+      border: 1px solid #333336;
+      border-radius: 8px;
+      background: #202023;
+    }
+
+    .meta-item strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 14px 0;
+    }
+
+    .button.muted {
+      border-color: #333336;
+      background: #202023;
+      color: #aaa5a7;
+      cursor: default;
+    }
+
+    .button,
+    button {
+      border-color: #f2d40b;
+      background: #f2d40b;
+      color: #141414;
+    }
+
+    .button.secondary {
+      border-color: #333336;
+      background: #202023;
+      color: #f3f3f4;
+    }
+
+    .badge {
+      background: #202023;
+      color: #d7d2d3;
+    }
+
+    .badge.success {
+      background: #f2d40b;
+      color: #171717;
+    }
+
+    .debug-panel {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #333336;
+    }
+
+    @media (max-width: 980px) {
+      .preview-shell,
+      .filter-bar,
+      .meta-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-bar .wide-field {
+        grid-column: auto;
+      }
+
+      .profile-pane {
+        position: static;
+      }
+    }
+  </style>
+
+  <p class="notice">Music Roadtrip Preview Sandbox</p>
+  <h1>Music Events Preview</h1>
+  <p>
+    Approved normalized events only. Radius filtering uses venue coordinates
+    when present.
+  </p>
+
+  <form class="filter-bar" method="get" action="/preview/events">
+    <div class="field wide-field">
+      <label for="search_area">Search area</label>
+      <input id="search_area" name="search_area" value="{{ filters.search_area }}">
+    </div>
+    <div class="field">
+      <label for="genre">Genre</label>
+      <input id="genre" name="genre" value="{{ filters.genre }}">
+    </div>
+    <div class="field">
+      <label for="radius_miles">Radius miles</label>
+      <input id="radius_miles" name="radius_miles" value="{{ filters.radius_miles }}">
+    </div>
+    <div class="field">
+      <label for="latitude">Latitude</label>
+      <input id="latitude" name="latitude" value="{{ filters.latitude }}">
+    </div>
+    <div class="field">
+      <label for="longitude">Longitude</label>
+      <input id="longitude" name="longitude" value="{{ filters.longitude }}">
+    </div>
+    <div class="field">
+      <label for="date_from">Date from</label>
+      <input id="date_from" name="date_from" type="date" value="{{ filters.date_from }}">
+    </div>
+    <div class="field">
+      <label for="date_to">Date to</label>
+      <input id="date_to" name="date_to" type="date" value="{{ filters.date_to }}">
+    </div>
+    <div class="field">
+      <label>&nbsp;</label>
+      <button type="submit">Filter</button>
+    </div>
+  </form>
+
+  <section class="preview-shell">
+    <div>
+      <h2>Events</h2>
+      {% if rows %}
+        <div class="event-list">
+          {% for row in rows %}
+            {% set event = row.event %}
+            {% set display_image_url = event.selected_main_image_url or event.main_image_url %}
+            <a class="event-row" href="/preview/events?selected_event_id={{ event.id }}">
+              <div class="thumb">
+                {% if previewable_image_url(display_image_url) %}
+                  <img alt="" src="{{ previewable_image_url(display_image_url) }}">
+                {% else %}
+                  Image QA
+                {% endif %}
+              </div>
+              <div>
+                <span class="date-pill">{{ event.start_datetime.strftime("%b %-d, %I:%M %p") }}</span>
+                <h2>{{ event.title }}</h2>
+                {% if event.headliner and event.headliner != event.title %}
+                  <p>{{ event.headliner }}</p>
+                {% endif %}
+                <span class="badge success">Event</span>
+                <span class="badge">{{ event.venue.display_name if event.venue else event.location_text or "No venue" }}</span>
+                <span class="badge">Dedupe {{ event.dedupe_confidence }}</span>
+                <span class="badge">{{ event.source_claim_count }} claim(s)</span>
+                {% if event.duplicate_status != "none" %}
+                  <span class="badge">{{ event.duplicate_status }}</span>
+                {% endif %}
+                {% if row.distance_miles is not none %}
+                  <span class="badge">{{ "%.1f"|format(row.distance_miles) }} mi</span>
+                {% endif %}
+                <div class="flag-row">
+                  {% for badge in row.image_badges %}
+                    <span class="flag">{{ badge }}</span>
+                  {% endfor %}
+                  {% for flag in row.quality_flags %}
+                    <span class="flag">{{ flag }}</span>
+                  {% endfor %}
+                </div>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="notice">No approved events match these filters.</p>
+      {% endif %}
+    </div>
+
+    <aside class="profile-pane">
+      {% if selected_event %}
+        {% set selected_display_image_url = selected_event.selected_main_image_url or selected_event.main_image_url %}
+        <div class="hero-image">
+          {% if previewable_image_url(selected_display_image_url) %}
+            <img alt="" src="{{ previewable_image_url(selected_display_image_url) }}">
+          {% else %}
+            Event Image QA
+          {% endif %}
+        </div>
+        <span class="badge success">Event</span>
+        <span class="badge">Dedupe {{ selected_event.dedupe_confidence }}</span>
+        <span class="badge">{{ selected_event.source_claim_count }} claim(s)</span>
+        {% if selected_event.duplicate_status != "none" %}
+          <span class="badge">{{ selected_event.duplicate_status }}</span>
+        {% endif %}
+        <h1>{{ selected_event.title }}</h1>
+        <p>{{ selected_event.start_datetime.strftime("%A, %B %-d at %I:%M %p") }}</p>
+        <div class="button-row">
+          <a class="button" href="{{ maps_url_for_event(selected_event) }}">Map</a>
+          <a class="button secondary" href="{{ maps_url_for_event(selected_event) }}">Nav</a>
+          <a class="button secondary" href="{{ street_url_for_event(selected_event) }}">Street</a>
+          {% if selected_event.source_url %}
+            <a class="button secondary" href="{{ selected_event.source_url }}">Web</a>
+          {% else %}
+            <span class="button muted">Web missing</span>
+          {% endif %}
+          {% if selected_event.tickets_link %}
+            <a class="button" href="{{ selected_event.tickets_link }}">Tickets</a>
+          {% else %}
+            <span class="button muted">Tickets missing</span>
+          {% endif %}
+          <a class="button secondary" href="/preview/events/{{ selected_event.id }}/reminder.ics">Set Reminder</a>
+          <a class="button secondary" href="/preview/events/{{ selected_event.id }}">Open Profile</a>
+        </div>
+
+        <div class="meta-grid">
+          <div class="meta-item">
+            <strong>Headliner</strong>
+            {{ selected_event.headliner or "Missing" }}
+          </div>
+          <div class="meta-item">
+            <strong>Venue</strong>
+            {% if selected_event.venue %}
+              <a href="/preview/events?selected_venue_id={{ selected_event.venue.id }}">{{ selected_event.venue.display_name }}</a>
+            {% else %}
+              {{ selected_event.location_text or "Missing" }}
+            {% endif %}
+          </div>
+          <div class="meta-item">
+            <strong>Selected image</strong>
+            <span class="url">{{ selected_event.selected_main_image_url or "Missing" }}</span>
+          </div>
+          <div class="meta-item">
+            <strong>Provider/upload image</strong>
+            <span class="url">{{ selected_event.main_image_url or "Missing" }}</span>
+          </div>
+          <div class="meta-item">
+            <strong>Spotify</strong>
+            {% if selected_event.spotify_url %}
+              <a href="{{ selected_event.spotify_url }}">{{ selected_event.spotify_url }}</a>
+            {% else %}
+              Spotify enrichment missing
+            {% endif %}
+          </div>
+          <div class="meta-item">
+            <strong>Dedupe</strong>
+            {{ selected_event.dedupe_confidence }} / {{ selected_event.duplicate_status }}
+            {% if selected_event.duplicate_candidate_group_id %}
+              <br><a href="/admin/duplicate-events/{{ selected_event.duplicate_candidate_group_id }}">Review group #{{ selected_event.duplicate_candidate_group_id }}</a>
+            {% endif %}
+          </div>
+          <div class="meta-item">
+            <strong>Source claims</strong>
+            {{ selected_event.source_claim_count }} claim(s)
+          </div>
+        </div>
+
+        <div class="flag-row">
+          {% for badge in selected_event_image_badges %}
+            <span class="flag">{{ badge }}</span>
+          {% endfor %}
+          {% for flag in selected_event_flags %}
+            <span class="flag">{{ flag }}</span>
+          {% endfor %}
+        </div>
+
+        <details class="debug-panel">
+          <summary>More</summary>
+          <p>Image status: {{ selected_event.image_status or "missing" }}</p>
+          <p>Image role: {{ selected_event.image_role or "n/a" }}</p>
+          <p>Image QA score: {{ selected_event.image_quality_score if selected_event.image_quality_score is not none else "n/a" }}</p>
+          <p>Image clearance: {{ selected_event.image_clearance_status or "n/a" }}</p>
+          <p>Image selection: {{ selected_event.image_selection_reason or "n/a" }}</p>
+          <p>Source type: {{ selected_event.source_type }}</p>
+          <p>Source URL: <span class="url">{{ selected_event.source_url or "n/a" }}</span></p>
+          <p><a href="/admin/events/{{ selected_event.id }}">Admin provenance</a></p>
+        </details>
+      {% elif selected_venue %}
+        {% set selected_venue_display_image_url = selected_venue.selected_main_image_url or selected_venue.main_image_url %}
+        <div class="hero-image">
+          {% if previewable_image_url(selected_venue_display_image_url) %}
+            <img alt="" src="{{ previewable_image_url(selected_venue_display_image_url) }}">
+          {% else %}
+            Venue Image QA
+          {% endif %}
+        </div>
+        <span class="badge success">{{ selected_venue.category }}</span>
+        <span class="badge">{{ selected_venue.subcategory }}</span>
+        <h1>{{ selected_venue.display_name }}</h1>
+        <p>{{ selected_venue.address or "Missing address" }}</p>
+        <div class="button-row">
+          <a class="button" href="{{ maps_url_for_venue(selected_venue) }}">Map</a>
+          <a class="button secondary" href="{{ maps_url_for_venue(selected_venue) }}">Nav</a>
+          <a class="button secondary" href="{{ street_url_for_venue(selected_venue) }}">Street</a>
+          {% if selected_venue.website %}
+            <a class="button secondary" href="{{ selected_venue.website }}">Web</a>
+          {% else %}
+            <span class="button muted">Web missing</span>
+          {% endif %}
+          <a class="button secondary" href="/preview/venues/{{ selected_venue.id }}">Open Venue</a>
+        </div>
+        <div class="flag-row">
+          {% for badge in selected_venue_image_badges %}
+            <span class="flag">{{ badge }}</span>
+          {% endfor %}
+          {% for flag in selected_venue_flags %}
+            <span class="flag">{{ flag }}</span>
+          {% endfor %}
+        </div>
+        <h2>Events at this venue</h2>
+        {% for row in selected_venue_event_rows %}
+          <p>
+            <a href="/preview/events?selected_event_id={{ row.event.id }}">{{ row.event.title }}</a>
+            <span class="badge">{{ row.event.start_datetime.strftime("%b %-d") }}</span>
+          </p>
+        {% else %}
+          <p class="notice">No events are linked to this venue.</p>
+        {% endfor %}
+      {% else %}
+        <p class="notice">Select an event or venue to preview details.</p>
+      {% endif %}
+    </aside>
+  </section>
+{% endblock %}

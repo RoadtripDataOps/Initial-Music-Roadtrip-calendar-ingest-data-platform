@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ provider.display_name }} Live Sandbox</h1>
+  <p class="notice">
+    Admin-only sandbox fetches create pending API Feed Review records. They do
+    not approve, publish, crawl public submissions, or expose raw provider
+    payloads to the app feed.
+  </p>
+
+  <section class="actions">
+    <a class="button secondary" href="/admin/api-feeds/{{ provider.provider_key }}">Review Records</a>
+    <a class="button secondary" href="/admin/api-feeds/{{ provider.provider_key }}/pipeline">Pipeline</a>
+    <a class="button secondary" href="/admin/api-feed-runs?provider_key={{ provider.provider_key }}">Runs</a>
+  </section>
+
+  {% if error %}
+    <p class="error">{{ error }}</p>
+  {% endif %}
+
+  <section class="panel">
+    <h2>Sandbox Status</h2>
+    <div class="actions">
+      <span class="badge success">{{ provider.workbench_status }}</span>
+      <span class="badge {{ 'success' if sandbox.live_calls_enabled else 'info' }}">{{ provider.live_api_status }}</span>
+      <span class="badge {{ 'success' if 'Configured' in sandbox.credential_status else 'warning' }}">{{ sandbox.credential_status }}</span>
+      {% if sandbox.portal_status is defined %}
+        <span class="badge {{ 'success' if sandbox.portal_status == 'Configured' else 'warning' }}">Portal {{ sandbox.portal_status }}</span>
+      {% endif %}
+      <span class="badge info">Max {{ sandbox.max_events }} events</span>
+    </div>
+    {% if sandbox.disabled_reason %}
+      <p class="notice">{{ sandbox.disabled_reason }}</p>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Redacted Request Preview</h2>
+    <pre class="code-block">{{ request_preview_json }}</pre>
+  </section>
+
+  <section class="panel">
+    <h2>Safe Parameters</h2>
+    <form method="post" action="/admin/api-feeds/{{ provider.provider_key }}/live-sandbox">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      {% if provider.provider_key == "jambase" %}
+        <div class="field"><label for="limit">Limit</label><input id="limit" name="limit" type="number" min="1" max="{{ sandbox.max_events }}" value="{{ sandbox.default_values.limit }}"></div>
+        <div class="field"><label for="perPage">Per page</label><input id="perPage" name="perPage" type="number" min="1" max="100" value="{{ sandbox.default_values.perPage }}"></div>
+        <div class="field"><label for="eventType">Event type</label><input id="eventType" name="eventType" value="{{ sandbox.default_values.eventType }}"></div>
+        <div class="field"><label for="eventDateFrom">Event date from</label><input id="eventDateFrom" name="eventDateFrom" type="date"></div>
+        <div class="field"><label for="eventDateTo">Event date to</label><input id="eventDateTo" name="eventDateTo" type="date"></div>
+        <div class="field"><label for="geoCityName">City</label><input id="geoCityName" name="geoCityName"></div>
+        <div class="field"><label for="geoStateIso">State ISO</label><input id="geoStateIso" name="geoStateIso"></div>
+        <div class="field"><label for="geoCountryIso2">Country ISO2</label><input id="geoCountryIso2" name="geoCountryIso2"></div>
+        <div class="field"><label for="geoLatitude">Latitude</label><input id="geoLatitude" name="geoLatitude"></div>
+        <div class="field"><label for="geoLongitude">Longitude</label><input id="geoLongitude" name="geoLongitude"></div>
+        <div class="field"><label for="geoRadiusAmount">Radius amount</label><input id="geoRadiusAmount" name="geoRadiusAmount"></div>
+        <div class="field"><label for="genreSlug">Genre slug</label><input id="genreSlug" name="genreSlug"></div>
+        <div class="field"><label for="artistName">Artist name</label><input id="artistName" name="artistName"></div>
+        <div class="field"><label for="venueName">Venue name</label><input id="venueName" name="venueName"></div>
+      {% else %}
+        <div class="field"><label for="limit">Limit</label><input id="limit" name="limit" type="number" min="1" max="{{ sandbox.max_events }}" value="{{ sandbox.default_values.limit }}"></div>
+        <div class="field"><label for="pageSize">Page size</label><input id="pageSize" name="pageSize" type="number" min="1" max="200" value="{{ sandbox.default_values.pageSize }}"></div>
+        <div class="field"><label for="searchTerm">Search term</label><input id="searchTerm" name="searchTerm"></div>
+        <div class="field"><label for="latitude">Latitude</label><input id="latitude" name="latitude"></div>
+        <div class="field"><label for="longitude">Longitude</label><input id="longitude" name="longitude"></div>
+        <div class="field"><label for="radius">Radius</label><input id="radius" name="radius"></div>
+        <div class="field"><label for="categories">Categories</label><input id="categories" name="categories"></div>
+        <div class="field"><label for="labels">Labels</label><input id="labels" name="labels"></div>
+        <label class="checkbox"><input type="checkbox" name="includeLabels" value="true" checked><span>Include labels</span></label>
+        <label class="checkbox"><input type="checkbox" name="includeInstances" value="true" checked><span>Include instances</span></label>
+        <label class="checkbox"><input type="checkbox" name="blockVirtual" value="true"><span>Block virtual</span></label>
+        <label class="checkbox"><input type="checkbox" name="handPicked" value="true"><span>Hand picked</span></label>
+      {% endif %}
+      <button type="submit" {% if sandbox.disabled_reason %}disabled{% endif %}>Run Live Sandbox</button>
+      <button
+        type="submit"
+        formaction="/admin/api-feeds/{{ provider.provider_key }}/live-sandbox/background"
+      >Run in background</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Recent Sandbox Runs</h2>
+    {% if recent_runs %}
+      <table>
+        <thead>
+          <tr><th>Run</th><th>Status</th><th>Raw</th><th>Normalized</th><th>Started</th><th>Error</th></tr>
+        </thead>
+        <tbody>
+          {% for run in recent_runs %}
+            <tr>
+              <td data-label="Run"><a href="/admin/api-feed-runs/{{ run.id }}">#{{ run.id }}</a></td>
+              <td data-label="Status">{{ run.status }}</td>
+              <td data-label="Raw">{{ run.raw_record_count }}</td>
+              <td data-label="Normalized">{{ run.normalized_candidate_count }}</td>
+              <td data-label="Started">{{ run.started_at.strftime("%Y-%m-%d %H:%M") }}</td>
+              <td data-label="Error">{{ run.error_message or "n/a" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="notice">No live sandbox runs yet.</p>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,135 @@
+{
+  "events": [
+    {
+      "@type": "Concert",
+      "identifier": "jambase:test-concert-1",
+      "name": "Synthetic JamBase Concert",
+      "x-subtitle": "A fixture-only subtitle",
+      "startDate": "2026-10-10T20:00:00-05:00",
+      "endDate": "2026-10-10T23:00:00-05:00",
+      "doorTime": "2026-10-10T19:00:00-05:00",
+      "eventStatus": "EventScheduled",
+      "url": "https://events.example/synthetic-jambase-concert",
+      "image": "https://images.example/synthetic-jambase-concert.jpg",
+      "x-externalIdentifiers": [
+        {"source": "bandsintown", "identifier": "bit:event-1"}
+      ],
+      "location": {
+        "identifier": "jambase:venue-1",
+        "name": "Synthetic Hall",
+        "url": "https://venues.example/synthetic-hall",
+        "image": "https://images.example/synthetic-hall.jpg",
+        "x-externalIdentifiers": [
+          {"source": "axs", "identifier": "axs:venue-1"}
+        ],
+        "geo": {
+          "latitude": 35.1495,
+          "longitude": -90.049
+        },
+        "address": {
+          "streetAddress": "100 Fixture Ave",
+          "addressLocality": "Memphis",
+          "addressRegion": {
+            "alternateName": "TN",
+            "identifier": "US-TN",
+            "name": "Tennessee"
+          },
+          "postalCode": "38103",
+          "addressCountry": {
+            "identifier": "US",
+            "name": "United States"
+          },
+          "x-timezone": "America/Chicago"
+        }
+      },
+      "performer": [
+        {
+          "identifier": "jambase:artist-headliner",
+          "name": "Fixture Headliner",
+          "genre": ["Rock"],
+          "sameAs": ["https://open.spotify.com/artist/fixture"],
+          "x-externalIdentifiers": [
+            {"source": "ticketmaster", "identifier": "tm:artist-1"}
+          ],
+          "x-isHeadliner": true
+        },
+        {
+          "identifier": "jambase:artist-support",
+          "name": "Fixture Support",
+          "genre": ["Indie Rock"],
+          "x-isHeadliner": false
+        }
+      ],
+      "offers": [
+        {
+          "category": "ticketingLinkPrimary",
+          "url": "https://www.axs.com/events/synthetic-jambase-concert",
+          "seller": {"identifier": "axs", "name": "AXS"},
+          "priceSpecification": {
+            "minPrice": 25,
+            "maxPrice": 45,
+            "priceCurrency": "USD"
+          }
+        },
+        {
+          "category": "ticketingLinkSecondary",
+          "url": "https://backup-tickets.example/synthetic-jambase-concert"
+        }
+      ]
+    },
+    {
+      "@type": "Festival",
+      "identifier": "jambase:test-festival-1",
+      "name": "Synthetic JamBase Festival",
+      "startDate": "2026-11-01T12:00:00-05:00",
+      "endDate": "2026-11-03T23:00:00-05:00",
+      "url": "https://events.example/synthetic-jambase-festival",
+      "x-promoImage": "https://images.example/synthetic-jambase-festival.jpg",
+      "sameAs": ["https://open.spotify.com/playlist/fixture"],
+      "location": {
+        "identifier": "jambase:venue-festival",
+        "name": "Synthetic Festival Grounds",
+        "geo": {"latitude": 36.1627, "longitude": -86.7816},
+        "address": {
+          "streetAddress": "200 Festival Field",
+          "addressLocality": "Nashville",
+          "addressRegion": {"alternateName": "TN"},
+          "postalCode": "37203",
+          "addressCountry": {"identifier": "US"},
+          "x-timezone": "America/Chicago"
+        }
+      },
+      "performer": [
+        {"identifier": "jambase:festival-headliner", "name": "Festival Lead", "genre": ["Americana"], "x-isHeadliner": true},
+        {"identifier": "jambase:festival-support-1", "name": "Festival Guest One", "genre": ["Folk"], "x-isHeadliner": false},
+        {"identifier": "jambase:festival-support-2", "name": "Festival Guest Two", "genre": ["Country"], "x-isHeadliner": false}
+      ],
+      "offers": [
+        {
+          "category": "ticketingLinkSecondary",
+          "url": "https://tickets.example/synthetic-jambase-festival"
+        }
+      ]
+    },
+    {
+      "@type": "Concert",
+      "identifier": "jambase:test-missing-image",
+      "name": "Synthetic JamBase Missing Image",
+      "startDate": "2026-12-01T20:00:00-05:00",
+      "location": {
+        "identifier": "jambase:venue-no-image",
+        "name": "No Image Room",
+        "address": {
+          "addressLocality": "Memphis",
+          "addressRegion": {"alternateName": "TN"},
+          "addressCountry": {"identifier": "US"},
+          "x-timezone": "America/Chicago"
+        }
+      },
+      "performer": [
+        {"identifier": "jambase:artist-no-image", "name": "No Image Quartet", "genre": ["Jazz"], "x-isHeadliner": true}
+      ],
+      "offers": []
+    }
+  ]
+}

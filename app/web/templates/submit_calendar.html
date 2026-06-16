@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .submission-hero {
+      margin-bottom: 28px;
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(40, 184, 111, 0.15), rgba(58, 167, 255, 0.1)),
+        var(--admin-card);
+      box-shadow: var(--shadow);
+    }
+
+    .submission-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .submission-card {
+      display: flex;
+      flex-direction: column;
+      min-height: 230px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+      box-shadow: var(--shadow);
+    }
+
+    .submission-card .button {
+      margin-top: auto;
+    }
+
+    .guidance-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .guidance-panel {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+    }
+
+    .choice-table {
+      width: 100%;
+      margin-top: 12px;
+    }
+
+    .choice-table th,
+    .choice-table td {
+      vertical-align: top;
+    }
+
+    .next-list {
+      margin: 12px 0 0;
+      padding-left: 22px;
+    }
+
+    .path-number {
+      display: inline-grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      margin-bottom: 10px;
+      border-radius: 999px;
+      background: #172026;
+      color: #ffffff;
+      font-weight: 800;
+    }
+
+    @media (max-width: 860px) {
+      .submission-grid,
+      .guidance-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <section class="submission-hero">
+    <div class="public-brand-form">
+      <img class="brand-logo brand-logo--header" src="/static/images/music-roadtrip-logo-circle.png" alt="Music Roadtrip logo">
+      <span class="badge success">Music Roadtrip Calendar Intake</span>
+    </div>
+    <h1>Submit Calendar</h1>
+    <p>Send Music Roadtrip authorized event calendar links for review.</p>
+  </section>
+
+  <section class="submission-grid" aria-label="Calendar submission options">
+    <article class="submission-card">
+      <span class="path-number">A</span>
+      <h2>Send one calendar link</h2>
+      <p>Use this if you have one venue, festival, artist, promoter, chamber, or tourism board event calendar.</p>
+      <a class="button" href="/submit-calendar/url">Start calendar submission</a>
+    </article>
+    <article class="submission-card">
+      <span class="path-number">B</span>
+      <h2>Upload a list of calendar links</h2>
+      <p>Use this if you are a tourism board, chamber, city, or partner with many calendars to send.</p>
+      <a class="button" href="/submit-calendar/sources-file">Upload calendar list</a>
+    </article>
+  </section>
+
+  <section class="guidance-grid">
+    <article class="guidance-panel">
+      <h2>Which option should I choose?</h2>
+      <table class="choice-table">
+        <thead>
+          <tr>
+            <th>What you have</th>
+            <th>Choose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>One website calendar link</td>
+            <td>Send one calendar link</td>
+          </tr>
+          <tr>
+            <td>A spreadsheet with many calendar links</td>
+            <td>Upload a calendar list</td>
+          </tr>
+          <tr>
+            <td>A spreadsheet with actual event details</td>
+            <td><a href="/submit-events">Upload event spreadsheet</a></td>
+          </tr>
+          <tr>
+            <td>Not sure</td>
+            <td>Send one calendar link, and Music Roadtrip can review it</td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+
+    <article class="guidance-panel">
+      <h2>What happens next?</h2>
+      <ol class="next-list">
+        <li>Your submission goes to Music Roadtrip for review.</li>
+        <li>We check that the calendar or file is authorized.</li>
+        <li>We clean up event names, dates, venues, ticket links, and images.</li>
+        <li>Approved events may appear in Music Roadtrip after review.</li>
+      </ol>
+    </article>
+  </section>
+{% endblock %}

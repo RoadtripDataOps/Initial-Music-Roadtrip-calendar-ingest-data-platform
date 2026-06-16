@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel">
+    <p><a href="/admin/poi-locations">Back to POI registry</a></p>
+    <h1>{{ location.display_name }}</h1>
+    <p>
+      <span class="badge">{{ location.category }}</span>
+      {% if location.subcategory %}
+        <span class="badge secondary">{{ location.subcategory }}</span>
+      {% endif %}
+      <span class="badge">{{ location.poi_dedupe_confidence }} dedupe</span>
+    </p>
+  </section>
+
+  <table>
+    <tbody>
+      <tr><th>Canonical POI ID</th><td>{{ location.canonical_poi_id }}</td></tr>
+      <tr><th>Dedupe key</th><td class="url">{{ location.poi_dedupe_key }}</td></tr>
+      <tr><th>Mapotic ID</th><td>{{ location.mapotic_id or "n/a" }}</td></tr>
+      <tr><th>Import ID</th><td>{{ location.source_record_id or "n/a" }}</td></tr>
+      <tr><th>PlacesID</th><td>{{ location.places_id or "n/a" }}</td></tr>
+      <tr><th>Canonical Venue ID</th><td>{{ location.canonical_venue_id or "n/a" }}</td></tr>
+      <tr><th>Address</th><td>{{ location.address or "n/a" }}</td></tr>
+      <tr><th>City / State / Zip</th><td>{{ location.city or "n/a" }}{% if location.state %}, {{ location.state }}{% endif %} {{ location.zip_code or "" }}</td></tr>
+      <tr><th>Country</th><td>{{ location.country or "n/a" }}</td></tr>
+      <tr>
+        <th>Latitude / Longitude</th>
+        <td>
+          {% if location.latitude is not none and location.longitude is not none %}
+            {{ location.latitude }}, {{ location.longitude }}
+          {% else %}
+            n/a
+          {% endif %}
+        </td>
+      </tr>
+      <tr><th>Website</th><td class="url">{{ location.website or "n/a" }}</td></tr>
+      <tr><th>Phone</th><td>{{ location.phone or "n/a" }}</td></tr>
+      <tr><th>Email</th><td>{{ location.email or "n/a" }}</td></tr>
+      <tr><th>Instagram</th><td class="url">{{ location.instagram or "n/a" }}</td></tr>
+      <tr><th>Facebook</th><td class="url">{{ location.facebook or "n/a" }}</td></tr>
+      <tr><th>X</th><td class="url">{{ location.x_url or "n/a" }}</td></tr>
+      <tr><th>TikTok</th><td class="url">{{ location.tiktok or "n/a" }}</td></tr>
+      <tr><th>Spotify</th><td class="url">{{ location.spotify_url or "n/a" }}</td></tr>
+      <tr><th>Main image</th><td class="url">{{ location.main_image_url or "n/a" }}</td></tr>
+      <tr><th>Additional images</th><td class="url">{{ location.additional_image_urls or "n/a" }}</td></tr>
+      <tr><th>Certified</th><td>{{ location.certified if location.certified is not none else "n/a" }}</td></tr>
+      <tr><th>Carousel selection</th><td>{{ location.carousel_selection or "n/a" }}</td></tr>
+      <tr><th>Business status</th><td>{{ location.business_status or "n/a" }}</td></tr>
+      <tr><th>Photo quality score</th><td>{{ location.photo_quality_score if location.photo_quality_score is not none else "n/a" }}</td></tr>
+      <tr><th>Quality control</th><td>{{ location.quality_control or "n/a" }}</td></tr>
+    </tbody>
+  </table>
+
+  <section class="panel">
+    <h2>Raw Source JSON Preview</h2>
+    <pre>{{ raw_source_preview }}</pre>
+    {% if raw_source_was_truncated %}
+      <p class="notice">Preview truncated.</p>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,20 @@
+{
+  "music": {
+    "classifications": [
+      {
+        "segment": {"id": "KZFzniwnSyZfZ7v7nJ", "name": "Music"},
+        "genre": {"id": "KnvZfZ7vAvv", "name": "Alternative"},
+        "subGenre": {"id": "KZazBEonSMnZfZ7vAvn", "name": "Alternative Rock"}
+      }
+    ]
+  },
+  "non_music": {
+    "classifications": [
+      {
+        "segment": {"id": "KZFzniwnSyZfZ7v7nE", "name": "Sports"},
+        "genre": {"id": "KnvZfZ7vAde", "name": "Basketball"},
+        "subGenre": {"id": "KZazBEonSMnZfZ7vFJA", "name": "NBA"}
+      }
+    ]
+  }
+}

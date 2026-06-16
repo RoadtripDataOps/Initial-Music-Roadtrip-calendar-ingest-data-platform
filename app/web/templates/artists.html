@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel">
+    <h1>Artists</h1>
+    <p>
+      Canonical artist identities are built from approved Concert events,
+      provider performer data, file uploads, and reviewed source claims.
+    </p>
+    <div class="actions">
+      <form method="post" action="/admin/artists/rebuild">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Rebuild Artist Registry</button>
+      </form>
+      <a class="button secondary" href="/admin/artist-duplicates">Review Duplicates</a>
+    </div>
+  </section>
+
+  {% if artists %}
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Genres</th>
+          <th>Claims</th>
+          <th>Upcoming</th>
+          <th>Image</th>
+          <th>Quality</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for artist in artists %}
+          <tr>
+            <td data-label="Name">
+              <a href="/admin/artists/{{ artist.id }}">{{ artist.display_name }}</a>
+            </td>
+            <td data-label="Type">{{ artist.artist_type | replace("_", " ") | title }}</td>
+            <td data-label="Genres">
+              {% for genre in artist.normalized_genres %}
+                <span class="badge">{{ genre }}</span>
+              {% else %}
+                <span class="notice">Unknown</span>
+              {% endfor %}
+            </td>
+            <td data-label="Claims">{{ artist.source_claim_count }}</td>
+            <td data-label="Upcoming">{{ upcoming_event_count_for_artist(artist) }}</td>
+            <td data-label="Image">
+              <span class="badge {{ 'success' if artist.image_url else 'warning' }}">
+                {{ artist.image_status or ("candidate" if artist.image_url else "missing") }}
+              </span>
+            </td>
+            <td data-label="Quality">
+              {{ "%.0f"|format(artist.quality_score) if artist.quality_score is not none else "n/a" }}
+            </td>
+            <td data-label="Actions">
+              <a class="button secondary" href="/admin/artists/{{ artist.id }}">Open</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <section class="empty-state">
+      <h2>No artists yet</h2>
+      <p>
+        Approve Concert events with headliners or JamBase performer data, then
+        rebuild the registry to create canonical artist records.
+      </p>
+    </section>
+  {% endif %}
+{% endblock %}

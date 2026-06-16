@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .provider-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .provider-card {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 330px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+      box-shadow: var(--shadow);
+    }
+
+    .provider-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .provider-header h2 {
+      margin-bottom: 4px;
+    }
+
+    .provider-counts {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .count-box {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.045);
+      text-align: center;
+    }
+
+    .count-box strong {
+      display: block;
+      color: var(--admin-primary-dark);
+      font-size: 1.45rem;
+      line-height: 1;
+    }
+
+    .provider-status-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0;
+    }
+
+    .provider-card .button {
+      margin-top: auto;
+    }
+
+    .provider-card .actions .button {
+      margin-top: 0;
+    }
+
+    @media (max-width: 1100px) {
+      .provider-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .provider-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <p class="notice">
+    Private admin review for provider-style records before normalized events
+    become live.
+  </p>
+
+  <section class="actions">
+    <a class="button secondary" href="/admin/api-feed-runs">View all API feed runs</a>
+  </section>
+
+  {% if provider_summaries %}
+    <section class="provider-grid" aria-label="API feed providers">
+      {% for row in provider_summaries %}
+        {% set provider = row.provider %}
+        {% set storage_badge_class = "success" if provider.storage_policy == "permanent_allowed" else "info" if provider.storage_policy == "enrichment_suggestions_only" else "warning" %}
+        <article class="provider-card">
+          <div class="provider-header">
+            <div>
+              <h2>{{ provider.display_name }}</h2>
+              <p>{{ provider.provider_type_display }}</p>
+            </div>
+            <span class="badge success">{{ provider.workbench_status }}</span>
+          </div>
+
+          <div class="provider-status-stack">
+            <span class="badge info">{{ provider.live_api_status }}</span>
+            <span class="badge {{ storage_badge_class }}">
+              {{ provider.storage_status }}
+            </span>
+            {% if provider.credential_status %}
+              <span class="badge info">{{ provider.credential_status }}</span>
+            {% endif %}
+            {% if provider.retention_status %}
+              <span class="badge warning">{{ provider.retention_status }}</span>
+            {% endif %}
+            {% if provider.contract_status %}
+              <span class="badge warning">{{ provider.contract_status }}</span>
+            {% endif %}
+          </div>
+
+          {% if provider.compliance_notes %}
+            <p>{{ provider.compliance_notes }}</p>
+          {% endif %}
+
+          <div class="provider-counts">
+            <div class="count-box"><strong>{{ row.pending_count }}</strong>Pending</div>
+            <div class="count-box"><strong>{{ row.approved_count }}</strong>Approved</div>
+            <div class="count-box"><strong>{{ row.rejected_count }}</strong>Rejected</div>
+          </div>
+
+          <p>
+            <strong>Latest run:</strong>
+            {% if row.last_run %}
+              <a href="/admin/api-feed-runs/{{ row.last_run.id }}">#{{ row.last_run.id }}</a>
+              {{ row.last_run.status }}
+            {% else %}
+              Never run
+            {% endif %}
+          </p>
+
+          <div class="actions" style="margin-top: auto;">
+            <a class="button" href="/admin/api-feeds/{{ provider.provider_key }}">Open</a>
+            <a class="button secondary" href="/admin/api-feeds/{{ provider.provider_key }}/pipeline">Pipeline</a>
+            {% if provider.provider_key in ["jambase", "cityspark"] %}
+              <a class="button secondary" href="/admin/api-feeds/{{ provider.provider_key }}/live-sandbox">Live Sandbox</a>
+            {% endif %}
+          </div>
+        </article>
+      {% endfor %}
+    </section>
+  {% else %}
+    <section class="empty-state">
+      <h2>No API feed providers configured</h2>
+      <p>
+        This workbench reviews staged provider records and provenance. It is
+        empty when the local provider registry has not been configured.
+      </p>
+      <a class="button" href="/admin/dashboard">Return to dashboard</a>
+    </section>
+  {% endif %}
+{% endblock %}

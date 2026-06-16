@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .quality-buckets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 18px 0;
+    }
+
+    .quality-bucket {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: var(--text);
+      text-decoration: none;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .quality-bucket.active {
+      border-color: var(--admin-primary);
+      box-shadow: 0 0 0 1px rgba(73, 196, 106, 0.35);
+    }
+
+    .quality-score {
+      display: inline-grid;
+      place-items: center;
+      min-width: 42px;
+      min-height: 42px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      font-weight: 850;
+    }
+
+    .event-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .event-actions form {
+      margin: 0;
+    }
+
+    .compact-action {
+      padding: 6px 10px;
+      font-size: 0.85rem;
+    }
+  </style>
+
+  <p class="notice">Scott data-quality workflow for normalized Concert events. No route-builder, itinerary, mobile app, or auto-publish behavior is included.</p>
+  <h1>Event Quality Workbench</h1>
+  <p>Review event title/date, venue linkage, tickets, photos, dedupe status, source claims, music relevance, and app-feed readiness before events reach the app feed.</p>
+
+  <section class="quality-buckets" aria-label="Event quality buckets">
+    <a class="quality-bucket {{ 'active' if not selected_bucket else '' }}" href="/admin/event-quality">All {{ workbench.total_count }}</a>
+    {% for bucket in workbench.buckets %}
+      <a class="quality-bucket {{ 'active' if selected_bucket == bucket.key else '' }}" href="/admin/event-quality?bucket={{ bucket.key }}">
+        {{ bucket.label }} {{ bucket.count }}
+      </a>
+    {% endfor %}
+  </section>
+
+  <form method="get" action="/admin/event-quality" class="filter-form">
+    <input type="hidden" name="bucket" value="{{ selected_bucket }}">
+    <div class="field">
+      <label for="search">Search events, venues, providers</label>
+      <input id="search" name="search" value="{{ search }}">
+    </div>
+    <button type="submit">Filter</button>
+    <a class="button secondary" href="/admin/event-quality">Reset filters</a>
+  </form>
+
+  <form id="event-quality-bulk-form" method="post" action="/admin/event-quality/bulk-action" class="actions">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="bulk-action">Bulk action</label>
+    <select id="bulk-action" name="action" required>
+      <option value="photo_rescue">Run photo rescue for selected</option>
+      <option value="needs_image_review">Mark selected needs image review</option>
+      <option value="recompute_quality">Recompute event quality for selected</option>
+      <option value="duplicate_review">Send selected to duplicate review if suspicious</option>
+    </select>
+    <button type="submit">Apply to selected</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Select</th>
+        <th>Event</th>
+        <th>Date / Venue</th>
+        <th>Sources</th>
+        <th>Dedupe</th>
+        <th>Image</th>
+        <th>Ticket</th>
+        <th>Music</th>
+        <th>Ready</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in workbench.rows %}
+        {% set event = row.event %}
+        <tr>
+          <td data-label="Select">
+            <input form="event-quality-bulk-form" type="checkbox" name="event_ids" value="{{ event.id }}" aria-label="Select {{ event.title }}">
+          </td>
+          <td data-label="Event">
+            <strong>{{ event.title }}</strong>
+            <div class="muted">Headliner: {{ event.headliner or "Missing" }}</div>
+            <div class="muted">Genre: {{ event.normalized_genre or event.genre or "Missing" }}</div>
+          </td>
+          <td data-label="Date / Venue">
+            {{ event.start_datetime.strftime("%Y-%m-%d %H:%M") if event.start_datetime else "Missing date" }}
+            <div class="muted">{{ event.venue.display_name if event.venue else "Missing venue" }}</div>
+            <div class="muted">
+              {% if event.venue %}
+                {{ event.venue.city or "" }}{% if event.venue.city and event.venue.state %}, {% endif %}{{ event.venue.state or "" }}
+              {% else %}
+                Missing city/state
+              {% endif %}
+            </div>
+          </td>
+          <td data-label="Sources">
+            {{ row.source_providers|join(", ") or "unknown" }}
+            <div class="muted">{{ row.source_claim_count }} claim(s)</div>
+          </td>
+          <td data-label="Dedupe">
+            <span class="badge {{ 'warning' if 'duplicate_candidate' in row.flags else 'success' }}">{{ row.dedupe_status_label }}</span>
+            <div class="muted">Confidence: {{ event.dedupe_confidence }}</div>
+          </td>
+          <td data-label="Image">
+            <span class="badge {{ 'warning' if 'missing_image' in row.flags or 'selected_image_pending_approval' in row.flags else 'success' }}">{{ row.image_status_label }}</span>
+            <div class="muted">{{ event.image_selection_reason or "No selection reason" }}</div>
+          </td>
+          <td data-label="Ticket">
+            <span class="badge {{ 'warning' if 'missing_ticket_link' in row.flags or 'bad_generic_ticket_link' in row.flags else 'success' }}">{{ row.ticket_status_label }}</span>
+            <div class="muted">Score: {{ event.ticket_link_quality_score if event.ticket_link_quality_score is not none else "n/a" }}</div>
+          </td>
+          <td data-label="Music">
+            <span class="badge {{ 'warning' if 'low_music_relevance' in row.flags else 'success' }}">
+              {{ event.music_relevance_score if event.music_relevance_score is not none else "n/a" }}
+            </span>
+            {% if 'missing_artist_headliner' in row.flags %}<div class="muted">Missing artist/headliner</div>{% endif %}
+          </td>
+          <td data-label="Ready">
+            <span class="quality-score">{{ row.event_quality_score }}</span>
+            <div class="muted">App feed: {{ row.app_feed_readiness_score }}</div>
+            <span class="badge {{ 'success' if row.app_feed_ready else 'warning' }}">{{ "Ready" if row.app_feed_ready else "Not ready" }}</span>
+          </td>
+          <td data-label="Actions">
+            <div class="event-actions">
+              <a class="button secondary compact-action" href="/admin/events/{{ event.id }}">View event</a>
+              <a class="button secondary compact-action" href="/preview/events/{{ event.id }}">Preview</a>
+              <a class="button secondary compact-action" href="/admin/image-candidates?event_id={{ event.id }}">Images</a>
+              <a class="button secondary compact-action" href="/admin/events/{{ event.id }}#source-claims">Source claims</a>
+              {% if event.duplicate_candidate_group_id %}
+                <a class="button secondary compact-action" href="/admin/duplicate-events/{{ event.duplicate_candidate_group_id }}">Duplicate group</a>
+              {% endif %}
+              <a class="button secondary compact-action" href="/admin/app-feed/events.json?event_id={{ event.id }}&include_needs_approval=true">App JSON</a>
+              <form method="post" action="/admin/event-quality/bulk-action">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="action" value="photo_rescue">
+                <input type="hidden" name="event_ids" value="{{ event.id }}">
+                <button class="compact-action" type="submit">Run photo rescue</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="10">No events match this quality filter.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

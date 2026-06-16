@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Search Seed Registry</h1>
+  <p class="notice">Internal location registry for search before paid external search or geocoding services.</p>
+
+  <section class="actions">
+    <form method="post" action="/admin/search-seeds/seed">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Seed from POIs and regions</button>
+    </form>
+    <a class="button secondary" href="/admin/regions">Regions</a>
+  </section>
+
+  <form method="get" action="/admin/search-seeds" class="panel">
+    <div class="form-grid">
+      <div class="field">
+        <label for="q">Search name</label>
+        <input id="q" name="q" value="{{ filters.q }}">
+      </div>
+      <div class="field">
+        <label for="seed_type">Seed type</label>
+        <select id="seed_type" name="seed_type">
+          <option value="">Any</option>
+          {% for value in seed_types %}
+            <option value="{{ value }}" {{ "selected" if filters.seed_type == value else "" }}>{{ value | replace("_", " ") }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="region_id">Region</label>
+        <select id="region_id" name="region_id">
+          <option value="">Any</option>
+          {% for region in regions %}
+            <option value="{{ region.id }}" {{ "selected" if filters.region_id == region.id|string else "" }}>{{ region.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <button type="submit">Apply filters</button>
+    <a class="button secondary" href="/admin/search-seeds">Reset</a>
+  </form>
+
+  {% if seeds %}
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Region</th>
+          <th>Source</th>
+          <th>Internal</th>
+          <th>App</th>
+          <th>Priority</th>
+          <th>Weight</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for seed in seeds %}
+          <tr>
+            <td data-label="Name">{{ seed.display_name }}<br><span class="url">{{ seed.seed_key }}</span></td>
+            <td data-label="Type">{{ seed.seed_type | replace("_", " ") }}</td>
+            <td data-label="Region">{{ seed.region.name if seed.region else "unassigned" }}</td>
+            <td data-label="Source">{{ seed.source_type }}</td>
+            <td data-label="Internal">{{ "Yes" if seed.use_for_internal_search else "No" }}</td>
+            <td data-label="App">{{ "Yes" if seed.use_for_app_search else "No" }}</td>
+            <td data-label="Priority">{{ seed.priority }}</td>
+            <td data-label="Weight">{{ seed.search_weight }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <section class="empty-state">
+      <h2>No search seeds</h2>
+      <p>Seed from POIs and regions to populate the internal registry.</p>
+    </section>
+  {% endif %}
+{% endblock %}

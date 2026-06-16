@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ source.source_name }}</h1>
+  <p class="url"><a href="{{ source.canonical_url }}">{{ source.canonical_url }}</a></p>
+
+  <section class="panel">
+    <h2>Source Details</h2>
+    <table>
+      <tbody>
+        <tr><th>Original URL</th><td class="url">{{ source.original_url }}</td></tr>
+        <tr><th>Domain</th><td>{{ source.domain or "n/a" }}</td></tr>
+        <tr><th>Hash</th><td>{{ source.canonical_url_hash }}</td></tr>
+        <tr><th>Source type</th><td>{{ source.source_type }}</td></tr>
+        <tr><th>Expected category</th><td>{{ source.expected_category }}</td></tr>
+        <tr><th>Venue</th><td>{{ source.venue_name or "n/a" }}</td></tr>
+        <tr><th>City</th><td>{{ source.city or "n/a" }}</td></tr>
+        <tr><th>State</th><td>{{ source.state or "n/a" }}</td></tr>
+        <tr><th>Country</th><td>{{ source.country or "n/a" }}</td></tr>
+        <tr><th>Region / Market</th><td>{{ source.region_or_market or "n/a" }}</td></tr>
+        <tr><th>Status</th><td>{{ source.status | replace("_", " ") | title }}</td></tr>
+        <tr><th>Review</th><td>{{ source.review_status | replace("_", " ") | title }}</td></tr>
+        <tr><th>Risk</th><td>{{ source.risk_level }}{% if source.risk_flags %}: {{ source.risk_flags | join(", ") }}{% endif %}</td></tr>
+        <tr><th>Crawl frequency</th><td>{{ source.crawl_frequency or "n/a" }}</td></tr>
+        <tr><th>Next crawl due</th><td>{{ crawl_metadata.next_crawl_due_at.strftime("%Y-%m-%d %H:%M") if crawl_metadata.next_crawl_due_at else "manual" }}</td></tr>
+        <tr><th>Last crawl result</th><td>{{ crawl_metadata.last_crawl_status or "n/a" }}</td></tr>
+        <tr><th>Total crawl runs</th><td>{{ crawl_metadata.total_crawl_runs }}</td></tr>
+        <tr><th>Latest extracted events</th><td>{{ crawl_metadata.latest_event_count }}</td></tr>
+        <tr><th>First seen</th><td>{{ source.first_seen_at.strftime("%Y-%m-%d %H:%M") if source.first_seen_at else "n/a" }}</td></tr>
+        <tr><th>Last seen</th><td>{{ source.last_seen_at.strftime("%Y-%m-%d %H:%M") if source.last_seen_at else "n/a" }}</td></tr>
+        <tr><th>Last crawled</th><td>{{ source.last_crawled_at.strftime("%Y-%m-%d %H:%M") if source.last_crawled_at else "n/a" }}</td></tr>
+        <tr><th>Notes</th><td>{{ source.notes or "n/a" }}</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Submitting Organizations</h2>
+    {% if submissions %}
+      <table>
+        <thead>
+          <tr>
+            <th>Organization</th>
+            <th>Contact</th>
+            <th>Submitted URL</th>
+            <th>Risk</th>
+            <th>Review</th>
+            <th>Submitted</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for submission in submissions %}
+            <tr>
+              <td data-label="Organization">{{ submission.organization_name }}</td>
+              <td data-label="Contact">
+                {{ submission.contact_name or "n/a" }}<br>{{ submission.contact_email }}
+              </td>
+              <td class="url" data-label="Submitted URL">{{ submission.original_url }}</td>
+              <td data-label="Risk">{{ submission.risk_level }}{% if submission.risk_flags %}: {{ submission.risk_flags | join(", ") }}{% endif %}</td>
+              <td data-label="Review">{{ submission.review_status | replace("_", " ") | title }}</td>
+              <td data-label="Submitted">{{ submission.submitted_at.strftime("%Y-%m-%d %H:%M") }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="notice">No submitting organizations recorded.</p>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Crawl History</h2>
+    {% if crawl_metadata.last_crawl %}
+      <p>
+        Latest run:
+        <a href="/admin/crawl-runs/{{ crawl_metadata.last_crawl.id }}">#{{ crawl_metadata.last_crawl.id }}</a>
+        {{ crawl_metadata.last_crawl.status }}
+      </p>
+    {% else %}
+      <p class="notice">No crawl runs yet for this master source.</p>
+    {% endif %}
+    <form method="post" action="/admin/master-calendar-sources/bulk-crawl">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" name="source_ids" value="{{ source.id }}">Run Crawl</button>
+    </form>
+  </section>
+{% endblock %}

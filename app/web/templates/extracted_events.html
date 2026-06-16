@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Extracted Event Candidates</h1>
+  <p class="notice">
+    Candidates from approved source crawls are staged here before they become
+    normalized Concert events.
+  </p>
+
+  <form method="get" action="/admin/extracted-events" class="panel">
+    <div class="field">
+      <label for="review_status">Review status</label>
+      <select id="review_status" name="review_status">
+        <option value="">Any</option>
+        {% for value in ["pending_review", "needs_review", "approved", "rejected", "duplicate_candidate"] %}
+          <option value="{{ value }}" {{ "selected" if filters.review_status == value else "" }}>{{ value | replace("_", " ") }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit">Apply filter</button>
+    <a class="button secondary" href="/admin/extracted-events">Reset</a>
+  </form>
+
+  {% if candidates %}
+    <table>
+      <thead>
+        <tr>
+          <th>Candidate</th>
+          <th>Source</th>
+          <th>Date</th>
+          <th>Venue</th>
+          <th>Extractor</th>
+          <th>Review</th>
+          <th>Quality</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for candidate in candidates %}
+          <tr>
+            <td data-label="Candidate">
+              <a href="/admin/extracted-events/{{ candidate.id }}">{{ candidate.event_name or "Untitled" }}</a>
+              {% if candidate.created_event_id %}
+                <br><a href="/admin/events/{{ candidate.created_event_id }}">Event #{{ candidate.created_event_id }}</a>
+              {% endif %}
+            </td>
+            <td data-label="Source">
+              {% if candidate.crawl_run %}
+                <a href="/admin/crawl-runs/{{ candidate.crawl_run_id }}">Crawl #{{ candidate.crawl_run_id }}</a>
+                <br>{{ candidate.crawl_run.source.organization_name }}
+              {% else %}
+                Crawl #{{ candidate.crawl_run_id }}
+              {% endif %}
+            </td>
+            <td data-label="Date">{{ candidate.start_datetime.strftime("%Y-%m-%d %H:%M") if candidate.start_datetime else "missing" }}</td>
+            <td data-label="Venue">{{ candidate.venue_name or "needs review" }}</td>
+            <td data-label="Extractor">{{ candidate.extractor_type }}</td>
+            <td data-label="Review">{{ candidate.review_status | replace("_", " ") }}</td>
+            <td data-label="Quality">{{ candidate.quality_flags | join(", ") if candidate.quality_flags else "none" }}</td>
+            <td data-label="Actions">
+              <div class="actions">
+                {% if candidate.validation_status == "valid" and not candidate.created_event_id %}
+                  <form method="post" action="/admin/extracted-events/{{ candidate.id }}/approve">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit">Approve</button>
+                  </form>
+                {% endif %}
+                {% if candidate.review_status != "rejected" %}
+                  <form method="post" action="/admin/extracted-events/{{ candidate.id }}/reject">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit">Reject</button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <section class="empty-state">
+      <h2>No extracted candidates</h2>
+      <p>Run a crawl on an approved JSON-LD, RSS/Atom, or static HTML source.</p>
+    </section>
+  {% endif %}
+{% endblock %}

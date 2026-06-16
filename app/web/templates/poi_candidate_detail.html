@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .summary-card {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+    }
+
+    .summary-number {
+      display: block;
+      color: var(--admin-primary-dark);
+      font-size: 1.25rem;
+      font-weight: 850;
+      line-height: 1.2;
+    }
+
+    @media (max-width: 760px) {
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <section class="panel">
+    <p><a href="/admin/poi-candidates">Back to POI candidates</a></p>
+    <h1>{{ candidate.candidate_name }}</h1>
+    <p>
+      <span class="badge">{{ candidate.review_status | replace("_", " ") }}</span>
+      <span class="badge secondary">{{ candidate.match_status | replace("_", " ") }}</span>
+      <span class="badge secondary">{{ candidate.match_confidence }} match</span>
+      <span class="badge">{{ "%.0f"|format(candidate.poi_quality_score) }} quality</span>
+    </p>
+  </section>
+
+  <section class="summary-grid" style="margin-top: 18px;">
+    <article class="summary-card">
+      <span class="summary-number">{{ candidate.suggested_category or candidate.category or "unknown" }}</span>
+      Suggested category
+    </article>
+    <article class="summary-card">
+      <span class="summary-number">{{ candidate.suggested_subcategory or candidate.subcategory or "n/a" }}</span>
+      Suggested subcategory
+    </article>
+    <article class="summary-card">
+      <span class="summary-number">{{ "%.0f"|format(candidate.music_signal_score) }}</span>
+      Music signal
+    </article>
+  </section>
+
+  <section class="panel">
+    <h2>Decision Actions</h2>
+    <div class="actions">
+      <form method="post" action="/admin/poi-candidates/{{ candidate.id }}/approve-create">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Approve and create new POI</button>
+      </form>
+      <form method="post" action="/admin/poi-candidates/{{ candidate.id }}/event-venue-only">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="secondary" type="submit">Mark event venue only</button>
+      </form>
+      <form method="post" action="/admin/poi-candidates/{{ candidate.id }}/needs-research">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="secondary" type="submit">Mark needs research</button>
+      </form>
+      <form method="post" action="/admin/poi-candidates/{{ candidate.id }}/recompute">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="secondary" type="submit">Recompute match/quality</button>
+      </form>
+    </div>
+
+    <div class="panel" style="margin-top: 14px;">
+      <h3>Link Or Update Existing POI</h3>
+      <form method="post" action="/admin/poi-candidates/{{ candidate.id }}/link-existing" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label for="poi_location_id_link">POI</label>
+        <select id="poi_location_id_link" name="poi_location_id">
+          {% if matched_poi %}
+            <option value="{{ matched_poi.id }}">{{ matched_poi.display_name }}{% if matched_poi.city %} · {{ matched_poi.city }}{% endif %}</option>
+          {% endif %}
+          {% for poi in poi_locations %}
+            <option value="{{ poi.id }}">{{ poi.display_name }}{% if poi.city %} · {{ poi.city }}{% endif %}{% if poi.state %}, {{ poi.state }}{% endif %}</option>
+          {% endfor %}
+        </select>
+        <button class="secondary" type="submit">Link existing POI</button>
+      </form>
+      <form method="post" action="/admin/poi-candidates/{{ candidate.id }}/approve-update" class="inline-form" style="margin-top: 10px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label for="poi_location_id_update">POI</label>
+        <select id="poi_location_id_update" name="poi_location_id">
+          {% if matched_poi %}
+            <option value="{{ matched_poi.id }}">{{ matched_poi.display_name }}{% if matched_poi.city %} · {{ matched_poi.city }}{% endif %}</option>
+          {% endif %}
+          {% for poi in poi_locations %}
+            <option value="{{ poi.id }}">{{ poi.display_name }}{% if poi.city %} · {{ poi.city }}{% endif %}{% if poi.state %}, {{ poi.state }}{% endif %}</option>
+          {% endfor %}
+        </select>
+        <button class="secondary" type="submit">Approve safe update</button>
+      </form>
+    </div>
+
+    <form method="post" action="/admin/poi-candidates/{{ candidate.id }}/reject" style="margin-top: 14px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label for="rejection_reason">Rejection reason</label>
+      <input id="rejection_reason" name="rejection_reason" value="{{ candidate.rejection_reason or '' }}">
+      <button class="danger" type="submit">Reject candidate</button>
+    </form>
+  </section>
+
+  <table>
+    <tbody>
+      <tr><th>Category</th><td>{{ candidate.category or "n/a" }}</td></tr>
+      <tr><th>Subcategory</th><td>{{ candidate.subcategory or "n/a" }}</td></tr>
+      <tr><th>Address</th><td>{{ candidate.address or "n/a" }}</td></tr>
+      <tr><th>City / State / Zip</th><td>{{ candidate.city or "n/a" }}{% if candidate.state %}, {{ candidate.state }}{% endif %} {{ candidate.zip_code or "" }}</td></tr>
+      <tr><th>Country</th><td>{{ candidate.country or "n/a" }}</td></tr>
+      <tr>
+        <th>Latitude / Longitude</th>
+        <td>
+          {% if candidate.latitude is not none and candidate.longitude is not none %}
+            {{ candidate.latitude }}, {{ candidate.longitude }}
+          {% else %}
+            n/a
+          {% endif %}
+        </td>
+      </tr>
+      <tr><th>Website</th><td class="url">{{ candidate.website or "n/a" }}</td></tr>
+      <tr><th>Source URL</th><td class="url">{{ candidate.source_url or "n/a" }}</td></tr>
+      <tr><th>Phone</th><td>{{ candidate.phone or "n/a" }}</td></tr>
+      <tr><th>Email</th><td>{{ candidate.email or "n/a" }}</td></tr>
+      <tr><th>Instagram</th><td class="url">{{ candidate.instagram or "n/a" }}</td></tr>
+      <tr><th>Facebook</th><td class="url">{{ candidate.facebook or "n/a" }}</td></tr>
+      <tr><th>X</th><td class="url">{{ candidate.x_url or "n/a" }}</td></tr>
+      <tr><th>TikTok</th><td class="url">{{ candidate.tiktok or "n/a" }}</td></tr>
+      <tr><th>YouTube</th><td class="url">{{ candidate.youtube or "n/a" }}</td></tr>
+      <tr><th>Main image</th><td class="url">{{ candidate.main_image_url or "n/a" }}</td></tr>
+      <tr><th>Additional images</th><td class="url">{{ candidate.additional_image_urls | join("$") or "n/a" }}</td></tr>
+      <tr><th>Dedupe key</th><td class="url">{{ candidate.dedupe_key }}</td></tr>
+      <tr><th>Matched POI</th><td>{% if matched_poi %}<a href="/admin/poi-locations/{{ matched_poi.id }}">{{ matched_poi.display_name }}</a>{% else %}n/a{% endif %}</td></tr>
+      <tr><th>Created POI</th><td>{% if created_poi %}<a href="/admin/poi-locations/{{ created_poi.id }}">{{ created_poi.display_name }}</a>{% else %}n/a{% endif %}</td></tr>
+      <tr><th>Quality flags</th><td>{% for flag in candidate.poi_quality_flags %}<span class="badge failure">{{ flag }}</span>{% else %}<span class="badge success">No blocking flags</span>{% endfor %}</td></tr>
+      <tr><th>Match reason</th><td><pre>{{ candidate.match_reason_json }}</pre></td></tr>
+    </tbody>
+  </table>
+
+  <section class="panel">
+    <h2>Raw Fragment Preview</h2>
+    <pre>{{ raw_preview }}</pre>
+    {% if raw_was_truncated %}<p class="notice">Preview truncated.</p>{% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Normalized Payload Preview</h2>
+    <pre>{{ normalized_preview }}</pre>
+    {% if normalized_was_truncated %}<p class="notice">Preview truncated.</p>{% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    body {
+      background: #101011;
+      color: #f3f3f4;
+    }
+
+    header {
+      border-bottom-color: #262629;
+      background: #101011;
+    }
+
+    nav a,
+    nav .logout-form button {
+      color: #f3f3f4;
+    }
+
+    main {
+      width: min(1280px, calc(100% - 32px));
+    }
+
+    p {
+      color: #c8c2c4;
+    }
+
+    .filter-panel {
+      margin: 20px 0 26px;
+      padding: 26px;
+      border: 1px solid #2f2f32;
+      border-radius: 8px;
+      background: #151516;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+    }
+
+    .filter-panel h2 {
+      margin: 0 0 18px;
+      font-size: clamp(2rem, 5vw, 3rem);
+    }
+
+    .filter-section-title {
+      margin: 22px 0 10px;
+      color: #c8c2c4;
+      font-size: 0.92rem;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .chip-grid,
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 48px;
+      padding: 8px 15px;
+      border: 2px solid var(--chip-color, #777);
+      border-radius: 8px;
+      background: transparent;
+      color: #f3f3f4;
+      font-size: 1rem;
+      font-weight: 750;
+      text-decoration: none;
+    }
+
+    .filter-chip.active {
+      background: color-mix(in srgb, var(--chip-color, #777) 22%, transparent);
+    }
+
+    .chip-icon {
+      display: inline-grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: var(--chip-color, #777);
+      color: #101011;
+      font-size: 0.82rem;
+      font-weight: 900;
+    }
+
+    .advanced-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .advanced-grid label {
+      color: #d9d6d7;
+    }
+
+    .advanced-grid input,
+    .advanced-grid select {
+      border-color: #4a4245;
+      background: #202023;
+      color: #f3f3f4;
+    }
+
+    .show-places {
+      margin-top: 22px;
+      min-width: 260px;
+      min-height: 56px;
+      border-color: #cfcfcf;
+      border-radius: 999px;
+      background: #d4d4d5;
+      color: #222326;
+      font-size: 1.15rem;
+    }
+
+    .reset-link {
+      display: inline-flex;
+      margin-top: 18px;
+      color: #f3f3f4;
+      font-size: 1.1rem;
+      font-weight: 750;
+    }
+
+    .empty-subcategories {
+      color: #aaa5a7;
+    }
+
+    .venue-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .venue-card {
+      overflow: hidden;
+      border: 1px solid #343437;
+      border-radius: 8px;
+      background: #151516;
+    }
+
+    .venue-image {
+      display: grid;
+      place-items: center;
+      aspect-ratio: 16 / 10;
+      background: #242427;
+      color: #aaa5a7;
+      font-weight: 750;
+    }
+
+    .venue-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .venue-body {
+      padding: 14px;
+    }
+
+    .flag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .flag {
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: #3b201b;
+      color: #ffb19e;
+      font-size: 0.78rem;
+      font-weight: 750;
+    }
+
+    .badge {
+      background: #202023;
+      color: #d7d2d3;
+    }
+
+    .badge.success {
+      background: #3fa2ff;
+      color: #07121b;
+    }
+
+    .venue-card a {
+      color: #f3f3f4;
+    }
+
+    @media (max-width: 980px) {
+      .advanced-grid,
+      .venue-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <p class="notice">Music Roadtrip Preview Sandbox</p>
+  <h1>Venue Profile Preview</h1>
+  <p>Venue profiles are POI-style containers. Nested records remain events.</p>
+
+  <section class="filter-panel" data-testid="venue-filter-drawer">
+    <h2>Filters</h2>
+    <div class="filter-section-title">Categories</div>
+    <div class="chip-grid" aria-label="Venue categories">
+      {% for option in venue_categories %}
+        <a
+          class="filter-chip {{ 'active' if filters.category == option.name else '' }}"
+          href="/preview/venues?category={{ option.name | urlencode }}"
+          style="--chip-color: {{ option.color }}"
+        >
+          <span class="chip-icon">{{ option.icon }}</span>
+          {{ option.name }}
+        </a>
+      {% endfor %}
+    </div>
+
+    {% if selected_category %}
+      <div class="filter-section-title">{{ selected_category.name }}</div>
+      {% if selected_category.subcategories %}
+        <div class="chip-row" aria-label="{{ selected_category.name }} subcategories">
+          {% for subcategory in selected_category.subcategories %}
+            <a
+              class="filter-chip {{ 'active' if filters.subcategory == subcategory else '' }}"
+              href="/preview/venues?category={{ selected_category.name | urlencode }}&subcategory={{ subcategory | urlencode }}"
+              style="--chip-color: {{ selected_category.color }}"
+            >
+              {{ subcategory }}
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-subcategories">No subcategories yet.</p>
+      {% endif %}
+    {% endif %}
+
+    <form method="get" action="/preview/venues">
+      <input type="hidden" name="category" value="{{ filters.category }}">
+      <input type="hidden" name="subcategory" value="{{ filters.subcategory }}">
+      <div class="filter-section-title">Advanced filtering</div>
+      <div class="advanced-grid">
+        <div class="field">
+          <label for="carousel_tag">Carousel tag</label>
+          <input id="carousel_tag" name="carousel_tag" value="{{ filters.carousel_tag }}" placeholder="Best Vinyl Bars">
+        </div>
+        <div class="field">
+          <label for="city">City</label>
+          <input id="city" name="city" value="{{ filters.city }}">
+        </div>
+        <div class="field">
+          <label for="state">State</label>
+          <input id="state" name="state" value="{{ filters.state }}">
+        </div>
+        <div class="field">
+          <label for="quality_issue">Quality issue</label>
+          <select id="quality_issue" name="quality_issue">
+            <option value="">Any issue</option>
+            {% for issue in quality_issues %}
+              <option value="{{ issue }}" {{ "selected" if filters.quality_issue == issue else "" }}>{{ issue }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <label class="filter-chip" style="--chip-color: #f5c84c; margin-top: 12px;">
+        <input type="checkbox" name="certified" value="1" {{ "checked" if filters.certified else "" }} style="width: 18px; min-height: 18px;">
+        Certified
+      </label>
+      <div>
+        <button class="show-places" type="submit">
+          Show {{ place_count }} place{{ "" if place_count == 1 else "s" }}
+        </button>
+      </div>
+      <a class="reset-link" href="/preview/venues">Reset filters</a>
+    </form>
+  </section>
+
+  {% if rows %}
+    <section class="venue-grid">
+      {% for row in rows %}
+        {% set venue_display_image_url = row.venue.selected_main_image_url or row.venue.main_image_url %}
+        <article class="venue-card">
+          <a class="venue-image" href="/preview/venues/{{ row.venue.id }}">
+            {% if previewable_image_url(venue_display_image_url) %}
+              <img alt="" src="{{ previewable_image_url(venue_display_image_url) }}">
+            {% else %}
+              Venue Image QA
+            {% endif %}
+          </a>
+          <div class="venue-body">
+            <span class="badge success">{{ row.venue.category }}</span>
+            <span class="badge">{{ row.venue.subcategory }}</span>
+            <h2><a href="/preview/venues/{{ row.venue.id }}">{{ row.venue.display_name }}</a></h2>
+            <p>{{ row.venue.address or "Missing address" }}</p>
+            <p>{{ row.venue.city or "" }} {{ row.venue.state or "" }}</p>
+            <p>{{ row.event_count }} upcoming event{{ "" if row.event_count == 1 else "s" }}</p>
+            {% if row.next_event %}
+              <p>Next: {{ row.next_event.start_datetime.strftime("%b %-d, %Y") }}</p>
+            {% endif %}
+            <div class="flag-row">
+              {% for badge in row.image_badges %}
+                <span class="flag">{{ badge }}</span>
+              {% endfor %}
+              {% for flag in row.quality_flags %}
+                <span class="flag">{{ flag }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </section>
+  {% else %}
+    <p class="notice">No venue profiles exist yet.</p>
+  {% endif %}
+{% endblock %}

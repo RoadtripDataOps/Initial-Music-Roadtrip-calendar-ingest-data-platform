@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .report-card {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+    }
+
+    .report-card strong {
+      display: block;
+      color: var(--admin-primary-dark);
+      font-size: 1.65rem;
+      line-height: 1.1;
+    }
+  </style>
+
+  <h1>{{ region.name }} Partner Report</h1>
+  <p class="notice">Destination reporting for source coverage, event/POI readiness, quality issues, and recommended next actions.</p>
+
+  <section class="actions">
+    <a class="button secondary" href="/admin/regions/{{ region.id }}">Back to region</a>
+    <form method="post" action="/admin/regions/{{ region.id }}/report/generate">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Generate Report</button>
+    </form>
+    <form method="post" action="/admin/regions/{{ region.id }}/report/queue">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Queue Report Job</button>
+    </form>
+    {% if latest_report %}
+      <a class="button" href="/admin/partner-reports/{{ latest_report.id }}/report.json">Download JSON</a>
+      <a class="button secondary" href="/admin/partner-reports/{{ latest_report.id }}/report.csv">Download CSV</a>
+    {% endif %}
+  </section>
+
+  {% if latest_report %}
+    <section class="report-grid" aria-label="Region report summary">
+      <article class="report-card"><strong>{{ latest_report.metrics.event_count or 0 }}</strong>Events</article>
+      <article class="report-card"><strong>{{ latest_report.metrics.app_feed_ready_events or 0 }}</strong>App-ready events</article>
+      <article class="report-card"><strong>{{ latest_report.metrics.poi_count or 0 }}</strong>POIs</article>
+      <article class="report-card"><strong>{{ latest_report.metrics.app_feed_ready_pois or 0 }}</strong>App-ready POIs</article>
+      <article class="report-card"><strong>{{ latest_report.metrics.approved_calendar_sources or 0 }}</strong>Approved sources</article>
+      <article class="report-card"><strong>{{ latest_report.metrics.pending_calendar_sources or 0 }}</strong>Pending sources</article>
+      <article class="report-card"><strong>{{ latest_report.metrics.image_issues or 0 }}</strong>Image issues</article>
+      <article class="report-card"><strong>{{ latest_report.metrics.ticket_link_issues or 0 }}</strong>Ticket issues</article>
+      <article class="report-card"><strong>{{ latest_report.metrics.extraction_failures or 0 }}</strong>Extraction failures</article>
+      <article class="report-card"><strong>{{ latest_report.metrics.duplicate_candidates_avoided or 0 }}</strong>Duplicate candidates</article>
+      <article class="report-card"><strong>{{ latest_report.metrics.region_quality_score or 0 }}</strong>Trust score</article>
+      <article class="report-card"><strong>{{ latest_report.metrics.region_quality_grade or "unknown" }}</strong>Trust grade</article>
+    </section>
+
+    <section class="panel">
+      <h2>Recommended Next Actions</h2>
+      <ul>
+        {% for recommendation in latest_report.recommendations %}
+          <li>{{ recommendation }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% else %}
+    <section class="empty-state" style="margin-top: 20px;">
+      <h2>No report yet</h2>
+      <p>Generate a report to capture the current regional readiness snapshot.</p>
+    </section>
+  {% endif %}
+
+  {% if region_score %}
+    <section class="panel" style="margin-top: 20px;">
+      <h2>Region Source Trust</h2>
+      <table>
+        <tbody>
+          <tr><th>Score</th><td>{{ "%.1f"|format(region_score.score) }}</td></tr>
+          <tr><th>Grade</th><td><span class="badge">{{ region_score.score_grade }}</span></td></tr>
+          <tr><th>App-feed ready</th><td>{{ region_score.app_feed_ready_count }}</td></tr>
+          <tr><th>Missing tickets</th><td>{{ region_score.missing_ticket_count }}</td></tr>
+          <tr><th>Missing images</th><td>{{ region_score.missing_image_count }}</td></tr>
+        </tbody>
+      </table>
+    </section>
+  {% endif %}
+
+  {% if source_scores %}
+    <section style="margin-top: 20px;">
+      <h2>Source Trust Table</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Score</th>
+            <th>Grade</th>
+            <th>Events</th>
+            <th>Tickets</th>
+            <th>Images</th>
+            <th>Recommendation</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for score in source_scores %}
+            <tr>
+              <td data-label="Source"><a href="/admin/source-quality/{{ score.id }}">{{ score.display_name }}</a></td>
+              <td data-label="Score">{{ "%.1f"|format(score.score) }}</td>
+              <td data-label="Grade"><span class="badge">{{ score.score_grade }}</span></td>
+              <td data-label="Events">{{ score.event_count }}</td>
+              <td data-label="Tickets">{{ score.missing_ticket_count + score.bad_ticket_count }}</td>
+              <td data-label="Images">{{ score.missing_image_count + score.generic_image_blocked_count }}</td>
+              <td data-label="Recommendation">{{ score.recommendations[0] if score.recommendations else "Monitor." }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% endif %}
+{% endblock %}

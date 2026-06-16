@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .itinerary-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .compact-form {
+      display: inline-flex;
+      align-items: end;
+      gap: 8px;
+      max-width: none;
+    }
+
+    .compact-form label {
+      min-width: 220px;
+    }
+  </style>
+
+  <p class="notice">Deferred / App team feature. Scott's current workflow is calendar ingest, API sandbox review, normalized events, event photos, ticket QA, and POI audit.</p>
+  <h1>Deferred Itineraries</h1>
+  <p>This compatibility page keeps existing itinerary records stable, but route builders, saved trips, road trips, and consumer navigation belong to the app team.</p>
+
+  <section class="itinerary-actions" aria-label="Itinerary actions">
+    <a class="button secondary" href="/admin/itineraries/new">Maintain Deferred Record</a>
+    <a class="button secondary" href="/admin/app-feed/itineraries.json">Itineraries JSON</a>
+    <a class="button secondary" href="/preview/itineraries">Deferred Preview</a>
+  </section>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Stops</th>
+        <th>Quality</th>
+        <th>Region / Artist</th>
+        <th>Links</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for itinerary in itineraries %}
+        <tr>
+          <td data-label="Title">
+            <strong>{{ itinerary.title }}</strong>
+            <div class="muted">{{ itinerary.subtitle or "" }}</div>
+          </td>
+          <td data-label="Type">{{ itinerary.display_label }} · {{ itinerary.itinerary_type.replace("_", " ").title() }}</td>
+          <td data-label="Status">
+            <span class="badge {{ 'success' if itinerary.app_feed_ready else 'warning' }}">{{ itinerary.status.replace("_", " ").title() }}</span>
+          </td>
+          <td data-label="Stops">{{ itinerary.stops|length }}</td>
+          <td data-label="Quality">
+            {{ itinerary.quality_score or 0 }}
+            {% for flag in itinerary.quality_flags[:3] %}
+              <span class="badge warning">{{ flag.replace("_", " ") }}</span>
+            {% endfor %}
+          </td>
+          <td data-label="Region / Artist">
+            {{ itinerary.region.name if itinerary.region else "No region" }}
+            {% if itinerary.artist %}<br>{{ itinerary.artist.display_name }}{% endif %}
+          </td>
+          <td data-label="Links">
+            <a href="/admin/itineraries/{{ itinerary.id }}">Open</a><br>
+            <a href="/admin/itineraries/{{ itinerary.id }}/preview">Preview</a><br>
+            <a href="/admin/itineraries/{{ itinerary.id }}/app-feed.json">JSON</a>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="7">No itineraries yet. Create a manual draft or generate a draft suggestion from a region or artist.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

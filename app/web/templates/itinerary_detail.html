@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .itinerary-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .stop-list {
+      display: grid;
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .stop-card {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr);
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+      padding: 14px;
+    }
+
+    .stop-number {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      background: rgba(159, 123, 255, 0.2);
+      color: #d8caff;
+      font-weight: 900;
+    }
+
+    .stop-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .stop-controls form {
+      display: inline-flex;
+      max-width: none;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    @media (max-width: 980px) {
+      .itinerary-grid,
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <div class="actions">
+    <a class="button secondary" href="/admin/itineraries">All Itineraries</a>
+    <a class="button secondary" href="/admin/itineraries/{{ itinerary.id }}/preview">Preview</a>
+    <a class="button secondary" href="/admin/itineraries/{{ itinerary.id }}/app-feed.json">App Feed JSON</a>
+    <a class="button secondary" href="/preview/itineraries/{{ itinerary.id }}">Preview Sandbox</a>
+  </div>
+
+  <p class="notice">Deferred / App team feature. Keep this record stable, but do not expand itinerary, route-builder, saved-trip, or consumer-navigation workflows in this repository.</p>
+  <h1>{{ itinerary.title }}</h1>
+  <p>{{ itinerary.subtitle or "Itinerary contract draft" }}</p>
+
+  <section class="itinerary-grid">
+    <div>
+      <div class="card">
+        <h2>Overview</h2>
+        <div class="actions">
+          <span class="badge info">{{ itinerary.display_label }}</span>
+          <span class="badge">{{ itinerary.itinerary_type.replace("_", " ").title() }}</span>
+          <span class="badge {{ 'success' if itinerary.app_feed_ready else 'warning' }}">{{ itinerary.status.replace("_", " ").title() }}</span>
+          <span class="badge {{ 'success' if itinerary.quality_score and itinerary.quality_score >= 70 else 'warning' }}">Quality {{ itinerary.quality_score or 0 }}</span>
+        </div>
+        <p>{{ itinerary.description or "No description yet." }}</p>
+        <dl>
+          <dt>Region</dt>
+          <dd>{{ itinerary.region.name if itinerary.region else "Unassigned" }}</dd>
+          <dt>Artist</dt>
+          <dd>{{ itinerary.artist.display_name if itinerary.artist else "Unassigned" }}</dd>
+          <dt>Theme</dt>
+          <dd>{{ itinerary.music_theme or "None" }}</dd>
+        </dl>
+        {% if itinerary.quality_flags %}
+          <div class="actions">
+            {% for flag in itinerary.quality_flags %}
+              <span class="badge warning">{{ flag.replace("_", " ") }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <section class="stop-list" aria-label="Itinerary stops">
+        {% for stop in itinerary.stops %}
+          <article class="stop-card">
+            <div class="stop-number">{{ stop.stop_order }}</div>
+            <div>
+              <strong>{{ stop.title }}</strong>
+              <div class="muted">{{ stop.stop_type.replace("_", " ").title() }} · {{ stop.subtitle or "Stop" }}</div>
+              <p>{{ stop.description or "" }}</p>
+              <div class="result-meta">
+                {% if stop.city or stop.state %}
+                  <span class="badge info">{{ stop.city }}{% if stop.state %}, {{ stop.state }}{% endif %}</span>
+                {% endif %}
+                {% if stop.ticket_url %}<span class="badge success">Ticket Link</span>{% endif %}
+                {% if stop.image_url %}<span class="badge success">Image</span>{% else %}<span class="badge warning">Missing Image</span>{% endif %}
+              </div>
+              <div class="stop-controls">
+                <form method="post" action="/admin/itineraries/{{ itinerary.id }}/stops/{{ stop.id }}/move">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <input type="hidden" name="direction" value="up">
+                  <button class="button secondary" type="submit">Move Up</button>
+                </form>
+                <form method="post" action="/admin/itineraries/{{ itinerary.id }}/stops/{{ stop.id }}/move">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <input type="hidden" name="direction" value="down">
+                  <button class="button secondary" type="submit">Move Down</button>
+                </form>
+                <form method="post" action="/admin/itineraries/{{ itinerary.id }}/stops/{{ stop.id }}/remove">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <button class="button secondary" type="submit">Remove</button>
+                </form>
+                {% if stop.app_url %}<a class="button secondary" href="{{ stop.app_url }}">App URL</a>{% endif %}
+              </div>
+            </div>
+          </article>
+        {% else %}
+          <div class="empty-state">No stops yet. Add at least two stops before approving for app feed.</div>
+        {% endfor %}
+      </section>
+    </div>
+
+    <aside class="card">
+      <h2>Edit Itinerary</h2>
+      <form method="post" action="/admin/itineraries/{{ itinerary.id }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="field">
+          <label for="title">Title</label>
+          <input id="title" name="title" value="{{ itinerary.title }}" required>
+        </div>
+        <div class="field">
+          <label for="status">Status</label>
+          <select id="status" name="status">
+            {% for value in ["draft", "review", "approved", "published", "archived"] %}
+              <option value="{{ value }}" {% if itinerary.status == value %}selected{% endif %}>{{ value.replace("_", " ").title() }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="itinerary_type">Type</label>
+          <select id="itinerary_type" name="itinerary_type">
+            {% for value in ["road_trip", "city_tour", "artist_tour", "festival_weekend", "venue_hop", "record_store_crawl", "certified_region", "custom"] %}
+              <option value="{{ value }}" {% if itinerary.itinerary_type == value %}selected{% endif %}>{{ value.replace("_", " ").title() }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="display_label">Display Label</label>
+          <select id="display_label" name="display_label">
+            {% for value in ["Road Trip", "Tour", "Setlist", "Route"] %}
+              <option value="{{ value }}" {% if itinerary.display_label == value %}selected{% endif %}>{{ value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="region_id">Region</label>
+          <select id="region_id" name="region_id">
+            <option value="">None</option>
+            {% for region in references.regions %}
+              <option value="{{ region.id }}" {% if itinerary.region_id == region.id %}selected{% endif %}>{{ region.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="artist_id">Artist</label>
+          <select id="artist_id" name="artist_id">
+            <option value="">None</option>
+            {% for artist in references.artists %}
+              <option value="{{ artist.id }}" {% if itinerary.artist_id == artist.id %}selected{% endif %}>{{ artist.display_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="hero_image_url">Hero Image URL</label>
+          <input id="hero_image_url" name="hero_image_url" value="{{ itinerary.hero_image_url or '' }}">
+        </div>
+        <div class="field">
+          <label for="description">Description</label>
+          <textarea id="description" name="description">{{ itinerary.description or "" }}</textarea>
+        </div>
+        <button type="submit">Save</button>
+      </form>
+
+      <form method="post" action="/admin/itineraries/{{ itinerary.id }}/quality">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Refresh Quality</button>
+      </form>
+    </aside>
+  </section>
+
+  <section class="card">
+    <h2>Add Stop</h2>
+    <form method="post" action="/admin/itineraries/{{ itinerary.id }}/stops">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="two-col">
+        <div class="field">
+          <label for="stop_type">Stop Type</label>
+          <select id="stop_type" name="stop_type">
+            {% for value in ["event", "poi", "venue", "region", "artist_context", "note", "custom"] %}
+              <option value="{{ value }}">{{ value.replace("_", " ").title() }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="event_id">Event</label>
+          <select id="event_id" name="event_id">
+            <option value="">None</option>
+            {% for event in references.events %}
+              <option value="{{ event.id }}">{{ event.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="poi_location_id">POI</label>
+          <select id="poi_location_id" name="poi_location_id">
+            <option value="">None</option>
+            {% for poi in references.pois %}
+              <option value="{{ poi.id }}">{{ poi.display_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="event_venue_id">Venue</label>
+          <select id="event_venue_id" name="event_venue_id">
+            <option value="">None</option>
+            {% for venue in references.venues %}
+              <option value="{{ venue.id }}">{{ venue.display_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <details class="filter-drawer">
+        <summary>Custom stop details</summary>
+        <div class="two-col">
+          <div class="field"><label>Title <input name="title"></label></div>
+          <div class="field"><label>Subtitle <input name="subtitle"></label></div>
+          <div class="field"><label>Address <input name="address"></label></div>
+          <div class="field"><label>City <input name="city"></label></div>
+          <div class="field"><label>State <input name="state"></label></div>
+          <div class="field"><label>Country <input name="country"></label></div>
+          <div class="field"><label>Latitude <input name="latitude"></label></div>
+          <div class="field"><label>Longitude <input name="longitude"></label></div>
+          <div class="field"><label>Ticket URL <input name="ticket_url"></label></div>
+          <div class="field"><label>Website URL <input name="website_url"></label></div>
+          <div class="field"><label>Image URL <input name="image_url"></label></div>
+          <div class="field"><label>Duration <input name="stop_duration_text"></label></div>
+        </div>
+        <div class="field"><label>Description <textarea name="description"></textarea></label></div>
+      </details>
+      <button type="submit">Add Stop</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>App Feed Preview</h2>
+    <pre>{{ feed_json }}</pre>
+  </section>
+{% endblock %}

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>JSON-LD Music Event Fixture</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "MusicEvent",
+        "@id": "fixture-jsonld-001",
+        "name": "JSON-LD Fixture Band at River Hall",
+        "startDate": "2026-09-12T20:00:00-05:00",
+        "endDate": "2026-09-12T22:30:00-05:00",
+        "eventStatus": "https://schema.org/EventScheduled",
+        "description": "A local fixture concert for extraction tests.",
+        "url": "https://venue.example/events/jsonld-fixture-band",
+        "image": [
+          "https://images.example/jsonld-fixture-band.jpg"
+        ],
+        "location": {
+          "@type": "Place",
+          "name": "River Hall",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "1 Music Way",
+            "addressLocality": "Memphis",
+            "addressRegion": "TN",
+            "postalCode": "38103",
+            "addressCountry": "US"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 35.1495,
+            "longitude": -90.049
+          }
+        },
+        "offers": {
+          "@type": "Offer",
+          "url": "https://tickets.example/jsonld-fixture-band",
+          "price": "25",
+          "priceCurrency": "USD"
+        },
+        "performer": [
+          {"@type": "MusicGroup", "name": "JSON-LD Fixture Band"},
+          {"@type": "MusicGroup", "name": "The Test Openers"}
+        ],
+        "organizer": {
+          "@type": "Organization",
+          "name": "Fixture Presents",
+          "url": "https://venue.example"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <h1>JSON-LD Fixture Band</h1>
+  </body>
+</html>

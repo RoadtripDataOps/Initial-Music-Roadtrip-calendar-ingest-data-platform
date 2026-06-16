@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Import Batches</h1>
+
+  {% if batches %}
+    <table>
+      <thead>
+        <tr>
+          <th>Batch</th>
+          <th>Submission Type</th>
+          <th>Organization</th>
+          <th>Contact</th>
+          <th>Filename</th>
+          <th>Status</th>
+          <th>Review</th>
+          <th>Risk</th>
+          <th>Rows</th>
+          <th>Submitted</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for batch in batches %}
+          <tr>
+            <td data-label="Batch"><a href="/admin/import-batches/{{ batch.id }}">#{{ batch.id }}</a></td>
+            <td data-label="Submission Type">{{ batch.submission_type | replace("_", " ") | title }}</td>
+            <td data-label="Organization">{{ batch.organization_name or "n/a" }}</td>
+            <td data-label="Contact">{{ batch.contact_email or "n/a" }}</td>
+            <td data-label="Filename">{{ batch.original_filename or "n/a" }}</td>
+            <td data-label="Status">{{ batch.status | replace("_", " ") | title }}</td>
+            <td data-label="Review">{{ batch.review_status | replace("_", " ") | title }}</td>
+            <td data-label="Risk"><span class="badge {{ batch.risk_level }}">{{ batch.risk_level }}</span></td>
+            <td data-label="Rows">
+              {{ batch.valid_row_count }} valid,
+              {{ batch.invalid_row_count }} invalid,
+              {{ batch.duplicate_row_count }} duplicate
+            </td>
+            <td data-label="Submitted">{{ batch.submitted_at.strftime("%Y-%m-%d %H:%M") if batch.submitted_at else "n/a" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <section class="empty-state">
+      <h2>No import batches yet</h2>
+      <p>
+        This page reviews staged event files and calendar-source file
+        uploads. It is empty until a public upload is submitted.
+      </p>
+      <a class="button" href="/submit-events">Open event intake</a>
+      <a class="button secondary" href="/submit-calendar">Open calendar intake</a>
+    </section>
+  {% endif %}
+{% endblock %}

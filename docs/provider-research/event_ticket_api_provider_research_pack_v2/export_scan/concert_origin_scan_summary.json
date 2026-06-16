@@ -1,0 +1,2633 @@
+{
+  "total_rows": 166743,
+  "concert_rows": 141168,
+  "category_counts": [
+    [
+      "Concert",
+      141168
+    ],
+    [
+      "Music Site",
+      8922
+    ],
+    [
+      "Cultural",
+      5602
+    ],
+    [
+      "Shopping",
+      5292
+    ],
+    [
+      "Bars & Lounges",
+      4275
+    ],
+    [
+      "Visitor & Travel",
+      880
+    ],
+    [
+      "Food & Bev",
+      604
+    ]
+  ],
+  "explicit_ingestion_provider_counts": [
+    [
+      "CitySpark",
+      84163
+    ],
+    [
+      "Jambase",
+      56876
+    ],
+    [
+      "<blank>",
+      129
+    ]
+  ],
+  "nonblank_field_counts": [
+    [
+      "Tickets link (en)",
+      98628
+    ],
+    [
+      "Website (en)",
+      78089
+    ],
+    [
+      "Music category",
+      65867
+    ],
+    [
+      "Spotify URL (en)",
+      17564
+    ]
+  ],
+  "top_domains": [
+    [
+      "ticketmaster.evyy.net",
+      47511,
+      {
+        "Tickets link (en)": 37144,
+        "Website (en)": 10367
+      },
+      [
+        {
+          "domain": "ticketmaster.evyy.net",
+          "field": "Tickets link (en)",
+          "url": "http://ticketmaster.evyy.net/c/253158/264167/4272?u=https%3a%2f%2fticketmaster.evyy.net%2fc%2f258147%2f271177%2f4272%3fu%3dhttps%253A%252F%252Fwww.ticketmaster.com%252Fevent%252FZ7r9jZ1A7r6f8%26utm_medium%3daffiliate",
+          "name": "Kenny Wayne Shepherd",
+          "data_source": "CitySpark",
+          "music_category": "R&B and Soul"
+        },
+        {
+          "domain": "ticketmaster.evyy.net",
+          "field": "Tickets link (en)",
+          "url": "http://ticketmaster.evyy.net/c/253158/264167/4272?u=https%3a%2f%2fticketmaster.evyy.net%2fc%2f258147%2f271177%2f4272%3fu%3dhttps%253A%252F%252Fwww.ticketmaster.com%252Fevent%252FZ7r9jZ1A7_JQo%26utm_medium%3daffiliate",
+          "name": "Misery - Play",
+          "data_source": "CitySpark",
+          "music_category": "Rock"
+        }
+      ]
+    ],
+    [
+      "bandsintown.com",
+      27998,
+      {
+        "Tickets link (en)": 10494,
+        "Website (en)": 17504
+      },
+      [
+        {
+          "domain": "bandsintown.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.bandsintown.com/t/107594596?app_id=pkvts0on0m&came_from=287&direct=true",
+          "name": "Patrick Lamb",
+          "data_source": "CitySpark",
+          "music_category": "R&B and Soul!Jazz"
+        },
+        {
+          "domain": "bandsintown.com",
+          "field": "Website (en)",
+          "url": "https://www.bandsintown.com/e/107594596?app_id=pkvts0on0m&came_from=287&direct=true",
+          "name": "Patrick Lamb",
+          "data_source": "CitySpark",
+          "music_category": "R&B and Soul!Jazz"
+        }
+      ]
+    ],
+    [
+      "open.spotify.com",
+      17662,
+      {
+        "Spotify URL (en)": 17564,
+        "Website (en)": 98
+      },
+      [
+        {
+          "domain": "open.spotify.com",
+          "field": "Spotify URL (en)",
+          "url": "https://open.spotify.com/artist/1bwsprbGyKx2vBbPAwVebl",
+          "name": "Noche de Banda",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "open.spotify.com",
+          "field": "Spotify URL (en)",
+          "url": "https://open.spotify.com/artist/0CDUUM6KNRvgBFYIbWxJwV",
+          "name": "Dawes",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "facebook.com",
+      17062,
+      {
+        "Website (en)": 17013,
+        "Tickets link (en)": 49
+      },
+      [
+        {
+          "domain": "facebook.com",
+          "field": "Website (en)",
+          "url": "https://www.facebook.com/groups/451924138259850",
+          "name": "Wednesday Night Open Mic",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "facebook.com",
+          "field": "Website (en)",
+          "url": "https://www.facebook.com/events/1569639934201147/",
+          "name": "Monday Pro Jam with Willy Jordan",
+          "data_source": "CitySpark",
+          "music_category": "R&B and Soul"
+        }
+      ]
+    ],
+    [
+      "eventbrite.com",
+      10354,
+      {
+        "Tickets link (en)": 6313,
+        "Website (en)": 4041
+      },
+      [
+        {
+          "domain": "eventbrite.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.eventbrite.com/e/rumba-sundays-party-at-h-lounge-in-vallejo-every-sunday-tickets-1974535764625",
+          "name": "Rumba Sundays Party at H Lounge in Vallejo, Every Sunday!",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "eventbrite.com",
+          "field": "Website (en)",
+          "url": "https://www.eventbrite.com/e/rumba-sundays-party-at-h-lounge-in-vallejo-every-sunday-tickets-1974535764625",
+          "name": "Rumba Sundays Party at H Lounge in Vallejo, Every Sunday!",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "eventim.de",
+      5614,
+      {
+        "Tickets link (en)": 5614
+      },
+      [
+        {
+          "domain": "eventim.de",
+          "field": "Tickets link (en)",
+          "url": "https://www.eventim.de/noapp/event/21466957/?affiliate=JAB&utm_medium=dp&utm_campaign=jambase&utm_source=jambase",
+          "name": "Virgil Donati at Club Zentral",
+          "data_source": "Jambase",
+          "music_category": ""
+        },
+        {
+          "domain": "eventim.de",
+          "field": "Tickets link (en)",
+          "url": "https://www.eventim.de/noapp/event/iron-maiden-run-for-your-lives-world-tour-2026-heinz-von-heiden-arena-20650060/?affiliate=IFY&utm_source=IFY&utm_medium=dp&utm_campaign=spotify",
+          "name": "Iron Maiden at Heinz von Heiden-Arena",
+          "data_source": "Jambase",
+          "music_category": "Rock"
+        }
+      ]
+    ],
+    [
+      "link.dice.fm",
+      5595,
+      {
+        "Website (en)": 7,
+        "Tickets link (en)": 5588
+      },
+      [
+        {
+          "domain": "link.dice.fm",
+          "field": "Website (en)",
+          "url": "https://link.dice.fm/M2/SANTELISES",
+          "name": "Intriga presents Simon Vuarambon @M2 Miami",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "link.dice.fm",
+          "field": "Tickets link (en)",
+          "url": "https://link.dice.fm/N6dcefa864e8?utm_source=jambase",
+          "name": "MC Chris at recordBar",
+          "data_source": "Jambase",
+          "music_category": "Hip Hop & Rap"
+        }
+      ]
+    ],
+    [
+      "axs.com",
+      4706,
+      {
+        "Tickets link (en)": 4703,
+        "Website (en)": 3
+      },
+      [
+        {
+          "domain": "axs.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.axs.com/events/1212334/benjamin-tod-and-the-inline-six-2026-tour-tickets?cid=afffboea",
+          "name": "the Inline Six 2026 Tour with Leon Majcen",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "axs.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.axs.com/events/1259261/thornhill-tickets?skin=showboxpresents&src=AEGLIVE_WSHBXSEA030115VEN001",
+          "name": "Thornhill w/ 156 Silence",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "prod-nts-api.seeticketsusa.us",
+      3126,
+      {
+        "Tickets link (en)": 3126
+      },
+      [
+        {
+          "domain": "prod-nts-api.seeticketsusa.us",
+          "field": "Tickets link (en)",
+          "url": "https://prod-nts-api.seeticketsusa.us/v1.0.0/promote/b8052a76-c920-45f5-b91b-111dfe56a6b3/clickthru",
+          "name": "Amelia Day",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "prod-nts-api.seeticketsusa.us",
+          "field": "Tickets link (en)",
+          "url": "https://prod-nts-api.seeticketsusa.us/v1.0.0/promote/9bfbe277-fd25-44a0-992f-e6cd7e0a9548/clickthru",
+          "name": "KBong & Johnny Cosmic",
+          "data_source": "CitySpark",
+          "music_category": "Rock"
+        }
+      ]
+    ],
+    [
+      "etix.prf.hn",
+      2185,
+      {
+        "Tickets link (en)": 2185
+      },
+      [
+        {
+          "domain": "etix.prf.hn",
+          "field": "Tickets link (en)",
+          "url": "https://etix.prf.hn/click/camref:1101lGKCg/destination:https://www.etix.com/ticket/p/90960458/charley-crockett-goshen-elkhart-county-4h-fairgrounds",
+          "name": "Charley Crockett at the Elkhart County 4-H Fair",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "etix.prf.hn",
+          "field": "Tickets link (en)",
+          "url": "https://etix.prf.hn/click/camref:1101lGKCg/destination:https://www.etix.com/ticket/p/42098008/here-come-the-mummies-bowling-green-clazel-theater",
+          "name": "Here Come the Mummies LIVE at Cla-Zel Theater",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "tixr.com",
+      1975,
+      {
+        "Tickets link (en)": 1922,
+        "Website (en)": 53
+      },
+      [
+        {
+          "domain": "tixr.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.tixr.com/groups/greenriverfestival/events/green-river-festival-2026-146792",
+          "name": "2026 Green River Festival",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "tixr.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.tixr.com/groups/ampballantyne/events/claypool-gold-173134",
+          "name": "Claypool Gold Featuring Primus, Les Claypool's Frog Brigade",
+          "data_source": "CitySpark",
+          "music_category": "Rock!R&B and Soul!Concerts"
+        }
+      ]
+    ],
+    [
+      "eventvesta.com",
+      1728,
+      {
+        "Tickets link (en)": 901,
+        "Website (en)": 827
+      },
+      [
+        {
+          "domain": "eventvesta.com",
+          "field": "Tickets link (en)",
+          "url": "https://eventvesta.com/events/127421/t/tickets",
+          "name": "Resound Presents: Tigers Jaw w/ Pool Kids at Mohawk on 6/3",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "eventvesta.com",
+          "field": "Tickets link (en)",
+          "url": "https://eventvesta.com/events/129526/t/tickets",
+          "name": "Resound Presents: Vundabar w/ Goon at Mohawk on 6/4",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "etix.com",
+      1188,
+      {
+        "Tickets link (en)": 1118,
+        "Website (en)": 70
+      },
+      [
+        {
+          "domain": "etix.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.etix.com/ticket/p/82646444/fridayaug-292025-rodeo-ellensburg-ellensburg-rodeo-arena?country=US&language=en",
+          "name": "Rockin' The Chutes with Clay Walker & KC Johns",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "etix.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.etix.com/ticket/p/79201748/?_gl=1*1y6txv5*_ga*MTU5MjM1NTQ2NC4xNzQzNzk0NzU0*_ga_N8N825CX0V*czE3Njg1OTk1NTIkbzQyMSRnMSR0MTc2ODU5OTU2NiRqNDYkbDAkaDA.&_ga=2.189666856.2056298318.1768237880-1592355464.1743794754",
+          "name": "Jim Henson's Labyrinth: In Concert",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "awin1.com",
+      1099,
+      {
+        "Tickets link (en)": 1099
+      },
+      [
+        {
+          "domain": "awin1.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.awin1.com/pclick.php?p=43436121567&a=139685&m=7816",
+          "name": "SOFIA ISELLA at O2 Institute Birmingham",
+          "data_source": "Jambase",
+          "music_category": ""
+        },
+        {
+          "domain": "awin1.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.awin1.com/pclick.php?p=43156561003&a=139685&m=7816",
+          "name": "James Morrison at Cliffs Pavilion",
+          "data_source": "Jambase",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "app.opendate.io",
+      986,
+      {
+        "Tickets link (en)": 966,
+        "Website (en)": 20
+      },
+      [
+        {
+          "domain": "app.opendate.io",
+          "field": "Tickets link (en)",
+          "url": "https://app.opendate.io/e/the-timber-bridges-w-uncle-march-01-2026-668872",
+          "name": "The Timber Bridges w/ Uncle",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "app.opendate.io",
+          "field": "Tickets link (en)",
+          "url": "https://app.opendate.io/e/juvenile-august-08-2026-673255",
+          "name": "Juvenile at The Regency Live",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "events.outhousetickets.com",
+      773,
+      {
+        "Tickets link (en)": 427,
+        "Website (en)": 346
+      },
+      [
+        {
+          "domain": "events.outhousetickets.com",
+          "field": "Tickets link (en)",
+          "url": "https://events.outhousetickets.com/e/furnas-county-fair-concert-2026?aff=cityspark",
+          "name": "Logan Mize, Ned LeDoux, Dylan Bloom | Furnas County Fair 2026",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "events.outhousetickets.com",
+          "field": "Website (en)",
+          "url": "https://events.outhousetickets.com/e/furnas-county-fair-concert-2026?aff=cityspark",
+          "name": "Logan Mize, Ned LeDoux, Dylan Bloom | Furnas County Fair 2026",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "jambase.com",
+      742,
+      {
+        "Website (en)": 742
+      },
+      [
+        {
+          "domain": "jambase.com",
+          "field": "Website (en)",
+          "url": "https://www.jambase.com/show/air-supply-thomas-wolfe-auditorium-20260709",
+          "name": "Air Supply at Thomas Wolfe Auditorium",
+          "data_source": "Jambase",
+          "music_category": "Rock"
+        },
+        {
+          "domain": "jambase.com",
+          "field": "Website (en)",
+          "url": "https://www.jambase.com/festival/red-ants-pants-music-festival-2026",
+          "name": "Red Ants Pants Music Festival",
+          "data_source": "Jambase",
+          "music_category": "Country!Rock!Folk & Traditional"
+        }
+      ]
+    ],
+    [
+      "eventbrite.ca",
+      601,
+      {
+        "Tickets link (en)": 306,
+        "Website (en)": 295
+      },
+      [
+        {
+          "domain": "eventbrite.ca",
+          "field": "Tickets link (en)",
+          "url": "https://www.eventbrite.ca/e/crumbl-cookie-country-night-saturday-150-free-crumble-cookies-tickets-1981349026274",
+          "name": "Crumbl Cookie Country Night Saturday-150+ Free Crumble Cookies",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "eventbrite.ca",
+          "field": "Tickets link (en)",
+          "url": "https://www.eventbrite.ca/e/sonata-music-adventures-live-in-concert-tickets-1977459754357",
+          "name": "Sonata Music Adventures Live In Concert!",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "universe.com",
+      577,
+      {
+        "Tickets link (en)": 576,
+        "Website (en)": 1
+      },
+      [
+        {
+          "domain": "universe.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.universe.com/events/collect-a-con-new-jersey-2-tickets-CK5907",
+          "name": "Collect-A-Con New Jersey 2026",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "universe.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.universe.com/events/collect-a-con-san-antonio-tx-tickets-G89NQR",
+          "name": "Collect-A-Con San Antonio 2026",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "ticketnetwork.lusg.net",
+      561,
+      {
+        "Tickets link (en)": 29,
+        "Website (en)": 532
+      },
+      [
+        {
+          "domain": "ticketnetwork.lusg.net",
+          "field": "Tickets link (en)",
+          "url": "https://ticketnetwork.lusg.net/c/258147/132208/2322?prodsku=7260920&u=https%3A%2F%2Fwww.ticketnetwork.com%2Fen%2Fp%2F7260920&intsrc=CATF_896",
+          "name": "The Prefontaine Classic",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "ticketnetwork.lusg.net",
+          "field": "Tickets link (en)",
+          "url": "https://ticketnetwork.lusg.net/c/258147/132208/2322?prodsku=7200545&u=https%3A%2F%2Fwww.ticketnetwork.com%2Fen%2Fp%2F7200545&intsrc=CATF_896",
+          "name": "Eden Munoz",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "tickets.taogroup.com",
+      464,
+      {
+        "Tickets link (en)": 288,
+        "Website (en)": 176
+      },
+      [
+        {
+          "domain": "tickets.taogroup.com",
+          "field": "Tickets link (en)",
+          "url": "https://tickets.taogroup.com/e/hakkasan-nightclub-las-vegas-9-2-2026?aff=cityspark",
+          "name": "R&Bae Wednesdays w/ DJ Franzen",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "tickets.taogroup.com",
+          "field": "Website (en)",
+          "url": "https://tickets.taogroup.com/e/hakkasan-nightclub-las-vegas-9-2-2026?aff=cityspark",
+          "name": "R&Bae Wednesdays w/ DJ Franzen",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "tockify.com",
+      429,
+      {
+        "Website (en)": 427,
+        "Tickets link (en)": 2
+      },
+      [
+        {
+          "domain": "tockify.com",
+          "field": "Website (en)",
+          "url": "https://tockify.com/1885taproom/detail/173/1792621800000",
+          "name": "MUSIC BINGO AT 1885 TAPROOM EVERY WEDNESDAY NIGHT AT 6:30PM",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "tockify.com",
+          "field": "Website (en)",
+          "url": "https://tockify.com/smileysroxxlivemusic/detail/1284/1787968800000",
+          "name": "Chris Hunt & The Hearthrobs",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "skiddle.com",
+      358,
+      {
+        "Tickets link (en)": 358
+      },
+      [
+        {
+          "domain": "skiddle.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.skiddle.com/whats-on/united-states/Middle-East-Club/The-Tartan-Specials-plus-special-guests/42376305/?utm_source=jambase",
+          "name": "The Tartan Specials at The Middle East",
+          "data_source": "Jambase",
+          "music_category": ""
+        },
+        {
+          "domain": "skiddle.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.skiddle.com/whats-on/Manchester/Amber%27s/Ambers-Presents-LF-System-b2b-Loods/42359707/?utm_source=jambase",
+          "name": "LF System at Amber’s",
+          "data_source": "Jambase",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "tickets.venuepilot.com",
+      334,
+      {
+        "Tickets link (en)": 328,
+        "Website (en)": 6
+      },
+      [
+        {
+          "domain": "tickets.venuepilot.com",
+          "field": "Tickets link (en)",
+          "url": "https://tickets.venuepilot.com/e/christian-royce-ton-johnson-2026-07-16-cactus-club-milwaukee-635265",
+          "name": "Christian Royce • Ton Johnson",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "tickets.venuepilot.com",
+          "field": "Tickets link (en)",
+          "url": "https://tickets.venuepilot.com/e/party-dozen-2026-06-13-cactus-club-milwaukee-8f77e2",
+          "name": "Party Dozen",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "ticketmaster.com",
+      323,
+      {
+        "Website (en)": 28,
+        "Tickets link (en)": 295
+      },
+      [
+        {
+          "domain": "ticketmaster.com",
+          "field": "Website (en)",
+          "url": "https://www.ticketmaster.com/chris-stapletons-allamerican-road-show-george-washington-07-24-2026/event/0F006391D73D8066",
+          "name": "Chris Stapleton's All-American Road Show",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "ticketmaster.com",
+          "field": "Tickets link (en)",
+          "url": "http://Ticketmaster.com/",
+          "name": "When Doves Cry - The Ultimate Prince Experience live at Bally's Lake Tahoe!",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "ticketweb.com",
+      321,
+      {
+        "Tickets link (en)": 281,
+        "Website (en)": 40
+      },
+      [
+        {
+          "domain": "ticketweb.com",
+          "field": "Tickets link (en)",
+          "url": "http://Ticketweb.com/",
+          "name": "KRS-ONE live in RENO, NV!!",
+          "data_source": "CitySpark",
+          "music_category": "Hip Hop & Rap"
+        },
+        {
+          "domain": "ticketweb.com",
+          "field": "Tickets link (en)",
+          "url": "http://Ticketweb.com/",
+          "name": "KRS-ONE live in NEVADA CITY, CA!",
+          "data_source": "CitySpark",
+          "music_category": "Hip Hop & Rap"
+        }
+      ]
+    ],
+    [
+      "scfta.org",
+      300,
+      {
+        "Tickets link (en)": 264,
+        "Website (en)": 36
+      },
+      [
+        {
+          "domain": "scfta.org",
+          "field": "Tickets link (en)",
+          "url": "https://www.scfta.org/events/2026/south-side-symphony-anime-juke-jam",
+          "name": "South Side Symphony: Anime Juke Jam",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "scfta.org",
+          "field": "Website (en)",
+          "url": "https://www.scfta.org/events/2026/south-side-symphony-anime-juke-jam",
+          "name": "South Side Symphony: Anime Juke Jam",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "biletix.com",
+      290,
+      {
+        "Tickets link (en)": 290
+      },
+      [
+        {
+          "domain": "biletix.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.biletix.com/performance/5OSM8/001/TURKIYE/tr?utm_source=jambase",
+          "name": "Wegh at Mawish Beach & Disco",
+          "data_source": "Jambase",
+          "music_category": "Hip Hop & Rap"
+        },
+        {
+          "domain": "biletix.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.biletix.com/performance/5DRE8/001/TURKIYE/tr?utm_source=jambase",
+          "name": "Nurettin Rençber at Hayalmest Meyhane – Canlı Müzik",
+          "data_source": "Jambase",
+          "music_category": "Folk & Traditional"
+        }
+      ]
+    ],
+    [
+      "speakeasygo.com",
+      244,
+      {
+        "Tickets link (en)": 244
+      },
+      [
+        {
+          "domain": "speakeasygo.com",
+          "field": "Tickets link (en)",
+          "url": "https://speakeasygo.com/LIV%20Nightclub%20-%20Las%20Vegas/Matroda?eid=EVE-QYM0SH&utm_source=jambase",
+          "name": "Matroda at LIV Las Vegas",
+          "data_source": "Jambase",
+          "music_category": ""
+        },
+        {
+          "domain": "speakeasygo.com",
+          "field": "Tickets link (en)",
+          "url": "https://speakeasygo.com/Afterlife%20Entertainment/Taco%20&%20Margarita%20Fest?eid=EVE-E73DSD&utm_source=jambase",
+          "name": "Bobby Afterlife at BaseCamp Pub",
+          "data_source": "Jambase",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "dice.fm",
+      237,
+      {
+        "Tickets link (en)": 213,
+        "Website (en)": 24
+      },
+      [
+        {
+          "domain": "dice.fm",
+          "field": "Tickets link (en)",
+          "url": "https://dice.fm/event/bbx2bo-solya-30th-jun-shrine-social-club-boise-tickets?dice_source=ee15ecdb&eventref=fb_oea",
+          "name": "Solya + Tele Novella",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "dice.fm",
+          "field": "Tickets link (en)",
+          "url": "https://dice.fm/event/q2957a-party-dozen-22nd-jun-zebulon-los-angeles-tickets?dice_source=ee15ecdb&eventref=fb_oea",
+          "name": "Party Dozen",
+          "data_source": "CitySpark",
+          "music_category": "Jazz"
+        }
+      ]
+    ],
+    [
+      "portsmouthnhtickets.com",
+      207,
+      {
+        "Tickets link (en)": 104,
+        "Website (en)": 103
+      },
+      [
+        {
+          "domain": "portsmouthnhtickets.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.portsmouthnhtickets.com/e/love-letters?aff=cityspark",
+          "name": "Love Letters",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "portsmouthnhtickets.com",
+          "field": "Website (en)",
+          "url": "https://www.portsmouthnhtickets.com/e/love-letters?aff=cityspark",
+          "name": "Love Letters",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "events.eventnoire.com",
+      190,
+      {
+        "Tickets link (en)": 96,
+        "Website (en)": 94
+      },
+      [
+        {
+          "domain": "events.eventnoire.com",
+          "field": "Tickets link (en)",
+          "url": "https://events.eventnoire.com/e/sneaker-gala-celebration-of-black-excellence-in-2/tickets?aff=cityspark",
+          "name": "10th Anniversary Sneaker Gala | Celebration of Black Excellence in Mental Health",
+          "data_source": "CitySpark",
+          "music_category": "Hip Hop & Rap"
+        },
+        {
+          "domain": "events.eventnoire.com",
+          "field": "Website (en)",
+          "url": "https://events.eventnoire.com/e/sneaker-gala-celebration-of-black-excellence-in-2?aff=cityspark",
+          "name": "10th Anniversary Sneaker Gala | Celebration of Black Excellence in Mental Health",
+          "data_source": "CitySpark",
+          "music_category": "Hip Hop & Rap"
+        }
+      ]
+    ],
+    [
+      "24tix.com",
+      172,
+      {
+        "Website (en)": 164,
+        "Tickets link (en)": 8
+      },
+      [
+        {
+          "domain": "24tix.com",
+          "field": "Website (en)",
+          "url": "https://www.24tix.com/events/3k2u5jxlcjbb5ospgvrbcm42q4",
+          "name": "Tigers Jaw",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "24tix.com",
+          "field": "Website (en)",
+          "url": "https://www.24tix.com/events/7ozne25izrfoxig5fy62bbayia",
+          "name": "Secondhand Serenade",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "visitgenevaonthelake.com",
+      169,
+      {
+        "Website (en)": 169
+      },
+      [
+        {
+          "domain": "visitgenevaonthelake.com",
+          "field": "Website (en)",
+          "url": "https://visitgenevaonthelake.com/event/triple-threat/",
+          "name": "Triple Threat",
+          "data_source": "CitySpark",
+          "music_category": "R&B and Soul"
+        },
+        {
+          "domain": "visitgenevaonthelake.com",
+          "field": "Website (en)",
+          "url": "https://visitgenevaonthelake.com/event/crush/",
+          "name": "Crush",
+          "data_source": "CitySpark",
+          "music_category": "Rock"
+        }
+      ]
+    ],
+    [
+      "ci.ovationtix.com",
+      168,
+      {
+        "Website (en)": 28,
+        "Tickets link (en)": 140
+      },
+      [
+        {
+          "domain": "ci.ovationtix.com",
+          "field": "Website (en)",
+          "url": "https://ci.ovationtix.com/36626",
+          "name": "June Cabaret: THE BEST OF BROADWAY",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "ci.ovationtix.com",
+          "field": "Website (en)",
+          "url": "https://ci.ovationtix.com/36626",
+          "name": "July Cabaret: THE BEST OF SWING",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "ticketmaster.no",
+      162,
+      {
+        "Tickets link (en)": 162
+      },
+      [
+        {
+          "domain": "ticketmaster.no",
+          "field": "Tickets link (en)",
+          "url": "https://www.ticketmaster.no/artist/sommerbris-billetter/952801",
+          "name": "Sommerbris",
+          "data_source": "Jambase",
+          "music_category": "Rock"
+        },
+        {
+          "domain": "ticketmaster.no",
+          "field": "Tickets link (en)",
+          "url": "https://www.ticketmaster.no/event/photek-billetter/566537492?utm_source=jambase",
+          "name": "Photek at Blå",
+          "data_source": "Jambase",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "my805tix.com",
+      161,
+      {
+        "Tickets link (en)": 84,
+        "Website (en)": 77
+      },
+      [
+        {
+          "domain": "my805tix.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.my805tix.com/e/dancy-party-5/tickets?aff=cityspark",
+          "name": "Dance Party",
+          "data_source": "CitySpark",
+          "music_category": "Rock"
+        },
+        {
+          "domain": "my805tix.com",
+          "field": "Website (en)",
+          "url": "https://www.my805tix.com/e/dancy-party-5?aff=cityspark",
+          "name": "Dance Party",
+          "data_source": "CitySpark",
+          "music_category": "Rock"
+        }
+      ]
+    ],
+    [
+      "link.seated.com",
+      144,
+      {
+        "Website (en)": 144
+      },
+      [
+        {
+          "domain": "link.seated.com",
+          "field": "Website (en)",
+          "url": "https://link.seated.com/3bf98717-9624-434c-8906-c72543e41e3d",
+          "name": "Giant Panda Guerilla Dub Squad",
+          "data_source": "CitySpark",
+          "music_category": "Rock"
+        },
+        {
+          "domain": "link.seated.com",
+          "field": "Website (en)",
+          "url": "https://link.seated.com/2c2f3b83-5b47-4d3c-9e98-f37bc16a9a6b",
+          "name": "Tropidelic",
+          "data_source": "CitySpark",
+          "music_category": "Rock"
+        }
+      ]
+    ],
+    [
+      "prekindle.com",
+      139,
+      {
+        "Website (en)": 111,
+        "Tickets link (en)": 28
+      },
+      [
+        {
+          "domain": "prekindle.com",
+          "field": "Website (en)",
+          "url": "https://www.prekindle.com/event/67781-troy-doherty-houston",
+          "name": "Troy Doherty",
+          "data_source": "CitySpark",
+          "music_category": "Rock"
+        },
+        {
+          "domain": "prekindle.com",
+          "field": "Website (en)",
+          "url": "https://www.prekindle.com/promo/id/-2853111880276793371",
+          "name": "Kings Kaleidoscope",
+          "data_source": "CitySpark",
+          "music_category": "Religious"
+        }
+      ]
+    ],
+    [
+      "sickening.events",
+      125,
+      {
+        "Tickets link (en)": 64,
+        "Website (en)": 61
+      },
+      [
+        {
+          "domain": "sickening.events",
+          "field": "Tickets link (en)",
+          "url": "https://www.sickening.events/e/curfew-philadelphia-pride-2026-detox-kevin-aviance/tickets?aff=cityspark",
+          "name": "CURFEW Philadelphia Pride 2026: Detox, Kevin Aviance, The Carry Nation and more",
+          "data_source": "CitySpark",
+          "music_category": "Electronic"
+        },
+        {
+          "domain": "sickening.events",
+          "field": "Website (en)",
+          "url": "https://www.sickening.events/e/curfew-philadelphia-pride-2026-detox-kevin-aviance?aff=cityspark",
+          "name": "CURFEW Philadelphia Pride 2026: Detox, Kevin Aviance, The Carry Nation and more",
+          "data_source": "CitySpark",
+          "music_category": "Electronic"
+        }
+      ]
+    ],
+    [
+      "events.humanitix.com",
+      123,
+      {
+        "Tickets link (en)": 82,
+        "Website (en)": 41
+      },
+      [
+        {
+          "domain": "events.humanitix.com",
+          "field": "Tickets link (en)",
+          "url": "https://events.humanitix.com/musical-improv-drop-in-workshop2026",
+          "name": "Musical Improv Drop-In Workshops 2026",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "events.humanitix.com",
+          "field": "Website (en)",
+          "url": "https://events.humanitix.com/musical-improv-drop-in-workshop2026",
+          "name": "Musical Improv Drop-In Workshops 2026",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "citywinery.com",
+      113,
+      {
+        "Tickets link (en)": 104,
+        "Website (en)": 9
+      },
+      [
+        {
+          "domain": "citywinery.com",
+          "field": "Tickets link (en)",
+          "url": "https://citywinery.com/pages/events/boston",
+          "name": "Ann Wilson at City Winery",
+          "data_source": "Jambase",
+          "music_category": "Rock"
+        },
+        {
+          "domain": "citywinery.com",
+          "field": "Tickets link (en)",
+          "url": "https://citywinery.com/chicago/?utm_source=jambase",
+          "name": "Lyle Lovett at City Winery",
+          "data_source": "Jambase",
+          "music_category": "Country!Rock!Folk & Traditional"
+        }
+      ]
+    ],
+    [
+      "hollywoodbowl.com",
+      111,
+      {
+        "Website (en)": 85,
+        "Tickets link (en)": 26
+      },
+      [
+        {
+          "domain": "hollywoodbowl.com",
+          "field": "Website (en)",
+          "url": "https://www.hollywoodbowl.com/events/performances/4278/2026-05-30/pitbull",
+          "name": "Pitbull",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "hollywoodbowl.com",
+          "field": "Website (en)",
+          "url": "https://www.hollywoodbowl.com/events/performances/4278/2026-05-30/pitbull",
+          "name": "Pitbull",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "festivalcountryindiana.com",
+      109,
+      {
+        "Website (en)": 109
+      },
+      [
+        {
+          "domain": "festivalcountryindiana.com",
+          "field": "Website (en)",
+          "url": "https://www.festivalcountryindiana.com/hops-and-vines-festival",
+          "name": "Hops & Vines Festival",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "festivalcountryindiana.com",
+          "field": "Website (en)",
+          "url": "https://www.festivalcountryindiana.com/holiday-lighting-and-winter-market",
+          "name": "Holiday Lighting and Winter Market",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "thebluegate.com",
+      104,
+      {
+        "Tickets link (en)": 104
+      },
+      [
+        {
+          "domain": "thebluegate.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.thebluegate.com/shipshewana/blue-gate-theatre/event/guy-penrod-browns",
+          "name": "Guy Penrod and The Browns at Blue Gate Performing Arts Center",
+          "data_source": "Jambase",
+          "music_category": ""
+        },
+        {
+          "domain": "thebluegate.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.thebluegate.com/shipshewana/blue-gate-theatre/event/1964-the-tribute",
+          "name": "1964 The Tribute at Blue Gate Performing Arts Center",
+          "data_source": "Jambase",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "yoshis.com",
+      103,
+      {
+        "Tickets link (en)": 62,
+        "Website (en)": 41
+      },
+      [
+        {
+          "domain": "yoshis.com",
+          "field": "Tickets link (en)",
+          "url": "https://yoshis.com/events/buy-tickets/eric-darius-8/detail",
+          "name": "Eric Darius",
+          "data_source": "CitySpark",
+          "music_category": "Hip Hop & Rap!Jazz"
+        },
+        {
+          "domain": "yoshis.com",
+          "field": "Tickets link (en)",
+          "url": "https://yoshis.com/events/buy-tickets/ja-ronn-flow/detail",
+          "name": "THAT 70's FLOW: THE B-SIDE",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "aspenmusicfestival.com",
+      101,
+      {
+        "Website (en)": 101
+      },
+      [
+        {
+          "domain": "aspenmusicfestival.com",
+          "field": "Website (en)",
+          "url": "https://www.aspenmusicfestival.com/events/calendar/aspen-festival-orchestra-dress-rehearsal3/",
+          "name": "Aspen Festival Orchestra Dress Rehearsal",
+          "data_source": "CitySpark",
+          "music_category": "Classical"
+        },
+        {
+          "domain": "aspenmusicfestival.com",
+          "field": "Website (en)",
+          "url": "https://www.aspenmusicfestival.com/events/calendar/aspen-festival-orchestra-dress-rehearsal1",
+          "name": "Aspen Festival Orchestra Dress Rehearsal",
+          "data_source": "CitySpark",
+          "music_category": "Classical"
+        }
+      ]
+    ],
+    [
+      "showpass.com",
+      91,
+      {
+        "Tickets link (en)": 52,
+        "Website (en)": 39
+      },
+      [
+        {
+          "domain": "showpass.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.showpass.com/soul-rebels-blue-nile-may-2026/",
+          "name": "The Soul Rebels at Blue Nile",
+          "data_source": "Jambase",
+          "music_category": "R&B and Soul"
+        },
+        {
+          "domain": "showpass.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.showpass.com/redclaystraysfanfest/",
+          "name": "The Red Clay Strays at Abayance Bay Marina",
+          "data_source": "Jambase",
+          "music_category": "Country!Rock"
+        }
+      ]
+    ],
+    [
+      "bremencafe.com",
+      90,
+      {
+        "Website (en)": 90
+      },
+      [
+        {
+          "domain": "bremencafe.com",
+          "field": "Website (en)",
+          "url": "http://bremencafe.com/calendar/",
+          "name": "Hot Science",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "bremencafe.com",
+          "field": "Website (en)",
+          "url": "http://bremencafe.com/calendar/",
+          "name": "Heavenly Venom Premiere",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "sacramento365.com",
+      89,
+      {
+        "Website (en)": 89
+      },
+      [
+        {
+          "domain": "sacramento365.com",
+          "field": "Website (en)",
+          "url": "https://sacramento365.com/event/open-mic-two-tune-thursday-at-twin-lotus-thai-restaurant/",
+          "name": "Open Mic - Two Tune Thursday at Twin Lotus Thai Restaurant",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "sacramento365.com",
+          "field": "Website (en)",
+          "url": "https://sacramento365.com/event/left-of-cool-band-concert/",
+          "name": "Left of Cool Band: Concert",
+          "data_source": "CitySpark",
+          "music_category": "Rock!Country"
+        }
+      ]
+    ],
+    [
+      "nowplayingutah.com",
+      87,
+      {
+        "Website (en)": 87
+      },
+      [
+        {
+          "domain": "nowplayingutah.com",
+          "field": "Website (en)",
+          "url": "https://nowplayingutah.com/event/harmony/",
+          "name": "Harmony",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "nowplayingutah.com",
+          "field": "Website (en)",
+          "url": "https://nowplayingutah.com/event/anastasia/",
+          "name": "Anastasia",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "events.timely.fun",
+      87,
+      {
+        "Website (en)": 87
+      },
+      [
+        {
+          "domain": "events.timely.fun",
+          "field": "Website (en)",
+          "url": "https://events.timely.fun/gwwwkkiu/event/78256101/20261110180000",
+          "name": "Stream Team Leader Training (VIRTUAL)",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "events.timely.fun",
+          "field": "Website (en)",
+          "url": "https://events.timely.fun/2p5gs5to/event/78252280/20260627000000",
+          "name": "Ethos Celebration of the Arts",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "simpletix.com",
+      83,
+      {
+        "Tickets link (en)": 66,
+        "Website (en)": 17
+      },
+      [
+        {
+          "domain": "simpletix.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.simpletix.com/e/latin-night-tickets-222128",
+          "name": "Latin Night at FRCC",
+          "data_source": "CitySpark",
+          "music_category": "Rock!Hip Hop & Rap"
+        },
+        {
+          "domain": "simpletix.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.simpletix.com/e/wildflower-revival-live-at-cult-tickets-252364",
+          "name": "Wildflower Revival LIVE at Cult",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "redrocksonline.com",
+      83,
+      {
+        "Website (en)": 82,
+        "Tickets link (en)": 1
+      },
+      [
+        {
+          "domain": "redrocksonline.com",
+          "field": "Website (en)",
+          "url": "https://www.redrocksonline.com/events/kaleo-with-very-special-guest-elle-king-1287812/",
+          "name": "KALEO with very special guest Elle King",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "redrocksonline.com",
+          "field": "Website (en)",
+          "url": "https://www.redrocksonline.com/events/five-finger-death-punch-1286674/",
+          "name": "Five Finger Death Punch",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "downtownorlando.com",
+      82,
+      {
+        "Website (en)": 82
+      },
+      [
+        {
+          "domain": "downtownorlando.com",
+          "field": "Website (en)",
+          "url": "https://www.downtownorlando.com/Fun/Events/AAP-ROCKY",
+          "name": "A$AP ROCKY",
+          "data_source": "CitySpark",
+          "music_category": "Hip Hop & Rap"
+        },
+        {
+          "domain": "downtownorlando.com",
+          "field": "Website (en)",
+          "url": "https://www.downtownorlando.com/Fun/Events/Vince-Gill",
+          "name": "Vince Gill",
+          "data_source": "CitySpark",
+          "music_category": "Concerts"
+        }
+      ]
+    ],
+    [
+      "wwoz.org",
+      81,
+      {
+        "Website (en)": 81
+      },
+      [
+        {
+          "domain": "wwoz.org",
+          "field": "Website (en)",
+          "url": "https://www.wwoz.org/events/1298256",
+          "name": "Valentine's Day Post-Endymion Masquerade Party ft. The Rumble",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "wwoz.org",
+          "field": "Website (en)",
+          "url": "https://www.wwoz.org/events/1301186",
+          "name": "John Royen",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "travelok.com",
+      80,
+      {
+        "Website (en)": 80
+      },
+      [
+        {
+          "domain": "travelok.com",
+          "field": "Website (en)",
+          "url": "https://www.travelok.com/listings/view.profile/id.35431/event.46830",
+          "name": "Forrest Frank in Concert",
+          "data_source": "CitySpark",
+          "music_category": "Hip Hop & Rap"
+        },
+        {
+          "domain": "travelok.com",
+          "field": "Website (en)",
+          "url": "https://www.travelok.com/listings/view.profile/id.22381/event.47055",
+          "name": "Heard on Hurd",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "belfrymusictheatre.com",
+      78,
+      {
+        "Tickets link (en)": 39,
+        "Website (en)": 39
+      },
+      [
+        {
+          "domain": "belfrymusictheatre.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.belfrymusictheatre.com/events/2026/26054-burt-bacharach-tribute-what-the-world-needs-now/",
+          "name": "Burt Bacharach Tribute",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "belfrymusictheatre.com",
+          "field": "Website (en)",
+          "url": "https://www.belfrymusictheatre.com/events/2026/26054-burt-bacharach-tribute-what-the-world-needs-now/",
+          "name": "Burt Bacharach Tribute",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "thecutlive.com",
+      76,
+      {
+        "Tickets link (en)": 55,
+        "Website (en)": 21
+      },
+      [
+        {
+          "domain": "thecutlive.com",
+          "field": "Tickets link (en)",
+          "url": "http://thecutlive.com",
+          "name": "PRIDE BLAST OFF with The Illustrious Blacks",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "thecutlive.com",
+          "field": "Tickets link (en)",
+          "url": "https://thecutlive.com/pages/events/roger-clyne-and-the-peacemakers?utm_source=gloucestertimes&utm_medium=event+calendar&utm_campaign=ROGER+CLYNE",
+          "name": "Roger Clyne & The Peacemakers",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "holdmyticket.com",
+      74,
+      {
+        "Tickets link (en)": 49,
+        "Website (en)": 25
+      },
+      [
+        {
+          "domain": "holdmyticket.com",
+          "field": "Tickets link (en)",
+          "url": "https://holdmyticket.com/event/452084",
+          "name": "Night of the Living Cover Bands - Night 1",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "holdmyticket.com",
+          "field": "Tickets link (en)",
+          "url": "https://holdmyticket.com/event/452084",
+          "name": "Night of the Living Cover Bands - Night 2",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "mokbpresents.com",
+      74,
+      {
+        "Website (en)": 74
+      },
+      [
+        {
+          "domain": "mokbpresents.com",
+          "field": "Website (en)",
+          "url": "https://mokbpresents.com/event/dizgo-2026/",
+          "name": "Dizgo",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "mokbpresents.com",
+          "field": "Website (en)",
+          "url": "https://mokbpresents.com/event/cold-2026/",
+          "name": "COLD",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "visitchicagonorthshore.com",
+      74,
+      {
+        "Website (en)": 74
+      },
+      [
+        {
+          "domain": "visitchicagonorthshore.com",
+          "field": "Website (en)",
+          "url": "https://www.visitchicagonorthshore.com/events/thursday-night-markets-2026-09-03",
+          "name": "Thursday Night Markets",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "visitchicagonorthshore.com",
+          "field": "Website (en)",
+          "url": "https://www.visitchicagonorthshore.com/events/winnetka-music-festival-2026-06-19",
+          "name": "Winnetka Music Festival 10th Anniversary",
+          "data_source": "CitySpark",
+          "music_category": "Brass"
+        }
+      ]
+    ],
+    [
+      "tickets.sohosb.com",
+      73,
+      {
+        "Tickets link (en)": 37,
+        "Website (en)": 36
+      },
+      [
+        {
+          "domain": "tickets.sohosb.com",
+          "field": "Tickets link (en)",
+          "url": "https://tickets.sohosb.com/e/ottmar-liebert-luna-negra-santa-barbara-soho-2?aff=cityspark",
+          "name": "An evening with Ottmar Liebert & Luna Negra",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "tickets.sohosb.com",
+          "field": "Website (en)",
+          "url": "https://tickets.sohosb.com/e/ottmar-liebert-luna-negra-santa-barbara-soho-2/tickets?aff=cityspark",
+          "name": "An evening with Ottmar Liebert & Luna Negra",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "mainstreetcrossing.com",
+      73,
+      {
+        "Website (en)": 63,
+        "Tickets link (en)": 10
+      },
+      [
+        {
+          "domain": "mainstreetcrossing.com",
+          "field": "Website (en)",
+          "url": "https://mainstreetcrossing.com/",
+          "name": "The Spicolis - Tribute to the 80's at Main Street Crossing",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "mainstreetcrossing.com",
+          "field": "Website (en)",
+          "url": "https://mainstreetcrossing.com/",
+          "name": "Bad Company Tribute called Breaking Bad Co. at Main Street Crossing",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "events.sonomalibrary.org",
+      72,
+      {
+        "Website (en)": 70,
+        "Tickets link (en)": 2
+      },
+      [
+        {
+          "domain": "events.sonomalibrary.org",
+          "field": "Website (en)",
+          "url": "https://events.sonomalibrary.org/event/friends-sebastopol-library-book-sale-78293",
+          "name": "Friends of Sebastopol Library Book Sale @SEBArts",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "events.sonomalibrary.org",
+          "field": "Website (en)",
+          "url": "https://events.sonomalibrary.org/event/family-storytime-102696",
+          "name": "Family Storytime",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "tix.com",
+      71,
+      {
+        "Tickets link (en)": 59,
+        "Website (en)": 12
+      },
+      [
+        {
+          "domain": "tix.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.tix.com/ticket-sales/empresstheatre/7268/event/1444117",
+          "name": "THURSDAY NIGHTS ARE LIT (really lit, new lighting) and Stage @ The Empress Marquee Club",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "tix.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.tix.com/ticket-sales/empresstheatre/7268/event/1432748",
+          "name": "New Century Chamber Orchestra",
+          "data_source": "CitySpark",
+          "music_category": "Strings!Classical"
+        }
+      ]
+    ],
+    [
+      "cincyae.com",
+      70,
+      {
+        "Website (en)": 70
+      },
+      [
+        {
+          "domain": "cincyae.com",
+          "field": "Website (en)",
+          "url": "https://cincyae.com/event/pussycat-dolls-pcd-forever-tour/",
+          "name": "The Pussycat Dolls: PCD FOREVER TOUR",
+          "data_source": "CitySpark",
+          "music_category": "Hip Hop & Rap!Rock!R&B and Soul"
+        },
+        {
+          "domain": "cincyae.com",
+          "field": "Website (en)",
+          "url": "https://cincyae.com/event/flea-in-the-fort-june-7/",
+          "name": "Flea in the Fort",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "taogroup.com",
+      70,
+      {
+        "Tickets link (en)": 70
+      },
+      [
+        {
+          "domain": "taogroup.com",
+          "field": "Tickets link (en)",
+          "url": "https://taogroup.com/venues/marquee-dayclub-las-vegas/?utm_source=jambase",
+          "name": "Coco & Breezy at Marquee Dayclub",
+          "data_source": "Jambase",
+          "music_category": ""
+        },
+        {
+          "domain": "taogroup.com",
+          "field": "Tickets link (en)",
+          "url": "https://taogroup.com/venues/marquee-dayclub-las-vegas/?utm_source=jambase",
+          "name": "Elderbrook at Marquee Dayclub",
+          "data_source": "Jambase",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "ticketmaster.it",
+      68,
+      {
+        "Tickets link (en)": 68
+      },
+      [
+        {
+          "domain": "ticketmaster.it",
+          "field": "Tickets link (en)",
+          "url": "https://www.ticketmaster.it/artist/adriatic-sound-festival-biglietti/1370664",
+          "name": "Adriatic Sound Festival",
+          "data_source": "Jambase",
+          "music_category": "R&B and Soul"
+        },
+        {
+          "domain": "ticketmaster.it",
+          "field": "Tickets link (en)",
+          "url": "https://www.ticketmaster.it/biglietti/franz-ferdinand-the-kooks-the-molotovs-ama-music-festival-bassano-del-grappa-30-08-2026/event/15ntl830yo3l?utm_source=jambase",
+          "name": "Franz Ferdinand at Parco di Villa Negri",
+          "data_source": "Jambase",
+          "music_category": "Rock"
+        }
+      ]
+    ],
+    [
+      "ticketmaster.fr",
+      68,
+      {
+        "Tickets link (en)": 68
+      },
+      [
+        {
+          "domain": "ticketmaster.fr",
+          "field": "Tickets link (en)",
+          "url": "https://www.ticketmaster.fr/fr/manifestation/patrick-bruel-billet/idmanif/645018/idtier/18864121",
+          "name": "Patrick Bruel at Cirque d’Hiver",
+          "data_source": "Jambase",
+          "music_category": ""
+        },
+        {
+          "domain": "ticketmaster.fr",
+          "field": "Tickets link (en)",
+          "url": "https://www.ticketmaster.fr/fr/manifestation/patrick-bruel-billet/idmanif/645018/idtier/18864121",
+          "name": "Patrick Bruel at Cirque d’Hiver",
+          "data_source": "Jambase",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "bit.ly",
+      66,
+      {
+        "Tickets link (en)": 38,
+        "Website (en)": 28
+      },
+      [
+        {
+          "domain": "bit.ly",
+          "field": "Tickets link (en)",
+          "url": "https://bit.ly/49C8w2o",
+          "name": "Fulton Lee - Sing With Me Tour 2026",
+          "data_source": "CitySpark",
+          "music_category": "Rock!R&B and Soul"
+        },
+        {
+          "domain": "bit.ly",
+          "field": "Tickets link (en)",
+          "url": "https://bit.ly/CPAMsignup",
+          "name": "Runway Rhythms Summer Music Series",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "fremontslo.com",
+      66,
+      {
+        "Tickets link (en)": 46,
+        "Website (en)": 20
+      },
+      [
+        {
+          "domain": "fremontslo.com",
+          "field": "Tickets link (en)",
+          "url": "https://fremontslo.com/?utm_source=jambase",
+          "name": "The Crane Wives LIVE at Fremont Theater",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "fremontslo.com",
+          "field": "Website (en)",
+          "url": "https://www.fremontslo.com/events/silversun-pickups/",
+          "name": "Silversun Pickups LIVE at Fremont Theater",
+          "data_source": "CitySpark",
+          "music_category": "Rock"
+        }
+      ]
+    ],
+    [
+      "ticketmaster.se",
+      66,
+      {
+        "Tickets link (en)": 66
+      },
+      [
+        {
+          "domain": "ticketmaster.se",
+          "field": "Tickets link (en)",
+          "url": "https://www.ticketmaster.se/event/seinabo-sey-amanda-bergman-sunnan--support-biljetter/1745203271?utm_source=jambase",
+          "name": "Seinabo Sey at Förbindelsehallen",
+          "data_source": "Jambase",
+          "music_category": "Folk & Traditional"
+        },
+        {
+          "domain": "ticketmaster.se",
+          "field": "Tickets link (en)",
+          "url": "https://www.ticketmaster.se/event/patti-smith-quartet-biljetter/1486647475",
+          "name": "Patti Smith at Cirkus",
+          "data_source": "Jambase",
+          "music_category": "Rock"
+        }
+      ]
+    ],
+    [
+      "wl.eventim.us",
+      65,
+      {
+        "Tickets link (en)": 51,
+        "Website (en)": 14
+      },
+      [
+        {
+          "domain": "wl.eventim.us",
+          "field": "Tickets link (en)",
+          "url": "https://wl.eventim.us/event/North-Coast-Music-Festival-2026/674105?afflky=NorthCoastMusicFestival",
+          "name": "North Coast Music Festival",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "wl.eventim.us",
+          "field": "Website (en)",
+          "url": "https://wl.eventim.us/event/dime-store-riot/677615?afflky=SunshineStudiosLive",
+          "name": "Dime Store Riot",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "xrayarcade.com",
+      64,
+      {
+        "Website (en)": 62,
+        "Tickets link (en)": 2
+      },
+      [
+        {
+          "domain": "xrayarcade.com",
+          "field": "Website (en)",
+          "url": "https://xrayarcade.com/calendar/2026/08/20/killlincoln",
+          "name": "Kill Lincoln / Jer / Bad Operation",
+          "data_source": "CitySpark",
+          "music_category": "Rock!Hip Hop & Rap"
+        },
+        {
+          "domain": "xrayarcade.com",
+          "field": "Website (en)",
+          "url": "https://xrayarcade.com/calendar/2026/10/12/armandhammer",
+          "name": "Armand Hammer",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "crafthousepgh.com",
+      63,
+      {
+        "Website (en)": 60,
+        "Tickets link (en)": 3
+      },
+      [
+        {
+          "domain": "crafthousepgh.com",
+          "field": "Website (en)",
+          "url": "https://crafthousepgh.com/eyes-of-the-nile-iron-maiden-tribute-%e2%88%99-july-11-2026/",
+          "name": "Eyes of The Nile: Iron Maiden Tribute ∙ July 11, 2026",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "crafthousepgh.com",
+          "field": "Website (en)",
+          "url": "https://crafthousepgh.com/eyes-of-the-nile-iron-maiden-tribute-%e2%88%99-july-11-2026/",
+          "name": "Eyes of the Nile--Iron Maiden Tribute",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "thebroadberry.com",
+      62,
+      {
+        "Website (en)": 57,
+        "Tickets link (en)": 5
+      },
+      [
+        {
+          "domain": "thebroadberry.com",
+          "field": "Website (en)",
+          "url": "https://thebroadberry.com/event/diggy-graves-the-no-vacancy-tour-w-resentvul-and-ryan-oakes/the-broadberry-2/richmond-virginia/",
+          "name": "Diggy Graves w/ Resentvul, Ryan Oakes",
+          "data_source": "CitySpark",
+          "music_category": "Hip Hop & Rap"
+        },
+        {
+          "domain": "thebroadberry.com",
+          "field": "Website (en)",
+          "url": "https://thebroadberry.com/event/hot-mulligan-w-joyce-manor-saturdays-at-your-place-and-koyo/kanawha-plaza/",
+          "name": "Hot Mulligan w/ Joyce Manor, Saturdays At Your Place, and Koyo",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "events.ticketleap.com",
+      62,
+      {
+        "Tickets link (en)": 56,
+        "Website (en)": 6
+      },
+      [
+        {
+          "domain": "events.ticketleap.com",
+          "field": "Tickets link (en)",
+          "url": "https://events.ticketleap.com/tickets/smellslikenirvanatribute/SMELLSLIKENIRVANATRIBUTEJUNE6DEADORIGINAL?fbclid=IwY2xjawQC7QhleHRuA2FlbQIxMABicmlkETJwWXNDemZCYU5jN1JHVDZIc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHiXhfQSLA771F3MIHJ-AAveyVYHMAADpdxUGe120GF7p3qi4hCHmERTj9R1a_aem_PKmv6dHoykAjUE7lztZXTQ",
+          "name": "Dead Original & Smells Like Nirvana",
+          "data_source": "CitySpark",
+          "music_category": "Rock"
+        },
+        {
+          "domain": "events.ticketleap.com",
+          "field": "Website (en)",
+          "url": "https://events.ticketleap.com/tickets/smellslikenirvanatribute/SMELLSLIKENIRVANATRIBUTEJUNE6DEADORIGINAL?fbclid=IwY2xjawQC7QhleHRuA2FlbQIxMABicmlkETJwWXNDemZCYU5jN1JHVDZIc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHiXhfQSLA771F3MIHJ-AAveyVYHMAADpdxUGe120GF7p3qi4hCHmERTj9R1a_aem_PKmv6dHoykAjUE7lztZXTQ",
+          "name": "Dead Original & Smells Like Nirvana",
+          "data_source": "CitySpark",
+          "music_category": "Rock"
+        }
+      ]
+    ],
+    [
+      "volumeonetickets.org",
+      61,
+      {
+        "Tickets link (en)": 32,
+        "Website (en)": 29
+      },
+      [
+        {
+          "domain": "volumeonetickets.org",
+          "field": "Tickets link (en)",
+          "url": "https://volumeonetickets.org/e/alten-2?aff=cityspark",
+          "name": "Friday Show! Clear Water Comedy Presents:  Dan Alten Live at The Plus",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "volumeonetickets.org",
+          "field": "Website (en)",
+          "url": "https://volumeonetickets.org/e/alten-2?aff=cityspark",
+          "name": "Friday Show! Clear Water Comedy Presents:  Dan Alten Live at The Plus",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "tickets.thestatetheatre.org",
+      61,
+      {
+        "Tickets link (en)": 42,
+        "Website (en)": 19
+      },
+      [
+        {
+          "domain": "tickets.thestatetheatre.org",
+          "field": "Tickets link (en)",
+          "url": "https://tickets.thestatetheatre.org/c/u9rt0m0z",
+          "name": "The Wood Brothers",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "tickets.thestatetheatre.org",
+          "field": "Tickets link (en)",
+          "url": "https://tickets.thestatetheatre.org/c/97itfj7r",
+          "name": "Béla Fleck, Edmar Castañeda, Antonio Sánchez Trio",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "mlb.com",
+      60,
+      {
+        "Website (en)": 6,
+        "Tickets link (en)": 54
+      },
+      [
+        {
+          "domain": "mlb.com",
+          "field": "Website (en)",
+          "url": "https://www.mlb.com/nationals/schedule/",
+          "name": "2026 MCR Concert - Parking",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "mlb.com",
+          "field": "Website (en)",
+          "url": "https://www.mlb.com/royals/tickets/concerts/post-malone",
+          "name": "Post Malone and Jelly Roll Present: The BIG ASS Stadium Tour Part 2",
+          "data_source": "CitySpark",
+          "music_category": "Rock"
+        }
+      ]
+    ],
+    [
+      "mountaintownmusic.org",
+      60,
+      {
+        "Website (en)": 60
+      },
+      [
+        {
+          "domain": "mountaintownmusic.org",
+          "field": "Website (en)",
+          "url": "https://mountaintownmusic.org/show/sky-olson-the-valley-2/",
+          "name": "Sky Olson & The Valley at  Billy Blanco's Concert Series",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "mountaintownmusic.org",
+          "field": "Website (en)",
+          "url": "https://mountaintownmusic.org/show/bruce-music-12/",
+          "name": "Bruce Music at  Park City Senior Center",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "tickets.goodmedicinepresents.com",
+      59,
+      {
+        "Tickets link (en)": 30,
+        "Website (en)": 29
+      },
+      [
+        {
+          "domain": "tickets.goodmedicinepresents.com",
+          "field": "Tickets link (en)",
+          "url": "https://tickets.goodmedicinepresents.com/e/agent-orange-2?aff=cityspark",
+          "name": "Agent Orange",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "tickets.goodmedicinepresents.com",
+          "field": "Website (en)",
+          "url": "https://tickets.goodmedicinepresents.com/e/agent-orange-2/tickets?aff=cityspark",
+          "name": "Agent Orange",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "ticketmaster.cz",
+      59,
+      {
+        "Tickets link (en)": 59
+      },
+      [
+        {
+          "domain": "ticketmaster.cz",
+          "field": "Tickets link (en)",
+          "url": "https://www.ticketmaster.cz/event/mastodon-vstupenky/1540541217",
+          "name": "Mastodon at O2 Universum",
+          "data_source": "Jambase",
+          "music_category": "Rock"
+        },
+        {
+          "domain": "ticketmaster.cz",
+          "field": "Tickets link (en)",
+          "url": "https://www.ticketmaster.cz/event/thaiboy-digital-vstupenky/1177126346?utm_source=jambase",
+          "name": "Thaiboy Digital at Fuchs2",
+          "data_source": "Jambase",
+          "music_category": "Hip Hop & Rap"
+        }
+      ]
+    ],
+    [
+      "ramsheadonstage.com",
+      58,
+      {
+        "Website (en)": 56,
+        "Tickets link (en)": 2
+      },
+      [
+        {
+          "domain": "ramsheadonstage.com",
+          "field": "Website (en)",
+          "url": "https://www.ramsheadonstage.com/events/detail/1308361",
+          "name": "Cowboy Mouth",
+          "data_source": "CitySpark",
+          "music_category": "Rock"
+        },
+        {
+          "domain": "ramsheadonstage.com",
+          "field": "Website (en)",
+          "url": "https://www.ramsheadonstage.com/events/detail/1303433",
+          "name": "OUR HOUSE: The Music of CSNY Performed By Family & Friends",
+          "data_source": "CitySpark",
+          "music_category": "Rock"
+        }
+      ]
+    ],
+    [
+      "tickets.smokejazz.com",
+      58,
+      {
+        "Tickets link (en)": 56,
+        "Website (en)": 2
+      },
+      [
+        {
+          "domain": "tickets.smokejazz.com",
+          "field": "Tickets link (en)",
+          "url": "https://tickets.smokejazz.com/r/miles-davis-100th-celebration-with-the-eddie-henderson-quintet-feat-gary-bartz-and-billy-hart",
+          "name": "Miles Davis 100th Celebration with the Eddie Henderson Quintet feat",
+          "data_source": "CitySpark",
+          "music_category": "Jazz"
+        },
+        {
+          "domain": "tickets.smokejazz.com",
+          "field": "Website (en)",
+          "url": "https://tickets.smokejazz.com/r/miles-davis-100th-celebration-with-the-eddie-henderson-quintet-feat-gary-bartz-and-billy-hart",
+          "name": "Miles Davis 100th Celebration with the Eddie Henderson Quintet feat",
+          "data_source": "CitySpark",
+          "music_category": "Jazz"
+        }
+      ]
+    ],
+    [
+      "tickets.thewordbarn.com",
+      56,
+      {
+        "Tickets link (en)": 28,
+        "Website (en)": 28
+      },
+      [
+        {
+          "domain": "tickets.thewordbarn.com",
+          "field": "Tickets link (en)",
+          "url": "https://tickets.thewordbarn.com/e/newfound-road?aff=cityspark",
+          "name": "NewFound Road",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "tickets.thewordbarn.com",
+          "field": "Website (en)",
+          "url": "https://tickets.thewordbarn.com/e/newfound-road?aff=cityspark",
+          "name": "NewFound Road",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "eventim.us",
+      56,
+      {
+        "Website (en)": 8,
+        "Tickets link (en)": 48
+      },
+      [
+        {
+          "domain": "eventim.us",
+          "field": "Website (en)",
+          "url": "https://eventim.us/altparty26",
+          "name": "Twin Productions Presents ALT! The Party",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "eventim.us",
+          "field": "Tickets link (en)",
+          "url": "https://eventim.us/redeos26",
+          "name": "Twin Productions Presents Red at The Rock Box",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "grandsierraresort.com",
+      55,
+      {
+        "Tickets link (en)": 2,
+        "Website (en)": 53
+      },
+      [
+        {
+          "domain": "grandsierraresort.com",
+          "field": "Tickets link (en)",
+          "url": "https://www.grandsierraresort.com/entertainment/concerts-and-shows/brit-floyd-the-moon-the-wall-and-beyond",
+          "name": "Brit Floyd: The Moon, The Wall & Beyond",
+          "data_source": "CitySpark",
+          "music_category": "Rock"
+        },
+        {
+          "domain": "grandsierraresort.com",
+          "field": "Website (en)",
+          "url": "https://www.grandsierraresort.com/entertainment/concerts-and-shows/brit-floyd-the-moon-the-wall-and-beyond",
+          "name": "Brit Floyd: The Moon, The Wall & Beyond",
+          "data_source": "CitySpark",
+          "music_category": "Rock"
+        }
+      ]
+    ],
+    [
+      "visitstaugustine.com",
+      55,
+      {
+        "Website (en)": 55
+      },
+      [
+        {
+          "domain": "visitstaugustine.com",
+          "field": "Website (en)",
+          "url": "https://www.visitstaugustine.com/event/drum-runners-series",
+          "name": "Drum Runner Series Barrel Racing",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "visitstaugustine.com",
+          "field": "Website (en)",
+          "url": "https://www.visitstaugustine.com/event/49-winchester-ponte-vedra-concert-hall",
+          "name": "49 Winchester at Ponte Vedra Concert Hall",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "tickets.knuckleheadskc.com",
+      55,
+      {
+        "Tickets link (en)": 50,
+        "Website (en)": 5
+      },
+      [
+        {
+          "domain": "tickets.knuckleheadskc.com",
+          "field": "Tickets link (en)",
+          "url": "https://tickets.knuckleheadskc.com/eventperformances.asp?evt=95",
+          "name": "Saturday Open Jam Hosted by Billy Ebeling",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "tickets.knuckleheadskc.com",
+          "field": "Website (en)",
+          "url": "https://tickets.knuckleheadskc.com/eventperformances.asp?evt=95",
+          "name": "Saturday Open Jam Hosted by Billy Ebeling",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "aftontickets.com",
+      55,
+      {
+        "Tickets link (en)": 55
+      },
+      [
+        {
+          "domain": "aftontickets.com",
+          "field": "Tickets link (en)",
+          "url": "https://aftontickets.com/chicagotribute",
+          "name": "Chicago Tribute Authority (Chicago tribute) at Rocky Pond Estate Amphitheater",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "aftontickets.com",
+          "field": "Tickets link (en)",
+          "url": "https://aftontickets.com/event/buyticket/1g9g7ogo98",
+          "name": "FANfest Concert Series",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "cactusclubmilwaukee.com",
+      54,
+      {
+        "Website (en)": 44,
+        "Tickets link (en)": 10
+      },
+      [
+        {
+          "domain": "cactusclubmilwaukee.com",
+          "field": "Website (en)",
+          "url": "https://www.cactusclubmilwaukee.com/events/by-storm-lerado-khalil/",
+          "name": "By Storm • Lerado Khalil",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "cactusclubmilwaukee.com",
+          "field": "Website (en)",
+          "url": "https://www.cactusclubmilwaukee.com/events/christian-royce-ton-johnson/",
+          "name": "Christian Royce • Ton Johnson",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "guildtheatre.com",
+      54,
+      {
+        "Website (en)": 32,
+        "Tickets link (en)": 22
+      },
+      [
+        {
+          "domain": "guildtheatre.com",
+          "field": "Website (en)",
+          "url": "https://www.guildtheatre.com/calendar",
+          "name": "10,000 Maniacs: 45th Anniversary",
+          "data_source": "CitySpark",
+          "music_category": "Rock"
+        },
+        {
+          "domain": "guildtheatre.com",
+          "field": "Website (en)",
+          "url": "https://www.guildtheatre.com/calendar",
+          "name": "Dogs in a Pile",
+          "data_source": "CitySpark",
+          "music_category": "Rock!R&B and Soul"
+        }
+      ]
+    ],
+    [
+      "tickets.clubgreenroom.com",
+      54,
+      {
+        "Tickets link (en)": 27,
+        "Website (en)": 27
+      },
+      [
+        {
+          "domain": "tickets.clubgreenroom.com",
+          "field": "Tickets link (en)",
+          "url": "https://tickets.clubgreenroom.com/e/monday-open-mic-grayson-howard-july-27?aff=cityspark",
+          "name": "Monday Open Mic Night hosted by Grayson Howard (All Ages!)",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "tickets.clubgreenroom.com",
+          "field": "Website (en)",
+          "url": "https://tickets.clubgreenroom.com/e/monday-open-mic-grayson-howard-july-27?aff=cityspark",
+          "name": "Monday Open Mic Night hosted by Grayson Howard (All Ages!)",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "artshubwma.org",
+      53,
+      {
+        "Website (en)": 53
+      },
+      [
+        {
+          "domain": "artshubwma.org",
+          "field": "Website (en)",
+          "url": "https://www.artshubwma.org/event/global-groove-with-taproots-rebelle-and-bomba-de-aqui",
+          "name": "Global Groove with TapRoots, ReBelle and Bomba de Aqui",
+          "data_source": "CitySpark",
+          "music_category": "R&B and Soul!Rock"
+        },
+        {
+          "domain": "artshubwma.org",
+          "field": "Website (en)",
+          "url": "https://www.artshubwma.org/event/september-arts-night-out-at-33",
+          "name": "September Arts Night Out at 33",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "vivid-seats.pxf.io",
+      53,
+      {
+        "Website (en)": 53
+      },
+      [
+        {
+          "domain": "vivid-seats.pxf.io",
+          "field": "Website (en)",
+          "url": "https://vivid-seats.pxf.io/c/258147/1017970/12730?prodsku=6488699&u=https%3A%2F%2Fwww.vividseats.com%2Fchoir-choir-choir-epic-80s-singalong-tickets-new-bedford-zeiterion-performing-arts-center-9-18-2026%2Fproduction%2F6488699%3Futm_term%3Dproduction-6488699&intsrc=CATF_7904",
+          "name": "Choir! Choir! Choir",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "vivid-seats.pxf.io",
+          "field": "Website (en)",
+          "url": "https://vivid-seats.pxf.io/c/258147/1017970/12730?prodsku=6451002&u=https%3A%2F%2Fwww.vividseats.com%2Flunasa-irish-solstice-tickets-groton-groton-hill-music-center-12-18-2026%2Fproduction%2F6451002%3Futm_term%3Dproduction-6451002&intsrc=CATF_7904",
+          "name": "Lunasa - Irish Solstice Celebration",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "tickets.holdmyticket.com",
+      53,
+      {
+        "Tickets link (en)": 51,
+        "Website (en)": 2
+      },
+      [
+        {
+          "domain": "tickets.holdmyticket.com",
+          "field": "Tickets link (en)",
+          "url": "https://tickets.holdmyticket.com/tickets/458105",
+          "name": "Agent Orange, The Drowns",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "tickets.holdmyticket.com",
+          "field": "Tickets link (en)",
+          "url": "https://tickets.holdmyticket.com/tickets/459972",
+          "name": "Nocteris, Absent Cardinal, Deceiving the Masses, Point Nemo",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ],
+    [
+      "meijergardens.org",
+      53,
+      {
+        "Website (en)": 32,
+        "Tickets link (en)": 21
+      },
+      [
+        {
+          "domain": "meijergardens.org",
+          "field": "Website (en)",
+          "url": "https://www.meijergardens.org/calendar/tuesday-evening-music-club/",
+          "name": "Tuesday Evening Music Club",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "meijergardens.org",
+          "field": "Tickets link (en)",
+          "url": "https://www.meijergardens.org/events/five-for-fighting-edwin-mccain/?occurrence=2026-06-10",
+          "name": "Five For Fighting & Edwin McCain",
+          "data_source": "CitySpark",
+          "music_category": "Concerts"
+        }
+      ]
+    ],
+    [
+      "artscapecod.org",
+      52,
+      {
+        "Website (en)": 52
+      },
+      [
+        {
+          "domain": "artscapecod.org",
+          "field": "Website (en)",
+          "url": "https://artscapecod.org/event/bart-weisman-jazz-group-at-the-vine-in-falmouth/",
+          "name": "Bart Weisman Jazz Group at The Vine in Falmouth",
+          "data_source": "CitySpark",
+          "music_category": ""
+        },
+        {
+          "domain": "artscapecod.org",
+          "field": "Website (en)",
+          "url": "https://artscapecod.org/event/monthly-free-community-drumming/",
+          "name": "Monthly Free Community Drumming",
+          "data_source": "CitySpark",
+          "music_category": ""
+        }
+      ]
+    ]
+  ]
+}

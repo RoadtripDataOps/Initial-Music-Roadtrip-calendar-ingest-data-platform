@@ -1,0 +1,1410 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "CitySpark API",
+    "description": "Usage of the CitySpark API requires an API key and CitySpark account",
+    "termsOfService": "https://cityspark.com/terms-of-use",
+    "contact": {
+      "name": "CitySpark Support",
+      "url": "https://cityspark.com",
+      "email": "support@CitySpark.com"
+    },
+    "version": "2.0"
+  },
+  "paths": {
+    "/v2/event/search": {
+      "post": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "Event Search",
+        "description": "Filters passed in are applied on top of those already specified as defaults on the portal except in the case of location and radius.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchEventRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EventSeries"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/event/details": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "Event Details",
+        "description": "Lookup details for a specific event",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "portalScriptId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "descriptionFormat",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/DescriptionFormat"
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventSeries"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/event/categories": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "Event Category List",
+        "description": "Returns the list of possible categories",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EventCategory"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/user": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get Users",
+        "description": "Returns information on users that have interacted with a specific portal",
+        "parameters": [
+          {
+            "name": "portalScriptId",
+            "in": "query",
+            "description": "The portal context for which you will be retrieving users",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includePromotions",
+            "in": "query",
+            "description": "Indicates whether or not to include promotions.  Default is true",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "includeSubmissions",
+            "in": "query",
+            "description": "Indicates whether or not to include submissions.  Default is true",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "If includeSubmissions then include submissions as of this date.  Defaults to 30 days ago.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "numberOfDays",
+            "in": "query",
+            "description": "Used in correlation with the startDate to determine how many days of promotions or submissions to include.  Defaults to 30.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetUsersResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/user/details": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "User Details",
+        "description": "Checks if a user exists in the system.",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "description": "Email of the User to check for",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/v2/promotion/events-flat": {
+      "get": {
+        "tags": [
+          "Promotions"
+        ],
+        "summary": "Flat Event Promotions",
+        "description": "Checks if a user exists in the system.",
+        "parameters": [
+          {
+            "name": "portalScriptId",
+            "in": "query",
+            "description": "The portal context for which you will be retrieving users",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "asOfDate",
+            "in": "query",
+            "description": "If the asOfDate is present than the results will show all currently approved and running promotions as of the Date specified.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "If asOfDate is not specified the startDate will be used to return promotions based upon when they were submitted taking into account the numberOfDays field.  Defaults to 30 days ago.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "numberOfDays",
+            "in": "query",
+            "description": "Used in correlation with the asOfDate to determine how many days of promotions to include.  Defaults to 30.",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "asCsv",
+            "in": "query",
+            "description": "If specified the results will be returned in CSV format",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserPromotionFlat"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/auth/create-token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Create JWT Token",
+        "description": "Generates a JWT token with the same access as the provided API Key. Useful for creating temporary bearer tokens for web clients.",
+        "operationId": "Name JWT Token",
+        "parameters": [
+          {
+            "name": "expiresAfter",
+            "in": "query",
+            "description": "Value in minutes that the token will expire after, max is 120 minutes, default is 30",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DescriptionFormat": {
+        "enum": [
+          "PlainText",
+          "Html",
+          "MarkDown",
+          "Blank"
+        ],
+        "default": "PlainText"
+      },
+      "EventCategory": {
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The unique identifier of the category",
+            "format": "int32"
+          },
+          "parentCategoryId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The parent category of the event (if any)",
+            "format": "int32"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The name of the event category"
+          }
+        },
+        "description": "Represents a category for an event"
+      },
+      "EventContact": {
+        "type": "object",
+        "properties": {
+          "organization": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Contact Organization"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Contact Name"
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Contact Email Address"
+          },
+          "phone": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Contact Phone Number"
+          },
+          "labels": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Event Labels - only included if requested"
+          }
+        },
+        "description": "Contact Information for the Event"
+      },
+      "EventImage": {
+        "type": "object",
+        "properties": {
+          "smallImageUrl": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The small event image"
+          },
+          "mediumImageUrl": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The medium event image"
+          },
+          "largeImageUrl": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The large event image"
+          }
+        },
+        "description": "Represents the different sizes for an event image URL"
+      },
+      "EventInstance": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "description": "The start of the event specified in local time",
+            "format": "date-time"
+          },
+          "end": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The end of the event specified in local time",
+            "format": "date-time"
+          },
+          "hasTime": {
+            "type": "boolean",
+            "description": "Whether or not the start includes the time"
+          },
+          "allDay": {
+            "type": "boolean",
+            "description": "Whether or not the event is an all-day event"
+          }
+        },
+        "description": "Represents a date of an event series"
+      },
+      "EventLink": {
+        "type": "object",
+        "properties": {
+          "isSponsor": {
+            "type": "boolean",
+            "description": "Specifies whether or not this is a sponsor link"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The name/text of the event link"
+          },
+          "linkUrl": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The url of the link"
+          },
+          "logoUrl": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The logo image url of the event link"
+          }
+        },
+        "description": "Represents a link for more info"
+      },
+      "EventLocation": {
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "The latitude of the event location.",
+            "format": "double"
+          },
+          "longitude": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "The longitude of the event location.",
+            "format": "double"
+          },
+          "city": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The city of the event location"
+          },
+          "state": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The state of the event location"
+          },
+          "address": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The address of the event location"
+          },
+          "country": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The country of the event location"
+          },
+          "locationName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The location name (venue) of the event"
+          }
+        },
+        "description": "Represents the location of the event"
+      },
+      "EventSeries": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Identifier for the event.  Used to uniquely identify an event",
+            "format": "int64"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The name of the event"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Description of the event"
+          },
+          "summary": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Short description of the event"
+          },
+          "primaryImage": {
+            "description": "The image that best represents the event",
+            "$ref": "#/components/schemas/EventImage"
+          },
+          "labels": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Event Labels (empty if not requested)"
+          },
+          "socials": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SocialSite"
+            },
+            "description": "Social Media Information for the Event"
+          },
+          "categories": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/EventCategory"
+            },
+            "description": "Categories that represent the type of event"
+          },
+          "format": {
+            "description": "The format of the event if known.  In person can be assumed when not specified",
+            "$ref": "#/components/schemas/FormatOfEvent"
+          },
+          "location": {
+            "description": "Location information for the event",
+            "$ref": "#/components/schemas/EventLocation"
+          },
+          "instances": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/EventInstance"
+            },
+            "description": "The dates of the event series"
+          },
+          "price": {
+            "description": "Pricing information for the event",
+            "$ref": "#/components/schemas/Price"
+          },
+          "lastUpdatedDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The date the event was last updated in the system",
+            "format": "date-time"
+          },
+          "popularity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The popularity of the event",
+            "format": "int32"
+          },
+          "interest": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The interest level of the event- levels are roughly 0-9 low and only of interest within say a 5 mile radius,\n10-29 low but of general appeal many good events still in this range but a smaller audience such as a library event, 30 low but a larger audience, 50 standard interest, 70+ high",
+            "format": "int32"
+          },
+          "links": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/EventLink"
+            },
+            "description": "The links for more information on the event"
+          },
+          "ticketUrl": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The primary url of the ticket for the event"
+          },
+          "enhanced": {
+            "type": "boolean",
+            "description": "Whether or not the event has been enhanced on the portal"
+          },
+          "start": {
+            "type": "string",
+            "description": "The start date and time of the event series in local time",
+            "format": "date-time"
+          },
+          "end": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The end date and time of the event series in local time",
+            "format": "date-time"
+          },
+          "startUtc": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The start date in UTC based on location of the event",
+            "format": "date-time"
+          },
+          "endUtc": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The end date in UTC based on location of the event",
+            "format": "date-time"
+          },
+          "hasTime": {
+            "type": "boolean"
+          },
+          "url": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Url of the event found where the portal is set up at."
+          },
+          "handPicked": {
+            "type": "boolean",
+            "description": "Whether or not the event has been hand picked by admin. Displayed as 'Editors Pick'"
+          },
+          "customField": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Custom Field defined in Portal"
+          },
+          "contact": {
+            "description": "Contact Information for the Event",
+            "$ref": "#/components/schemas/EventContact"
+          },
+          "media": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Videos for the Event primarily from youtube, vimeo and viddler"
+          }
+        },
+        "description": "Represents a series of a single event"
+      },
+      "FormatOfEvent": {
+        "enum": [
+          "UnSpecified",
+          "InPerson",
+          "Virtual",
+          "Hybrid"
+        ]
+      },
+      "GetUsersResponse": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSeries"
+            }
+          }
+        },
+        "description": "Response for when getting events"
+      },
+      "Price": {
+        "type": "object",
+        "properties": {
+          "lowerPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "The lower end of the event price",
+            "format": "double"
+          },
+          "upperPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "The upper end of the event price",
+            "format": "double"
+          },
+          "free": {
+            "type": "boolean",
+            "description": "Whether or not the event is free"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Additional text information about the price"
+          }
+        },
+        "description": "Represents the price of an event"
+      },
+      "SearchEventRequest": {
+        "required": [
+          "portalScriptId"
+        ],
+        "type": "object",
+        "properties": {
+          "portalScriptId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The portal context for which you will be retrieving events",
+            "example": "Your-Script-ID-Here"
+          },
+          "searchTerm": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The text of the event search",
+            "example": "Set labels and categories to null to pull calendar defaults"
+          },
+          "latitude": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "The center point latitude of the event search.  Defaults to the latitude set on the portal",
+            "format": "double"
+          },
+          "longitude": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "The center point longitude of the event search.  Defaults to the longitude set on the portal",
+            "format": "double"
+          },
+          "radius": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "description": "The radius of the event search from the center.  Defaults to what is set on the portal (normally 25)",
+            "format": "double"
+          },
+          "categories": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            },
+            "description": "The categories to show in the search.  Is applied in addition to the categories set on the portal",
+            "example": [
+              6,
+              2
+            ]
+          },
+          "interest": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "Minimum interest level to show in the search.  Defaults to what is set on the portal. Interest levels are roughly 0-9 low and only of interest within say a 5 mile radius,\n10-29 low but of general appeal many good events still in this range but a smaller audience such as a library event, 30 low but a larger audience, 50 standard interest, 70+ high",
+            "format": "int32"
+          },
+          "labels": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "The labels to filter by",
+            "example": [
+              "matchingLabel"
+            ]
+          },
+          "blockVirtual": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Set to true to block virtual events"
+          },
+          "includeLabels": {
+            "type": "boolean",
+            "description": "Include labels in the results, will be excluded if not set",
+            "default": false
+          },
+          "includeInstances": {
+            "type": "boolean",
+            "description": "Include additional dates when the event will be happening",
+            "default": false
+          },
+          "handPicked": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Whether to return only Editors Picks"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The number of records to return.  Defaults to 25, maximum of 200",
+            "format": "int32"
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "What page of events to return. Defaults to 1",
+            "format": "int32",
+            "default": 1
+          },
+          "lastUpdatedDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The cutoff for event updates - events will be pulled after this point only\nif the updated date is after the specified date.  Defaults to not being used as a filter",
+            "format": "date-time"
+          },
+          "startDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The begin event date filter.  Defaults to today",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The end.  Defaults to not being used as a filter",
+            "format": "date-time"
+          },
+          "sortBy": {
+            "description": "How to Sort the events, defaults to DayPopularity",
+            "$ref": "#/components/schemas/SortBy"
+          },
+          "descriptionFormat": {
+            "description": "The format descriptions should be returned in.  Currently only bold, italics, paragraphs and line breaks are supported",
+            "$ref": "#/components/schemas/DescriptionFormat"
+          },
+          "polygonPoints": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "array",
+              "items": {
+                "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+                "type": [
+                  "number",
+                  "string"
+                ],
+                "format": "double"
+              }
+            },
+            "description": "Polygon of long, lat points to search within.  Can be created using https://geojson.io or similar apps.  Max area of ~150,000 sq kilometers",
+            "example": [
+              [
+                -87.0402,
+                44.7423
+              ],
+              [
+                -88.7053,
+                44.7423
+              ],
+              [
+                -88.7053,
+                41.3162
+              ],
+              [
+                -87.0402,
+                41.3162
+              ],
+              [
+                -87.0402,
+                44.7423
+              ]
+            ]
+          }
+        },
+        "description": "Represents the different elements of an event request.  All Parameters are optional unless marked as required"
+      },
+      "SocialSite": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fullUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "platform": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "current possible values are Twitter, Facebook, Instagram, Pinterest, TikTok, YouTube, LinkedIn, Snapchat, BlueSky, Other"
+          }
+        }
+      },
+      "SortBy": {
+        "enum": [
+          "DayPopularity",
+          "Start",
+          "Popularity",
+          "DayNameAtoZ",
+          "NameAtoZ",
+          "NameZtoA"
+        ],
+        "default": "DayPopularity"
+      },
+      "TokenResult": {
+        "required": [
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "UserInfo": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Id of the User",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the user"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email of the user"
+          }
+        },
+        "description": "Response for when checking to see if a user exists"
+      },
+      "UserPromotion": {
+        "type": "object",
+        "properties": {
+          "eventName": {
+            "type": "string",
+            "description": "Name of event associated to promotion"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Promotion Amount",
+            "format": "double"
+          },
+          "type": {
+            "type": "string",
+            "description": "Promotion type"
+          },
+          "orderDate": {
+            "type": "string",
+            "description": "Date the promotion was entered",
+            "format": "date-time"
+          },
+          "eventId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "event associated to the promotion.  Will be null if there is no event associated",
+            "format": "int64"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventCategory"
+            },
+            "description": "categories associated with the event"
+          }
+        },
+        "description": "Promotions entered by the user"
+      },
+      "UserPromotionFlat": {
+        "type": "object",
+        "properties": {
+          "eventName": {
+            "type": "string",
+            "description": "Name of event associated to promotion"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "description": "Promotion Amount",
+            "format": "double"
+          },
+          "type": {
+            "type": "string",
+            "description": "Promotion type"
+          },
+          "orderDate": {
+            "type": "string",
+            "description": "Date the promotion was entered",
+            "format": "date-time"
+          },
+          "eventId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "event associated to the promotion.  Will be null if there is no event associated",
+            "format": "int64"
+          },
+          "promoImage": {
+            "type": "string",
+            "description": "Url of the image associated with the promotion if one exists."
+          },
+          "destinationUrl": {
+            "type": "string",
+            "description": "Url of the website associated to the promotion if one exists."
+          }
+        },
+        "description": "Promotions entered by the user"
+      },
+      "UserSeries": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Identifier for the user.  Used to uniquely identify a user",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the user"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email of the User"
+          },
+          "promos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserPromotion"
+            },
+            "description": "promotions entered by the user"
+          },
+          "submissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSubmission"
+            },
+            "description": "submissions entered by the user"
+          }
+        },
+        "description": "Represents a series of a single user"
+      },
+      "UserSubmission": {
+        "type": "object",
+        "properties": {
+          "eventName": {
+            "type": "string",
+            "description": "Event Name"
+          },
+          "eventId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Event Identifier",
+            "format": "int64"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventCategory"
+            },
+            "description": "Event Categories"
+          },
+          "submitDate": {
+            "type": "string",
+            "description": "Date the promotion was entered",
+            "format": "date-time"
+          }
+        },
+        "description": "Promotions entered by the user"
+      }
+    },
+    "securitySchemes": {
+      "ApiKey": {
+        "type": "apiKey",
+        "description": "API Key must be provided in 'X-API-Key' header.",
+        "name": "X-API-Key",
+        "in": "header"
+      },
+      "Bearer": {
+        "type": "http",
+        "description": "JWT Authorization header using the Bearer scheme.",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "ApiKey": [],
+      "Bearer": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Events"
+    },
+    {
+      "name": "Users"
+    },
+    {
+      "name": "Promotions"
+    },
+    {
+      "name": "Auth"
+    }
+  ]
+}

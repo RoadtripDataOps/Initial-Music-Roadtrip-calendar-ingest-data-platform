@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel">
+    <h1>POI Duplicate Review</h1>
+    <p>
+      This lightweight view shows duplicate dedupe keys currently present in
+      <code>poi_locations</code>. The generated CSV at
+      <code>data/generated/current_poi_duplicate_candidates.csv</code> is the
+      fuller review artifact for strong, medium, and weak candidates.
+    </p>
+  </section>
+
+  {% if duplicate_groups %}
+    <table>
+      <thead>
+        <tr>
+          <th>Dedupe key</th>
+          <th>Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for key, count in duplicate_groups %}
+          <tr>
+            <td class="url" data-label="Dedupe key">{{ key }}</td>
+            <td data-label="Count">{{ count }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <section class="empty-state">
+      <h2>No duplicate POI records in the table</h2>
+      <p>
+        The importer dedupes by deterministic POI key. Review generated duplicate
+        candidates before importing new source batches.
+      </p>
+    </section>
+  {% endif %}
+{% endblock %}

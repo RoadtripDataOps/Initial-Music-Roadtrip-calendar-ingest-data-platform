@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Events</h1>
+
+  {% if events %}
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Source</th>
+          <th>Dedupe</th>
+          <th>Location</th>
+          <th>Source URL</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in events %}
+          <tr>
+            <td data-label="Title">
+              <a href="/admin/events/{{ event.id }}">{{ event.title }}</a>
+            </td>
+            <td data-label="Start">{{ event.start_datetime.strftime("%Y-%m-%d %H:%M") }}</td>
+            <td data-label="End">
+              {{ event.end_datetime.strftime("%Y-%m-%d %H:%M") if event.end_datetime else "n/a" }}
+            </td>
+            <td data-label="Source">
+              {% if event.source %}
+                {{ event.source.organization_name }}
+              {% else %}
+                {{ event.source_type | replace("_", " ") | title }}
+              {% endif %}
+            </td>
+            <td data-label="Dedupe">
+              <span class="badge">{{ event.dedupe_confidence }}</span>
+              <span class="badge">{{ event.duplicate_status }}</span>
+              <span class="badge">{{ event.source_claim_count }} claim(s)</span>
+            </td>
+            <td data-label="Location">{{ event.location_text if event.location_text else "n/a" }}</td>
+            <td class="url" data-label="Source URL">
+              {% if event.source_url %}
+                <a href="{{ event.source_url }}">{{ event.source_url }}</a>
+              {% else %}
+                n/a
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <section class="empty-state">
+      <h2>No normalized events yet</h2>
+      <p>
+        No extracted events yet.
+      </p>
+      <p>
+        This page lists approved event records and their provenance. It
+        is empty until a crawl or approved file upload creates normalized events.
+      </p>
+      <a class="button" href="/admin/import-batches">Review import batches</a>
+    </section>
+  {% endif %}
+{% endblock %}

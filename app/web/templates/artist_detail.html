@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel">
+    <h1>{{ artist.display_name }}</h1>
+    <p><a href="/admin/artists">Back to artists</a></p>
+    <p>
+      <span class="badge">{{ artist.artist_type | replace("_", " ") | title }}</span>
+      <span class="badge">{{ artist.source_claim_count }} source claim(s)</span>
+      <span class="badge">{{ upcoming_event_count }} upcoming event(s)</span>
+      {% if artist.image_url %}
+        <span class="badge warning">{{ artist.image_clearance_status or "needs approval" }}</span>
+      {% endif %}
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>Artist Metadata</h2>
+    {% if artist.image_url %}
+      <p>
+        <img alt="{{ artist.display_name }}" src="{{ artist.image_url }}" style="max-width: 280px; border-radius: 8px;">
+      </p>
+    {% endif %}
+    <table>
+      <tbody>
+        <tr>
+          <th>Artist key</th>
+          <td>{{ artist.artist_key }}</td>
+        </tr>
+        <tr>
+          <th>Normalized name</th>
+          <td>{{ artist.normalized_name }}</td>
+        </tr>
+        <tr>
+          <th>Primary genre</th>
+          <td>{{ artist.primary_genre or "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Normalized genres</th>
+          <td>{{ artist.normalized_genres | join(", ") if artist.normalized_genres else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Provider genres</th>
+          <td>{{ artist.provider_genres | join(", ") if artist.provider_genres else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Spotify</th>
+          <td class="url">
+            {% if artist.spotify_url %}
+              <a href="{{ artist.spotify_url }}">{{ artist.spotify_url }}</a>
+            {% else %}
+              {{ artist.spotify_artist_id or "n/a" }}
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>JamBase ID</th>
+          <td>{{ artist.jambase_artist_id or "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Ticketmaster ID</th>
+          <td>{{ artist.ticketmaster_artist_id or "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>MusicBrainz ID</th>
+          <td>{{ artist.musicbrainz_id or "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Quality flags</th>
+          <td>{{ artist.quality_flags | join(", ") if artist.quality_flags else "none" }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>Linked Events</h2>
+    {% if artist.event_links %}
+      <table>
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Role</th>
+            <th>Rank</th>
+            <th>Date</th>
+            <th>Provider Artist ID</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for link in artist.event_links %}
+            {% if link.event %}
+              <tr>
+                <td data-label="Event"><a href="/admin/events/{{ link.event.id }}">{{ link.event.title }}</a></td>
+                <td data-label="Role">{{ link.role }}</td>
+                <td data-label="Rank">{{ link.performance_rank or "n/a" }}</td>
+                <td data-label="Date">{{ link.event.start_datetime.strftime("%Y-%m-%d %H:%M") if link.event.start_datetime else "n/a" }}</td>
+                <td data-label="Provider Artist ID">{{ link.provider_artist_id or "n/a" }}</td>
+              </tr>
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="notice">No linked events yet.</p>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Source Claims</h2>
+    {% if artist.source_claims %}
+      <table>
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Provider Artist ID</th>
+            <th>Genres</th>
+            <th>Confidence</th>
+            <th>Image</th>
+            <th>Source URL</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for claim in artist.source_claims %}
+            <tr>
+              <td data-label="Source">{{ claim.provider_name or claim.source_type }}</td>
+              <td data-label="Provider Artist ID">{{ claim.provider_artist_id or "n/a" }}</td>
+              <td data-label="Genres">{{ claim.genres | join(", ") if claim.genres else "n/a" }}</td>
+              <td data-label="Confidence">{{ "%.2f"|format(claim.match_confidence) if claim.match_confidence is not none else "n/a" }}</td>
+              <td data-label="Image">{{ "yes" if claim.image_url else "no" }}</td>
+              <td class="url" data-label="Source URL">
+                {% if claim.source_url %}
+                  <a href="{{ claim.source_url }}">{{ claim.source_url }}</a>
+                {% else %}
+                  n/a
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="notice">No source claims recorded.</p>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Image Candidates</h2>
+    {% if image_candidates %}
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Clearance</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for candidate in image_candidates %}
+            <tr>
+              <td data-label="ID"><a href="/admin/image-candidates/{{ candidate.id }}">#{{ candidate.id }}</a></td>
+              <td data-label="Role">{{ candidate.image_role }}</td>
+              <td data-label="Status">{{ candidate.candidate_status }}</td>
+              <td data-label="Clearance">{{ candidate.clearance_status }}</td>
+              <td data-label="Score">{{ "%.0f"|format(candidate.quality_score) if candidate.quality_score is not none else "n/a" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="notice">No artist image candidates yet.</p>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Background Job #{{ job.id }}</h1>
+  <p class="notice">
+    Payload, result, and error text are stored with sensitive provider fields redacted.
+  </p>
+
+  <section class="actions">
+    <a class="button secondary" href="/admin/jobs">Back to Jobs</a>
+    {% if job.status in ["failure", "cancelled", "skipped"] %}
+      <form method="post" action="/admin/jobs/{{ job.id }}/retry">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Retry job</button>
+      </form>
+    {% endif %}
+    {% if job.status in ["pending", "running"] %}
+      <form method="post" action="/admin/jobs/{{ job.id }}/cancel">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="danger" type="submit">Cancel job</button>
+      </form>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Status</h2>
+    <table>
+      <tbody>
+        <tr><th>Job type</th><td>{{ job.job_type }}</td></tr>
+        <tr><th>Status</th><td>{{ job.status }}</td></tr>
+        <tr><th>Queue</th><td>{{ job.queue_name }}</td></tr>
+        <tr><th>Priority</th><td>{{ job.priority }}</td></tr>
+        <tr><th>Attempts</th><td>{{ job.attempts }} / {{ job.max_attempts }}</td></tr>
+        <tr><th>Locked by</th><td>{{ job.locked_by or "n/a" }}</td></tr>
+        <tr><th>Scheduled for</th><td>{{ job.scheduled_for or "now" }}</td></tr>
+        <tr><th>Started</th><td>{{ job.started_at or "n/a" }}</td></tr>
+        <tr><th>Completed</th><td>{{ job.completed_at or "n/a" }}</td></tr>
+        <tr><th>Created by</th><td>{{ job.created_by or "system" }}</td></tr>
+        <tr><th>Error</th><td>{{ job.error_message or "none" }}</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>Related Records</h2>
+    <div class="actions">
+      {% if job.result.app_feed_export_id %}
+        <a class="button secondary" href="/admin/app-feed">App feed export #{{ job.result.app_feed_export_id }}</a>
+      {% endif %}
+      {% if job.result.api_feed_run_id %}
+        <a class="button secondary" href="/admin/api-feed-runs/{{ job.result.api_feed_run_id }}">API feed run #{{ job.result.api_feed_run_id }}</a>
+      {% endif %}
+      {% if job.result.crawl_run_id %}
+        <a class="button secondary" href="/admin/crawl-runs/{{ job.result.crawl_run_id }}">Crawl run #{{ job.result.crawl_run_id }}</a>
+      {% endif %}
+      {% if job.result.image_candidate_id %}
+        <a class="button secondary" href="/admin/image-candidates?candidate_id={{ job.result.image_candidate_id }}">Image candidate #{{ job.result.image_candidate_id }}</a>
+      {% endif %}
+      {% if job.result.selected_candidate_id %}
+        <a class="button secondary" href="/admin/image-candidates?candidate_id={{ job.result.selected_candidate_id }}">Selected candidate #{{ job.result.selected_candidate_id }}</a>
+      {% endif %}
+      {% if job.result.event_id %}
+        <a class="button secondary" href="/admin/events/{{ job.result.event_id }}">Event #{{ job.result.event_id }}</a>
+      {% endif %}
+      {% if not job.result %}
+        <span class="badge">No related records yet</span>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Payload</h2>
+    <pre class="code-block">{{ payload }}</pre>
+  </section>
+
+  <section class="panel">
+    <h2>Result</h2>
+    <pre class="code-block">{{ result }}</pre>
+  </section>
+{% endblock %}

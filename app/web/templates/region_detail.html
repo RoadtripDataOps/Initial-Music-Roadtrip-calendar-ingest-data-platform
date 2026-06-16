@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .feed-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin: 20px 0;
+    }
+
+    .feed-tile {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+      padding: 16px;
+    }
+
+    .feed-number {
+      display: block;
+      color: var(--admin-primary-dark);
+      font-size: 2rem;
+      font-weight: 850;
+      line-height: 1;
+    }
+  </style>
+
+  <h1>{{ region.name }}</h1>
+  <p class="notice">
+    {{ region.region_type | replace("_", " ") }} · {{ [region.city, region.state, region.country] | select | join(", ") }}
+  </p>
+
+  <section class="actions">
+    <a class="button secondary" href="/admin/regions">All Regions</a>
+    <a class="button" href="/admin/regions/{{ region.id }}/events">Events</a>
+    <a class="button secondary" href="/admin/regions/{{ region.id }}/pois">POIs</a>
+    <a class="button secondary" href="/admin/regions/{{ region.id }}/sources">Sources</a>
+    <a class="button secondary" href="/admin/regions/{{ region.id }}/quality">Quality</a>
+    <a class="button secondary" href="/admin/regions/{{ region.id }}/report">Partner Report</a>
+    <a class="button secondary" href="/admin/app-feed/regions/{{ region.id }}/events.json">Events JSON</a>
+  </section>
+
+  <section class="feed-grid" aria-label="Region summary">
+    <article class="feed-tile"><span class="feed-number">{{ event_count }}</span>Events</article>
+    <article class="feed-tile"><span class="feed-number">{{ poi_count }}</span>POIs</article>
+    <article class="feed-tile"><span class="feed-number">{{ source_count }}</span>Calendar sources</article>
+    <article class="feed-tile"><span class="feed-number">{{ approved_source_count }}</span>Approved sources</article>
+    <article class="feed-tile"><span class="feed-number">{{ extracted_candidate_count }}</span>Extracted candidates</article>
+    <article class="feed-tile"><span class="feed-number">{{ app_event_count }}</span>App-feed events</article>
+    <article class="feed-tile"><span class="feed-number">{{ app_poi_count }}</span>App-feed POIs</article>
+    <article class="feed-tile">
+      <span class="feed-number">{{ latest_snapshot.snapshot.quality_score if latest_snapshot else "n/a" }}</span>
+      Latest quality score
+    </article>
+  </section>
+
+  <section class="panel">
+    <h2>Source Coverage</h2>
+    <table>
+      <tbody>
+        <tr><th>Approved calendar sources</th><td>{{ source_coverage.approved_calendar_sources }}</td></tr>
+        <tr><th>Pending calendar sources</th><td>{{ source_coverage.pending_calendar_sources }}</td></tr>
+        <tr><th>Failed crawl sources</th><td>{{ source_coverage.failed_crawl_sources }}</td></tr>
+        <tr><th>Unsupported extraction sources</th><td>{{ source_coverage.unsupported_extraction_sources }}</td></tr>
+        <tr><th>Sources due for crawl</th><td>{{ source_coverage.sources_due_for_crawl }}</td></tr>
+        <tr><th>Events found from region sources</th><td>{{ source_coverage.events_found_from_region_sources }}</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>Region Details</h2>
+    <table>
+      <tbody>
+        <tr><th>Key</th><td>{{ region.region_key }}</td></tr>
+        <tr><th>Slug</th><td>{{ region.slug }}</td></tr>
+        <tr><th>Partner status</th><td>{{ region.partner_status | replace("_", " ") }}</td></tr>
+        <tr><th>Certified</th><td>{{ "Yes" if region.certified else "No" }}</td></tr>
+        <tr><th>Launch status</th><td>{{ region.launch_status }}</td></tr>
+        <tr><th>Center</th><td>{{ region.latitude or "n/a" }}, {{ region.longitude or "n/a" }}</td></tr>
+        <tr><th>Radius</th><td>{{ region.radius_miles or "n/a" }}</td></tr>
+        <tr><th>Timezone</th><td>{{ region.timezone or "n/a" }}</td></tr>
+      </tbody>
+    </table>
+  </section>
+{% endblock %}

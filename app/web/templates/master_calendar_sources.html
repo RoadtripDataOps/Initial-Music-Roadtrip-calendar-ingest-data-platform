@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .page-kicker {
+      max-width: 760px;
+      margin-bottom: 18px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .summary-card {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+      box-shadow: var(--shadow);
+    }
+
+    .summary-number {
+      display: block;
+      color: var(--admin-primary-dark);
+      font-size: 1.8rem;
+      font-weight: 850;
+      line-height: 1;
+    }
+
+    .filter-drawer {
+      margin: 18px 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+    }
+
+    .filter-drawer summary {
+      cursor: pointer;
+      padding: 14px 16px;
+      color: var(--admin-primary-dark);
+      font-weight: 800;
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      padding: 0 16px 16px;
+    }
+
+    .source-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+      box-shadow: var(--shadow);
+    }
+
+    .source-table-wrap table {
+      border: 0;
+    }
+
+    .source-table-wrap th {
+      white-space: nowrap;
+    }
+
+    .source-actions {
+      min-width: 210px;
+    }
+
+    .inline-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .inline-actions form {
+      display: inline-flex;
+      min-width: 0;
+    }
+
+    .inline-actions button {
+      min-height: 34px;
+      padding: 6px 9px;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 1100px) {
+      .summary-grid,
+      .filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .summary-grid,
+      .filter-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <p class="page-kicker">
+    Approved and pending calendar sources used for crawl operations.
+  </p>
+
+  <form id="bulk-crawl-selected" method="post" action="/admin/master-calendar-sources/bulk-crawl">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  </form>
+
+  <form id="bulk-crawl-filter" method="post" action="/admin/master-calendar-sources/bulk-crawl-filter">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="status" value="{{ filters.status }}">
+    <input type="hidden" name="review_status" value="{{ filters.review_status }}">
+    <input type="hidden" name="crawl_frequency" value="{{ filters.crawl_frequency }}">
+    <input type="hidden" name="city" value="{{ filters.city }}">
+    <input type="hidden" name="state" value="{{ filters.state }}">
+    <input type="hidden" name="region_or_market" value="{{ filters.region_or_market }}">
+    <input type="hidden" name="source_type" value="{{ filters.source_type }}">
+    <input type="hidden" name="organization" value="{{ filters.organization }}">
+    <input type="hidden" name="last_crawl_status" value="{{ filters.last_crawl_status }}">
+    <input type="hidden" name="due_for_crawl" value="{{ filters.due_for_crawl }}">
+    <input type="hidden" name="risk_level" value="{{ filters.risk_level }}">
+  </form>
+
+  <section class="actions" aria-label="Master source actions">
+    <form method="post" action="/admin/crawl-queue/run-due">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Run all due</button>
+    </form>
+    <button type="submit" form="bulk-crawl-selected" aria-label="Run crawl for selected sources">Bulk crawl selected</button>
+    <button
+      type="submit"
+      form="bulk-crawl-selected"
+      formaction="/admin/master-calendar-sources/bulk-crawl/background"
+      aria-label="Run selected sources in background"
+    >Bulk crawl in background</button>
+    <a class="button secondary" href="/submit-calendar/sources-file">Import calendar sources</a>
+    <a class="button secondary" href="/templates/calendar-sources-template.csv">Download calendar-source template</a>
+  </section>
+
+  <section class="summary-grid" aria-label="Master source summary">
+    <article class="summary-card"><span class="summary-number">{{ summary.total }}</span>Total sources</article>
+    <article class="summary-card"><span class="summary-number">{{ summary.approved }}</span>Approved</article>
+    <article class="summary-card"><span class="summary-number">{{ summary.due_now }}</span>Due now</article>
+    <article class="summary-card"><span class="summary-number">{{ summary.failed_last_crawl }}</span>Failed last crawl</article>
+    <article class="summary-card"><span class="summary-number">{{ summary.pending_review }}</span>Pending review</article>
+    <article class="summary-card"><span class="summary-number">{{ summary.never_crawled }}</span>Never crawled</article>
+  </section>
+
+  <details class="filter-drawer">
+    <summary>Show filters</summary>
+    <form method="get" action="/admin/master-calendar-sources">
+      <div class="filter-grid">
+        <div class="field">
+          <label for="status">Status</label>
+          <select id="status" name="status">
+            <option value="">Any status</option>
+            {% for value in ["pending", "approved", "paused", "blocked"] %}
+              <option value="{{ value }}" {{ "selected" if filters.status == value else "" }}>{{ value | replace("_", " ") | title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="review_status">Review status</label>
+          <select id="review_status" name="review_status">
+            <option value="">Any review status</option>
+            {% for value in ["pending_review", "approved", "rejected", "quarantined", "blocked"] %}
+              <option value="{{ value }}" {{ "selected" if filters.review_status == value else "" }}>{{ value | replace("_", " ") | title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="crawl_frequency">Crawl frequency</label>
+          <select id="crawl_frequency" name="crawl_frequency">
+            <option value="">Any frequency</option>
+            {% for value in frequencies %}
+              <option value="{{ value }}" {{ "selected" if filters.crawl_frequency == value else "" }}>{{ value | title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field"><label for="city">City</label><input id="city" name="city" value="{{ filters.city }}"></div>
+        <div class="field"><label for="state">State</label><input id="state" name="state" value="{{ filters.state }}"></div>
+        <div class="field"><label for="region_or_market">Region / Market</label><input id="region_or_market" name="region_or_market" value="{{ filters.region_or_market }}"></div>
+        <div class="field"><label for="source_type">Source type</label><input id="source_type" name="source_type" value="{{ filters.source_type }}"></div>
+        <div class="field"><label for="organization">Organization</label><input id="organization" name="organization" value="{{ filters.organization }}"></div>
+        <div class="field">
+          <label for="last_crawl_status">Last crawl status</label>
+          <select id="last_crawl_status" name="last_crawl_status">
+            <option value="">Any result</option>
+            {% for value in ["success", "failure"] %}
+              <option value="{{ value }}" {{ "selected" if filters.last_crawl_status == value else "" }}>{{ value | title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="risk_level">Risk level</label>
+          <select id="risk_level" name="risk_level">
+            <option value="">Any risk</option>
+            {% for value in ["low", "medium", "high", "blocked"] %}
+              <option value="{{ value }}" {{ "selected" if filters.risk_level == value else "" }}>{{ value | title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <label class="checkbox">
+          <input type="checkbox" name="due_for_crawl" value="1" {{ "checked" if filters.due_for_crawl else "" }}>
+          <span>Due for crawl</span>
+        </label>
+      </div>
+      <div class="actions" style="padding: 0 16px 16px;">
+        <button type="submit">Apply filters</button>
+        <a class="button secondary" href="/admin/master-calendar-sources">Reset filters</a>
+        <button type="submit" form="bulk-crawl-filter">Run matching filtered sources</button>
+      </div>
+    </form>
+  </details>
+
+  {% if rows %}
+    <section class="source-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th><span class="visually-hidden">Select</span></th>
+            <th>Source name</th>
+            <th>Domain</th>
+            <th>City/State</th>
+            <th>Status</th>
+            <th>Review</th>
+            <th>Frequency</th>
+            <th>Last crawl</th>
+            <th>Next due</th>
+            <th>Last result</th>
+            <th>Event count</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            {% set source = row.source %}
+            <tr>
+              <td data-label="Select">
+                <input form="bulk-crawl-selected" type="checkbox" name="source_ids" value="{{ source.id }}">
+              </td>
+              <td data-label="Source name">
+                <a href="/admin/master-calendar-sources/{{ source.id }}">{{ source.source_name }}</a>
+                <br><span class="url">{{ source.canonical_url }}</span>
+                {% if row.crawl_block_reason %}<br><span class="notice">Skip: {{ row.crawl_block_reason }}</span>{% endif %}
+              </td>
+              <td data-label="Domain">{{ source.domain or "n/a" }}</td>
+              <td data-label="City/State">
+                {{ source.city or "n/a" }}{% if source.state %}, {{ source.state }}{% endif %}
+                {% if source.region_or_market %}<br>{{ source.region_or_market }}{% endif %}
+              </td>
+              <td data-label="Status"><span class="badge {{ 'success' if source.status == 'approved' else 'warning' if source.status == 'pending' else 'failure' if source.status == 'blocked' else '' }}">{{ source.status | replace("_", " ") | title }}</span></td>
+              <td data-label="Review"><span class="badge {{ 'success' if source.review_status == 'approved' else 'warning' if source.review_status == 'pending_review' else 'failure' }}">{{ source.review_status | replace("_", " ") | title }}</span></td>
+              <td data-label="Frequency">{{ source.crawl_frequency or "manual" }}</td>
+              <td data-label="Last crawl">{{ row.last_crawl.fetched_at.strftime("%Y-%m-%d %H:%M") if row.last_crawl else "Never" }}</td>
+              <td data-label="Next due">
+                {% if row.next_crawl_due_at %}
+                  {{ row.next_crawl_due_at.strftime("%Y-%m-%d %H:%M") }}
+                  {% if row.is_due_for_crawl %}<br><span class="badge warning">Due now</span>{% endif %}
+                {% else %}
+                  manual
+                {% endif %}
+              </td>
+              <td data-label="Last result">{{ row.last_crawl_status or "n/a" }}</td>
+              <td data-label="Event count">{{ row.latest_event_count }}</td>
+              <td class="source-actions" data-label="Actions">
+                <div class="inline-actions">
+                  <button form="bulk-crawl-selected" type="submit" name="source_ids" value="{{ source.id }}">Run Crawl</button>
+                  <form method="post" action="/admin/master-calendar-sources/{{ source.id }}/status">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" name="action" value="approve">Approve</button>
+                    <button type="submit" name="action" value="pause">Pause</button>
+                    <button type="submit" name="action" value="block">Block</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% else %}
+    <section class="empty-state">
+      <h2>No master calendar sources yet</h2>
+      <p>
+        This page tracks deduped calendar URLs for crawl operations. It is empty
+        when no calendar URL has been submitted or all rows are hidden by filters.
+      </p>
+      <a class="button" href="/submit-calendar/url">Submit a calendar URL</a>
+    </section>
+  {% endif %}
+{% endblock %}

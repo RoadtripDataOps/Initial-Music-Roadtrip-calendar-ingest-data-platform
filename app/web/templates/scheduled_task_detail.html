@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ task.task_key }}</h1>
+  <p class="notice">Scheduled task definitions only enqueue jobs. Workers must be run separately.</p>
+
+  <section class="actions">
+    <a class="button secondary" href="/admin/scheduled-tasks">Back to Scheduled Tasks</a>
+    <form method="post" action="/admin/scheduled-tasks/{{ task.id }}/enqueue">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Enqueue now</button>
+    </form>
+    {% if last_job %}
+      <a class="button secondary" href="/admin/jobs/{{ last_job.id }}">Open last job</a>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Task Details</h2>
+    <table>
+      <tbody>
+        <tr><th>Type</th><td>{{ task.task_type }}</td></tr>
+        <tr><th>Enabled</th><td>{{ "yes" if task.enabled else "no" }}</td></tr>
+        <tr><th>Schedule type</th><td>{{ task.schedule_type }}</td></tr>
+        <tr><th>Interval minutes</th><td>{{ task.interval_minutes or "n/a" }}</td></tr>
+        <tr><th>Next run at</th><td>{{ task.next_run_at or "manual" }}</td></tr>
+        <tr><th>Last run at</th><td>{{ task.last_run_at or "never" }}</td></tr>
+        <tr><th>Last job</th><td>{{ task.last_job_id or "n/a" }}</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>Payload</h2>
+    <pre class="code-block">{{ payload }}</pre>
+  </section>
+{% endblock %}

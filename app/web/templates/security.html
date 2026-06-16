@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .security-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 20px 0 24px;
+    }
+
+    .security-card {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+      box-shadow: var(--shadow);
+    }
+
+    .security-number {
+      display: block;
+      color: var(--admin-primary-dark);
+      font-size: 1.8rem;
+      font-weight: 850;
+    }
+
+    @media (max-width: 900px) {
+      .security-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .security-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <h1>Security</h1>
+  <p class="notice">
+    Public intake, admin access, crawler safety, and provider-call guardrails.
+  </p>
+
+  <section class="security-grid" aria-label="Security signals">
+    <article class="security-card"><span class="security-number">{{ security.suspicious_submissions }}</span>Suspicious submissions</article>
+    <article class="security-card"><span class="security-number">{{ security.blocked_submissions }}</span>Blocked submissions</article>
+    <article class="security-card"><span class="security-number">{{ security.failed_logins }}</span>Failed logins</article>
+    <article class="security-card"><span class="security-number">{{ security.rate_limit_hits }}</span>Rate-limit hits</article>
+    <article class="security-card"><span class="security-number">{{ security.turnstile_failures }}</span>Turnstile failures</article>
+    <article class="security-card"><span class="security-number">{{ security.crawler_safety_blocks }}</span>Crawler safety blocks</article>
+    <article class="security-card"><span class="security-number">{{ security.provider_live_call_blocks }}</span>Provider live-call blocks</article>
+    <article class="security-card"><span class="security-number">{{ security.secrets_redaction_status | title }}</span>Secrets redaction status</article>
+  </section>
+
+  <section>
+    <h2>Recent Admin Actions</h2>
+    {% if security.recent_admin_actions %}
+      <table>
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>Actor</th>
+            <th>Action</th>
+            <th>Target</th>
+            <th>Metadata</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in security.recent_admin_actions %}
+            <tr>
+              <td data-label="When">{{ entry.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+              <td data-label="Actor">{{ entry.actor_username or "unknown" }}</td>
+              <td data-label="Action">{{ entry.action | replace("_", " ") | title }}</td>
+              <td data-label="Target">
+                {% if entry.target_type %}{{ entry.target_type }}{% endif %}
+                {% if entry.target_id %} #{{ entry.target_id }}{% endif %}
+              </td>
+              <td data-label="Metadata"><code>{{ entry.metadata_json }}</code></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <section class="empty-state">
+        <h2>No audit entries yet</h2>
+        <p>Login, review, crawl, image, POI, provider, and export actions will appear here.</p>
+      </section>
+    {% endif %}
+  </section>
+{% endblock %}

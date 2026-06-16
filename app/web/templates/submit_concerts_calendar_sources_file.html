@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel">
+    <div class="public-brand-form">
+      <img class="brand-logo brand-logo--header" src="/static/images/music-roadtrip-logo-circle.png" alt="Music Roadtrip logo">
+      <span class="badge success">Music Roadtrip Calendar Intake</span>
+    </div>
+    <span class="badge success">Calendar List</span>
+    <h1>Upload a calendar list</h1>
+    <p>
+      Upload a spreadsheet containing calendar links for venues, festivals,
+      tourism boards, chambers, or partner organizations.
+    </p>
+    <div class="actions">
+      <a class="button secondary" href="/templates/calendar-sources-template.csv">Download calendar list template CSV</a>
+      <a class="button secondary" href="/templates/calendar-sources-template.xlsx">Download calendar list template XLSX</a>
+    </div>
+
+    <form method="post" action="{{ form_action | default('/submit-calendar/sources-file') }}" enctype="multipart/form-data" novalidate>
+      <input type="hidden" name="form_rendered_at" value="{{ form_rendered_at }}">
+      <div aria-hidden="true" style="position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden;">
+        <label for="sources_website">Website</label>
+        <input id="sources_website" name="website" tabindex="-1" autocomplete="off" value="">
+      </div>
+
+      <div class="field">
+        <label for="organization_name">Organization name</label>
+        <input id="organization_name" name="organization_name" value="{{ values.get('organization_name', '') }}" required>
+      </div>
+      <div class="field">
+        <label for="contact_email">Contact email</label>
+        <input id="contact_email" name="contact_email" type="email" value="{{ values.get('contact_email', '') }}" required>
+      </div>
+      <div class="field">
+        <label for="uploaded_file">Calendar list spreadsheet</label>
+        <input id="uploaded_file" name="uploaded_file" type="file" accept=".csv,.xlsx" required>
+        <p class="notice">Upload a spreadsheet containing calendar links for venues, festivals, tourism boards, chambers, or partner organizations.</p>
+      </div>
+
+      <details>
+        <summary>Optional details</summary>
+        <div class="field">
+          <label for="contact_name">Contact name</label>
+          <input id="contact_name" name="contact_name" value="{{ values.get('contact_name', '') }}">
+        </div>
+        <div class="field">
+          <label for="notes">Notes</label>
+          <textarea id="notes" name="notes">{{ values.get('notes', '') }}</textarea>
+        </div>
+      </details>
+
+      <div class="field checkbox">
+        <input id="authorization_checkbox" name="authorization_checkbox" type="checkbox" value="true" required>
+        <label for="authorization_checkbox">
+          I confirm I am authorized to submit these calendars.
+        </label>
+      </div>
+      {% if errors.get("calendar_sources_file") %}
+        <div class="error">{{ errors["calendar_sources_file"] }}</div>
+      {% endif %}
+      {% if turnstile_enabled %}
+        <div class="field">
+          <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+          <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"></div>
+        </div>
+      {% endif %}
+      <button type="submit">Upload calendar list</button>
+    </form>
+  </section>
+{% endblock %}

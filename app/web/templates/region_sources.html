@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ region.name }} Sources</h1>
+  <p><a href="/admin/regions/{{ region.id }}">Back to region</a></p>
+  <section class="panel">
+    <h2>Coverage</h2>
+    <p>
+      Approved {{ coverage.approved_calendar_sources }} · Pending {{ coverage.pending_calendar_sources }} ·
+      Failed {{ coverage.failed_crawl_sources }} · Unsupported {{ coverage.unsupported_extraction_sources }} ·
+      Due {{ coverage.sources_due_for_crawl }}
+    </p>
+  </section>
+  {% if sources %}
+    <table>
+      <thead>
+        <tr>
+          <th>Source</th>
+          <th>Domain</th>
+          <th>Status</th>
+          <th>Review</th>
+          <th>Extraction</th>
+          <th>Crawl frequency</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for source in sources %}
+          <tr>
+            <td data-label="Source"><a href="/admin/master-calendar-sources/{{ source.id }}">{{ source.source_name }}</a></td>
+            <td data-label="Domain">{{ source.domain or "n/a" }}</td>
+            <td data-label="Status">{{ source.status }}</td>
+            <td data-label="Review">{{ source.review_status }}</td>
+            <td data-label="Extraction">{{ source.last_extraction_status or "not crawled" }}</td>
+            <td data-label="Crawl frequency">{{ source.crawl_frequency or "manual" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <section class="empty-state"><h2>No region sources</h2></section>
+  {% endif %}
+{% endblock %}

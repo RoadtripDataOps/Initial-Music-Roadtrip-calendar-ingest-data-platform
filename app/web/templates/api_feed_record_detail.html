@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .review-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .review-card {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+
+    @media (max-width: 980px) {
+      .review-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <h1>API Feed Record #{{ record.id }}</h1>
+  <p class="notice">{{ provider_display }} · {{ record.review_status | replace("_", " ") }}</p>
+  {% if error %}
+    <p class="error">{{ error }}</p>
+  {% endif %}
+  <section class="review-grid">
+    <article class="review-card">
+      <h2>Raw Provider Record</h2>
+      <p><strong>Provider record ID:</strong> {{ record.provider_record_id or "n/a" }}</p>
+      <p><strong>Provider event ID:</strong> {{ record.provider_event_id or "n/a" }}</p>
+      <p><strong>Provider event type:</strong> {{ record.provider_event_type or "n/a" }}</p>
+      <p><strong>Artist ID:</strong> {{ record.provider_artist_id or "n/a" }}</p>
+      <p><strong>Venue ID:</strong> {{ record.provider_venue_id or "n/a" }}</p>
+      <p><strong>Source URL:</strong> {{ record.source_url or "n/a" }}</p>
+      <pre>{{ raw_preview }}</pre>
+    </article>
+
+    <article class="review-card">
+      <h2>Source Chain</h2>
+      <p><strong>Ingestion provider:</strong> {{ source_display_name(record.ingestion_provider or record.provider_key) }}</p>
+      <p><strong>Ingestion docs status:</strong> {{ source_docs_status(record.ingestion_provider or record.provider_key) }}</p>
+      <p><strong>Upstream event source:</strong> {{ source_display_name(record.upstream_event_source) }}</p>
+      <p><strong>Upstream docs status:</strong> {{ source_docs_status(record.upstream_event_source) }}</p>
+      <p><strong>Upstream event ID:</strong> {{ record.upstream_event_id or "n/a" }}</p>
+      <p><strong>Upstream artist:</strong> {{ source_display_name(record.upstream_artist_source) }}{% if record.upstream_artist_id %} / {{ record.upstream_artist_id }}{% endif %}</p>
+      <p><strong>Upstream venue:</strong> {{ source_display_name(record.upstream_venue_source) }}{% if record.upstream_venue_id %} / {{ record.upstream_venue_id }}{% endif %}</p>
+      <p><strong>Ticketing provider:</strong> {{ source_display_name(record.ticketing_provider) }}</p>
+      <p><strong>Ticket provider domain:</strong> {{ record.ticketing_provider_domain or "n/a" }}</p>
+      <p><strong>Ticket provider docs status:</strong> {{ source_docs_status(record.ticketing_provider) }}</p>
+      <p><strong>Ticket repair strategy:</strong> {{ record.ticket_link_repair_strategy or "n/a" }}</p>
+      <p><strong>Ticket repair source:</strong> {{ record.ticket_link_repair_source or "n/a" }}</p>
+      <p><strong>Provider music segment:</strong> {{ record.provider_music_segment or "n/a" }}</p>
+      <p><strong>Provenance flags:</strong> {{ record.provenance_flags | join(", ") if record.provenance_flags else "none" }}</p>
+      <p><strong>Source chain JSON:</strong></p>
+      <pre>{{ record.source_chain_json }}</pre>
+      <p><strong>External identifiers:</strong></p>
+      <pre>{{ record.external_identifiers_json }}</pre>
+      <p><strong>Ticket offers:</strong></p>
+      <pre>{{ record.ticket_offers_json }}</pre>
+    </article>
+
+    <article class="review-card">
+      <h2>Normalized Music Roadtrip Candidate</h2>
+      <p><strong>Category:</strong> {{ record.category }}</p>
+      <p><strong>Record type:</strong> {{ record.record_type }}</p>
+      <p><strong>Event name:</strong> {{ record.event_name or "missing" }}</p>
+      <p><strong>Description:</strong> {{ record.description or "n/a" }}</p>
+      <p><strong>Headliner:</strong> {{ record.headliner or "missing" }}</p>
+      <p><strong>Supporting artists:</strong> {{ record.supporting_artists or "n/a" }}</p>
+      <p><strong>Provider genre/subgenre:</strong> {{ record.provider_genre or "n/a" }}{% if record.provider_subgenre %} / {{ record.provider_subgenre }}{% endif %}</p>
+      <p><strong>Normalized genre/music category:</strong> {{ record.normalized_genre or "n/a" }}{% if record.music_category %} / {{ record.music_category }}{% endif %}</p>
+      <p><strong>Event status:</strong> {{ record.event_status or "n/a" }}</p>
+      <p><strong>Start:</strong> {{ record.start_datetime.strftime("%Y-%m-%d %H:%M") if record.start_datetime else "missing" }}</p>
+      <p><strong>End:</strong> {{ record.end_datetime.strftime("%Y-%m-%d %H:%M") if record.end_datetime else "n/a" }}</p>
+      <p><strong>Timezone:</strong> {{ record.timezone or "n/a" }}</p>
+      <p><strong>Doors:</strong> {{ record.doors_time or "n/a" }}</p>
+      <p><strong>Time flags:</strong> has time={{ record.has_time if record.has_time is not none else "n/a" }}, all day={{ record.all_day if record.all_day is not none else "n/a" }}</p>
+      <p><strong>Venue:</strong> {{ record.venue_name or "missing" }}</p>
+      <p><strong>Address:</strong> {{ record.venue_address or "n/a" }}</p>
+      <p><strong>City/State:</strong> {{ record.city or "n/a" }}{% if record.state %}, {{ record.state }}{% endif %}</p>
+      <p><strong>Event URL:</strong> {{ record.event_url or "n/a" }}</p>
+      <p><strong>Tickets:</strong> {{ record.tickets_link or "missing" }}</p>
+      <p><strong>Recommended ticket link:</strong> {{ record.recommended_ticket_link or "n/a" }}</p>
+      <p><strong>Ticket classification:</strong> {{ record.ticket_link_classification or "n/a" }}</p>
+      <p><strong>Ticketing provider:</strong> {{ record.ticketing_provider or "n/a" }}</p>
+      <p><strong>Ticket repair strategy:</strong> {{ record.ticket_link_repair_strategy or "n/a" }}</p>
+      <p><strong>Ticket repair suggestion:</strong> {{ record.ticket_link_repair_suggestion or "n/a" }}</p>
+      <p><strong>Main image:</strong> {{ record.main_image_url or "missing" }}</p>
+      <p><strong>Spotify:</strong> {{ record.spotify_url or "n/a" }}</p>
+      <p><strong>Dedupe key:</strong> {{ record.dedupe_key }}</p>
+      <p><strong>Dedupe confidence:</strong> {{ record.dedupe_confidence if record.dedupe_confidence is not none else "n/a" }}</p>
+      <p><strong>Source ID fields used for dedupe:</strong> {{ record.dedupe_source_fields }}</p>
+      <p><strong>Venue ID fields for matching:</strong> {{ record.venue_match_fields }}</p>
+      <pre>{{ normalized_preview }}</pre>
+    </article>
+
+    <article class="review-card">
+      <h2>Incoming Provider Image Candidates</h2>
+      <p><strong>Provider image URL:</strong> {{ record.main_image_url or "missing" }}</p>
+      <p><strong>Direct image asset:</strong> {{ "yes" if incoming_image_is_direct else "no" }}</p>
+      <p><strong>Image source:</strong> {{ source_display_name(record.provider_key) }}{% if record.ticketing_provider %} / ticket provider {{ source_display_name(record.ticketing_provider) }}{% endif %}</p>
+      <p><strong>Source URL:</strong> {{ record.event_url or record.source_url or "n/a" }}</p>
+      <p>
+        Provider images are staged as image candidates. They are not final
+        event images until photo rescue, QA scoring, and admin review select them.
+      </p>
+      {% if provider_image_candidates_preview %}
+        <table>
+          <thead>
+            <tr>
+              <th>Path</th>
+              <th>Rescue source</th>
+              <th>Role</th>
+              <th>Final eligible</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for candidate in provider_image_candidates_preview %}
+              <tr>
+                <td>{{ candidate.source_payload_path }}</td>
+                <td>{{ candidate.rescue_source }}</td>
+                <td>{{ candidate.image_role }}</td>
+                <td>{{ "yes" if candidate.can_be_final_image else "no" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <form method="post" action="/admin/api-feed-records/{{ record.id }}/create-image-candidate">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit">Send all provider images to Image QA</button>
+        </form>
+        {% if record.created_event_id %}
+          <form method="post" action="/admin/api-feed-records/{{ record.id }}/photo-rescue">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit">Run photo rescue after approval</button>
+          </form>
+        {% endif %}
+      {% else %}
+        <p class="notice">No direct provider image asset URL was found in this record.</p>
+      {% endif %}
+    </article>
+
+    <article class="review-card">
+      <h2>QA / Decision</h2>
+      <p><strong>Field completeness:</strong> {{ record.field_completeness_score if record.field_completeness_score is not none else "n/a" }}</p>
+      <p><strong>Event relevance:</strong> {{ record.event_relevance_score if record.event_relevance_score is not none else "n/a" }}</p>
+      <p><strong>Venue match:</strong> {{ record.venue_match_confidence if record.venue_match_confidence is not none else "n/a" }}</p>
+      <p><strong>Photo quality:</strong> {{ record.photo_quality_score if record.photo_quality_score is not none else "n/a" }}</p>
+      <p><strong>Ticket-link quality:</strong> {{ record.ticket_link_quality_score if record.ticket_link_quality_score is not none else "n/a" }}</p>
+      <p><strong>Duplicate status:</strong> {{ record.duplicate_status }}</p>
+      <p><strong>Compliance expires:</strong> {{ record.compliance_expires_at.strftime("%Y-%m-%d %H:%M") if record.compliance_expires_at else "n/a" }}</p>
+      <p><strong>Created event:</strong>
+        {% if record.created_event_id %}
+          <a href="/admin/events/{{ record.created_event_id }}">#{{ record.created_event_id }}</a>
+        {% else %}
+          none
+        {% endif %}
+      </p>
+      <p><strong>Quality flags:</strong> {{ record.quality_flags | join(", ") if record.quality_flags else "none" }}</p>
+      <p><strong>Mapping warnings:</strong> {{ record.mapping_warnings | join(", ") if record.mapping_warnings else "none" }}</p>
+      <p><strong>Provider documentation notes:</strong> {{ record.provider_doc_notes or "n/a" }}</p>
+      <div class="actions">
+        <form method="post" action="/admin/api-feed-records/{{ record.id }}/approve">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit">Approve</button>
+        </form>
+        <form method="post" action="/admin/api-feed-records/{{ record.id }}/hold">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit">Hold</button>
+        </form>
+        <form method="post" action="/admin/api-feed-records/{{ record.id }}/reject">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit">Reject</button>
+        </form>
+        <form method="post" action="/admin/api-feed-records/{{ record.id }}/send-to-enrichment">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit">Send to enrichment</button>
+        </form>
+      </div>
+    </article>
+  </section>
+{% endblock %}

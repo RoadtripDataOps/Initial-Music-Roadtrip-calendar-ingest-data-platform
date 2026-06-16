@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="login-card">
+    <img class="brand-logo brand-logo--login" src="/static/images/music-roadtrip-logo-circle.png" alt="Music Roadtrip logo">
+    <p class="notice">Music Roadtrip Calendar Ingest</p>
+    <h1>Admin Login</h1>
+    <p>Private internal tool</p>
+    <form method="post" action="/admin/login" novalidate>
+      <input type="hidden" name="next" value="{{ next_path }}">
+
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" name="username" autocomplete="username" required>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+
+      {% if error %}
+        <div class="error">{{ error }}</div>
+      {% endif %}
+
+      <button type="submit">Log in</button>
+    </form>
+  </section>
+{% endblock %}

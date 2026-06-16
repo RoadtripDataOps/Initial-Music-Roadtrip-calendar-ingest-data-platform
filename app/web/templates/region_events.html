@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ region.name }} Events</h1>
+  <p><a href="/admin/regions/{{ region.id }}">Back to region</a></p>
+  {% if events %}
+    <table>
+      <thead>
+        <tr>
+          <th>Event</th>
+          <th>Start</th>
+          <th>Venue</th>
+          <th>Ticket QA</th>
+          <th>Image</th>
+          <th>Publish</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in events %}
+          <tr>
+            <td data-label="Event"><a href="/admin/events/{{ event.id }}">{{ event.title }}</a></td>
+            <td data-label="Start">{{ event.start_datetime }}</td>
+            <td data-label="Venue">{{ event.venue.display_name if event.venue else event.location_text or "n/a" }}</td>
+            <td data-label="Ticket QA">{{ event.ticket_link_classification or "unknown" }}</td>
+            <td data-label="Image">{{ event.image_status or event.image_clearance_status or "unknown" }}</td>
+            <td data-label="Publish">{{ event.publish_status }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <section class="empty-state"><h2>No region events</h2></section>
+  {% endif %}
+{% endblock %}

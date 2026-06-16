@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Suspicious Submissions</h1>
+
+  {% if sources %}
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Organization</th>
+          <th>Contact</th>
+          <th>Risk</th>
+          <th>Flags</th>
+          <th>Submitted</th>
+          <th>Review</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for source in sources %}
+          <tr>
+            <td data-label="Type">{{ source.submitted_via }}</td>
+            <td data-label="Organization">{{ source.organization_name }}</td>
+            <td data-label="Contact">{{ source.contact_email }}</td>
+            <td data-label="Risk">
+              {{ source.risk_score }}
+              <span class="badge {{ source.risk_level }}">{{ source.risk_level }}</span>
+            </td>
+            <td data-label="Flags">{{ source.risk_flags | join(", ") }}</td>
+            <td data-label="Submitted">{{ source.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+            <td data-label="Review">{{ source.review_status | replace("_", " ") | title }}</td>
+            <td data-label="Actions">
+              <form method="post" action="/admin/suspicious-submissions/{{ source.id }}/review">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <select name="action" aria-label="Review action for {{ source.organization_name }}">
+                  <option value="approve">Approve</option>
+                  <option value="reject">Reject</option>
+                  <option value="quarantine">Quarantine</option>
+                  <option value="block_email">Block Email</option>
+                  <option value="block_domain">Block Domain</option>
+                  <option value="trust_submitter">Trust Submitter</option>
+                  <option value="trust_domain">Trust Domain</option>
+                </select>
+                <input name="review_notes" placeholder="Review notes">
+                <button type="submit">Apply</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <section class="empty-state">
+      <h2>No suspicious submissions yet</h2>
+      <p>
+        This queue holds high-risk or quarantined public submissions. It is
+        empty when the trust gate has not flagged any recent calendar or upload
+        submissions.
+      </p>
+      <a class="button" href="/admin/sources">Review normal submissions</a>
+    </section>
+  {% endif %}
+{% endblock %}

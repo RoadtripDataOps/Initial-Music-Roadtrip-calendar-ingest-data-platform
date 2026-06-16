@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>API Feed Run #{{ run.id }}</h1>
+  <p class="notice">
+    {{ provider_display_name(run.provider_key) }} · {{ run.run_mode | replace("_", " ") }} · {{ run.status }}
+  </p>
+  <section class="panel">
+    <h2>Run Metadata</h2>
+    <table>
+      <tbody>
+        <tr><th>Raw records</th><td>{{ run.raw_record_count }}</td></tr>
+        <tr><th>Normalized candidates</th><td>{{ run.normalized_candidate_count }}</td></tr>
+        <tr><th>Approved</th><td>{{ run.approved_count }}</td></tr>
+        <tr><th>Held</th><td>{{ run.held_count }}</td></tr>
+        <tr><th>Rejected</th><td>{{ run.rejected_count }}</td></tr>
+        <tr><th>Duplicate candidates</th><td>{{ run.duplicate_candidate_count }}</td></tr>
+        <tr><th>Compliance expiration</th><td>{{ run.compliance_expiration_at.strftime("%Y-%m-%d %H:%M") if run.compliance_expiration_at else "n/a" }}</td></tr>
+        <tr><th>Error</th><td>{{ run.error_message or "n/a" }}</td></tr>
+        {% if run.request_preview_json and run.request_preview_json != "{}" %}
+          <tr><th>Request preview</th><td><pre class="code-block">{{ run.request_preview_json }}</pre></td></tr>
+        {% endif %}
+        {% if run.parameters_json and run.parameters_json != "{}" %}
+          <tr><th>Parameters</th><td><pre class="code-block">{{ run.parameters_json }}</pre></td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+    <div class="actions">
+      <form method="post" action="/admin/api-feed-runs/{{ run.id }}/photo-rescue">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Run photo rescue for approved events</button>
+      </form>
+      <form method="post" action="/admin/api-feed-runs/{{ run.id }}/photo-rescue/background">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Run photo rescue in background</button>
+      </form>
+    </div>
+  </section>
+
+  <form method="get" action="/admin/api-feed-runs/{{ run.id }}" class="panel">
+    <h2>Filters</h2>
+    <div class="field">
+      <label for="review_status">Review status</label>
+      <select id="review_status" name="review_status">
+        <option value="">Any</option>
+        {% for value in ["pending_review", "approved", "held", "rejected", "needs_enrichment", "expired"] %}
+          <option value="{{ value }}" {{ "selected" if filters.review_status == value else "" }}>{{ value | replace("_", " ") }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="normalization_status">Normalization status</label>
+      <select id="normalization_status" name="normalization_status">
+        <option value="">Any</option>
+        {% for value in ["normalized", "partial", "failed"] %}
+          <option value="{{ value }}" {{ "selected" if filters.normalization_status == value else "" }}>{{ value }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field"><label for="ingestion_provider">Ingestion provider</label><input id="ingestion_provider" name="ingestion_provider" value="{{ filters.ingestion_provider }}"></div>
+    <div class="field"><label for="upstream_event_source">Upstream event source</label><input id="upstream_event_source" name="upstream_event_source" value="{{ filters.upstream_event_source }}"></div>
+    <div class="field"><label for="ticketing_provider">Ticketing provider</label><input id="ticketing_provider" name="ticketing_provider" value="{{ filters.ticketing_provider }}"></div>
+    <div class="field"><label for="ticket_link_classification">Ticket classification</label><input id="ticket_link_classification" name="ticket_link_classification" value="{{ filters.ticket_link_classification }}"></div>
+    <div class="field"><label for="ticket_link_repair_strategy">Ticket repair strategy</label><input id="ticket_link_repair_strategy" name="ticket_link_repair_strategy" value="{{ filters.ticket_link_repair_strategy }}"></div>
+    <div class="field"><label for="provenance_flag">Provenance flag</label><input id="provenance_flag" name="provenance_flag" value="{{ filters.provenance_flag }}"></div>
+    <div class="field"><label for="quality_issue">Quality issue</label><input id="quality_issue" name="quality_issue" value="{{ filters.quality_issue }}"></div>
+    <div class="field"><label for="duplicate_status">Duplicate status</label><input id="duplicate_status" name="duplicate_status" value="{{ filters.duplicate_status }}"></div>
+    <label class="checkbox"><input type="checkbox" name="missing_image" value="1" {{ "checked" if filters.missing_image else "" }}><span>Missing image</span></label>
+    <label class="checkbox"><input type="checkbox" name="missing_ticket_link" value="1" {{ "checked" if filters.missing_ticket_link else "" }}><span>Missing ticket link</span></label>
+    <label class="checkbox"><input type="checkbox" name="missing_venue" value="1" {{ "checked" if filters.missing_venue else "" }}><span>Missing venue</span></label>
+    <label class="checkbox"><input type="checkbox" name="compliance_expiring_soon" value="1" {{ "checked" if filters.compliance_expiring_soon else "" }}><span>Compliance expiring soon</span></label>
+    <label class="checkbox"><input type="checkbox" name="unknown_upstream_source" value="1" {{ "checked" if filters.unknown_upstream_source else "" }}><span>Unknown upstream source</span></label>
+    <label class="checkbox"><input type="checkbox" name="api_backfill_required" value="1" {{ "checked" if filters.api_backfill_required else "" }}><span>API backfill required</span></label>
+    <div class="field"><label for="min_event_relevance_score">Min event relevance</label><input id="min_event_relevance_score" name="min_event_relevance_score" value="{{ filters.min_event_relevance_score }}"></div>
+    <div class="field"><label for="min_photo_quality_score">Min photo quality</label><input id="min_photo_quality_score" name="min_photo_quality_score" value="{{ filters.min_photo_quality_score }}"></div>
+    <button type="submit">Apply filters</button>
+    <a class="button secondary" href="/admin/api-feed-runs/{{ run.id }}">Reset filters</a>
+  </form>
+
+  <section>
+    <h2>Records</h2>
+    {% if records %}
+      <table>
+        <thead>
+          <tr>
+            <th>Record</th>
+            <th>Event</th>
+            <th>Venue</th>
+            <th>Normalize</th>
+            <th>Review</th>
+            <th>Dedupe</th>
+            <th>Ticket QA</th>
+            <th>Source Chain</th>
+            <th>QA</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in records %}
+            <tr>
+              <td data-label="Record"><a href="/admin/api-feed-records/{{ record.id }}">#{{ record.id }}</a></td>
+              <td data-label="Event">{{ record.event_name or "Untitled" }}</td>
+              <td data-label="Venue">{{ record.venue_name or "missing" }}</td>
+              <td data-label="Normalize">{{ record.normalization_status }}</td>
+              <td data-label="Review">{{ record.review_status | replace("_", " ") }}</td>
+              <td data-label="Dedupe">{{ record.duplicate_status }}</td>
+              <td data-label="Ticket QA">
+                {{ record.ticket_link_classification or "n/a" }}
+                {% if record.ticket_link_repair_strategy %}<br>{{ record.ticket_link_repair_strategy | replace("_", " ") }}{% endif %}
+              </td>
+              <td data-label="Source Chain">
+                {{ record.ingestion_provider or record.provider_key }}
+                {% if record.upstream_event_source %} &rarr; {{ record.upstream_event_source }}{% endif %}
+                {% if record.ticketing_provider %} &rarr; {{ record.ticketing_provider }}{% endif %}
+              </td>
+              <td data-label="QA">{{ record.quality_flags | join(", ") if record.quality_flags else "none" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="notice">No records match these filters.</p>
+    {% endif %}
+  </section>
+{% endblock %}

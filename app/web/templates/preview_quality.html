@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    body {
+      background: #101011;
+      color: #f3f3f4;
+    }
+
+    header {
+      border-bottom-color: #262629;
+      background: #101011;
+    }
+
+    nav a,
+    nav .logout-form button {
+      color: #f3f3f4;
+    }
+
+    main {
+      width: min(1280px, calc(100% - 32px));
+    }
+
+    p {
+      color: #c8c2c4;
+    }
+
+    .quality-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .quality-tile {
+      min-height: 142px;
+      padding: 16px;
+      border: 1px solid #343437;
+      border-radius: 8px;
+      background: #151516;
+      color: #f3f3f4;
+      text-decoration: none;
+    }
+
+    .quality-number {
+      display: block;
+      margin: 4px 0;
+      font-size: 2.25rem;
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .badge {
+      background: #202023;
+      color: #d7d2d3;
+    }
+
+    .badge.success {
+      background: #f2d40b;
+      color: #171717;
+    }
+
+    .badge.failure {
+      background: #3b201b;
+      color: #ffb19e;
+    }
+
+    @media (max-width: 980px) {
+      .quality-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 620px) {
+      .quality-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <p class="notice">Music Roadtrip Preview Sandbox</p>
+  <h1>Data Quality Dashboard</h1>
+  <p>Read-only preview counts for approved normalized events and venue containers.</p>
+
+  <section class="quality-grid" aria-label="App feed quality">
+    <a class="quality-tile" href="/admin/regions">
+      <span class="badge success">Regions</span>
+      <span class="quality-number">Go</span>
+      Destination QA and regional feeds
+    </a>
+    <a class="quality-tile" href="/admin/app-feed">
+      <span class="badge success">App Feed</span>
+      <span class="quality-number">{{ app_summary.event_feed_record_count }}</span>
+      Publishable events
+    </a>
+    <a class="quality-tile" href="/admin/app-feed">
+      <span class="badge failure">App Feed</span>
+      <span class="quality-number">{{ app_summary.records_blocked_from_publishing }}</span>
+      Events and POIs blocked from app feed
+    </a>
+    <a class="quality-tile" href="/admin/app-feed">
+      <span class="badge success">POIs</span>
+      <span class="quality-number">{{ app_summary.publishable_pois }}</span>
+      Publishable POIs
+    </a>
+    <a class="quality-tile" href="/admin/poi-candidates">
+      <span class="badge failure">POI Audit</span>
+      <span class="quality-number">{{ poi_candidate_counts.pending }}</span>
+      Pending POI candidates
+    </a>
+    <a class="quality-tile" href="/admin/poi-candidates?bucket=possible_duplicate">
+      <span class="badge failure">POI Audit</span>
+      <span class="quality-number">{{ poi_candidate_counts.possible_duplicates }}</span>
+      Possible POI duplicates
+    </a>
+    <a class="quality-tile" href="/admin/poi-candidates?bucket=approved_created">
+      <span class="badge success">POI Audit</span>
+      <span class="quality-number">{{ poi_candidate_counts.approved_created }}</span>
+      Newly approved POIs
+    </a>
+    <a class="quality-tile" href="/admin/poi-candidates?bucket=rejected">
+      <span class="badge failure">POI Audit</span>
+      <span class="quality-number">{{ poi_candidate_counts.rejected }}</span>
+      POI candidates rejected
+    </a>
+    <a class="quality-tile" href="/admin/poi-candidates?bucket=event_venue_only">
+      <span class="badge">POI Audit</span>
+      <span class="quality-number">{{ poi_candidate_counts.event_venue_only }}</span>
+      Event venue only candidates
+    </a>
+    <a class="quality-tile" href="/admin/app-feed">
+      <span class="badge warning">Approval</span>
+      <span class="quality-number">{{ app_summary.events_pending_image_approval }}</span>
+      Pending image approval but included
+    </a>
+    <a class="quality-tile" href="/admin/duplicate-events">
+      <span class="badge failure">Dedupe</span>
+      <span class="quality-number">{{ app_summary.duplicate_candidates_excluded }}</span>
+      Duplicate candidates excluded
+    </a>
+    <a class="quality-tile" href="/admin/source-quality?grade=poor">
+      <span class="badge failure">Source Trust</span>
+      <span class="quality-number">{{ source_quality_summary.poor_source_count }}</span>
+      Sources with poor trust score
+    </a>
+    <a class="quality-tile" href="/admin/source-quality?source_kind=region&grade=poor">
+      <span class="badge failure">Regions</span>
+      <span class="quality-number">{{ source_quality_summary.poor_region_count }}</span>
+      Regions with poor quality
+    </a>
+    <a class="quality-tile" href="/admin/source-quality">
+      <span class="badge failure">Dedupe</span>
+      <span class="quality-number">{{ source_quality_summary.duplicate_source_count }}</span>
+      Sources generating duplicate candidates
+    </a>
+    <a class="quality-tile" href="/admin/source-quality">
+      <span class="badge failure">Source Trust</span>
+      <span class="quality-number">{{ source_quality_summary.failed_extraction_source_count }}</span>
+      Sources with extraction failures
+    </a>
+    <a class="quality-tile" href="/admin/source-quality">
+      <span class="badge failure">Source Trust</span>
+      <span class="quality-number">{{ source_quality_summary.missing_ticket_source_count }}</span>
+      Sources missing tickets
+    </a>
+    <a class="quality-tile" href="/admin/source-quality">
+      <span class="badge failure">Source Trust</span>
+      <span class="quality-number">{{ source_quality_summary.bad_image_source_count }}</span>
+      Sources generating bad images
+    </a>
+  </section>
+
+  <section class="quality-grid">
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge success">Events</span>
+      <span class="quality-number">{{ summary.total_approved_events }}</span>
+      Total approved events
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge failure">Images</span>
+      <span class="quality-number">{{ summary.events_missing_images }}</span>
+      Events missing images
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge failure">Images</span>
+      <span class="quality-number">{{ summary.events_with_bad_image_urls }}</span>
+      Events with bad image URLs
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge success">Images</span>
+      <span class="quality-number">{{ summary.events_with_selected_image }}</span>
+      Events with selected image
+    </a>
+    <a class="quality-tile" href="/admin/image-candidates?selected_pending_approval=1">
+      <span class="badge failure">Approval</span>
+      <span class="quality-number">{{ summary.events_with_selected_image_pending_approval }}</span>
+      Events with selected image pending approval
+    </a>
+    <a class="quality-tile" href="/admin/image-candidates?selected_and_cleared=1">
+      <span class="badge success">Cleared</span>
+      <span class="quality-number">{{ summary.events_with_selected_cleared_image }}</span>
+      Events with selected cleared image
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge failure">Images</span>
+      <span class="quality-number">{{ summary.events_missing_usable_image }}</span>
+      Events missing usable image
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge">Images</span>
+      <span class="quality-number">{{ summary.events_using_venue_fallback }}</span>
+      Events using venue fallback images
+    </a>
+    <a class="quality-tile" href="/admin/image-candidates?selected_but_needs_approval=1&image_role=event_provider">
+      <span class="badge failure">Provider</span>
+      <span class="quality-number">{{ summary.events_using_provider_image_pending_approval }}</span>
+      Events using provider image pending approval
+    </a>
+    <a class="quality-tile" href="/admin/image-candidates?hard_blocked=1">
+      <span class="badge failure">Blocked</span>
+      <span class="quality-number">{{ summary.events_with_hard_blocked_image_candidates }}</span>
+      Events with hard-blocked image candidates
+    </a>
+    <a class="quality-tile" href="/admin/image-candidates?stock_placeholder_candidate=1">
+      <span class="badge failure">Images</span>
+      <span class="quality-number">{{ summary.events_with_provider_stock_candidate }}</span>
+      Events with provider stock candidates
+    </a>
+    <a class="quality-tile" href="/admin/image-candidates?needs_approval=1">
+      <span class="badge failure">Approval</span>
+      <span class="quality-number">{{ summary.events_needing_image_approval }}</span>
+      Events needing image approval
+    </a>
+    <a class="quality-tile" href="/admin/image-candidates?text_detected=1">
+      <span class="badge failure">Images</span>
+      <span class="quality-number">{{ summary.events_with_text_heavy_image_candidates }}</span>
+      Events with text-heavy image candidates
+    </a>
+    <a class="quality-tile" href="/admin/image-candidates?watermark_detected=1">
+      <span class="badge failure">Images</span>
+      <span class="quality-number">{{ summary.events_with_watermark_candidates }}</span>
+      Events with watermark candidates
+    </a>
+    <a class="quality-tile" href="/admin/image-candidates?poster_or_flyer=1">
+      <span class="badge failure">Images</span>
+      <span class="quality-number">{{ summary.events_with_poster_flyer_candidates }}</span>
+      Events with poster/flyer candidates
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge success">Images</span>
+      <span class="quality-number">{{ summary.events_with_accepted_artist_images }}</span>
+      Events with accepted artist images
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge">Images</span>
+      <span class="quality-number">{{ summary.events_with_accepted_venue_fallback_images }}</span>
+      Events with accepted venue fallback images
+    </a>
+    <a class="quality-tile" href="/admin/image-candidates?selected_by_rescue=1">
+      <span class="badge success">Photo Rescue</span>
+      <span class="quality-number">{{ summary.events_selected_by_photo_rescue }}</span>
+      Events selected by photo rescue
+    </a>
+    <a class="quality-tile" href="/admin/image-candidates?stock_placeholder_candidate=1">
+      <span class="badge failure">Photo Rescue</span>
+      <span class="quality-number">{{ summary.events_with_generic_provider_image_blocked }}</span>
+      Events with generic provider images blocked
+    </a>
+    <a class="quality-tile" href="/admin/image-candidates?poster_or_flyer=1">
+      <span class="badge failure">Photo Rescue</span>
+      <span class="quality-number">{{ summary.events_with_poster_flyer_admat_blocked }}</span>
+      Events with poster/flyer/admat blocked
+    </a>
+    <a class="quality-tile" href="/admin/image-candidates?source_evidence_only=1">
+      <span class="badge">Photo Rescue</span>
+      <span class="quality-number">{{ summary.events_with_social_graphic_evidence }}</span>
+      Events with social graphic evidence only
+    </a>
+    <a class="quality-tile" href="/admin/image-candidates?rescue_source=provider_artist_image">
+      <span class="badge success">Photo Rescue</span>
+      <span class="quality-number">{{ summary.events_with_artist_image_candidates }}</span>
+      Events with artist image candidates
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge failure">Tickets</span>
+      <span class="quality-number">{{ summary.events_missing_ticket_links }}</span>
+      Events missing ticket links
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge failure">Venue</span>
+      <span class="quality-number">{{ summary.events_missing_venue_address }}</span>
+      Events missing venue address
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge failure">Map</span>
+      <span class="quality-number">{{ summary.events_missing_coordinates }}</span>
+      Events missing coordinates
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge">Spotify</span>
+      <span class="quality-number">{{ summary.events_missing_spotify_url }}</span>
+      Events missing Spotify URL
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge failure">Tracking</span>
+      <span class="quality-number">{{ summary.events_with_suspicious_tracking }}</span>
+      Events with suspicious tracking
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge failure">Venue</span>
+      <span class="quality-number">{{ summary.events_without_venue_profile }}</span>
+      Events without venue profile
+    </a>
+    <a class="quality-tile" href="/preview/venues">
+      <span class="badge failure">Venues</span>
+      <span class="quality-number">{{ summary.venues_missing_images }}</span>
+      Venues missing images
+    </a>
+    <a class="quality-tile" href="/admin/image-candidates?venue_id=&needs_approval=1">
+      <span class="badge failure">Venues</span>
+      <span class="quality-number">{{ summary.venues_needing_image_approval }}</span>
+      Venues needing image approval
+    </a>
+    <a class="quality-tile" href="/preview/venues">
+      <span class="badge failure">Venues</span>
+      <span class="quality-number">{{ summary.venues_missing_descriptions }}</span>
+      Venues missing descriptions
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge">Dedupe</span>
+      <span class="quality-number">{{ summary.duplicate_candidate_events }}</span>
+      Duplicate candidate groups
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge failure">Dedupe</span>
+      <span class="quality-number">{{ summary.weak_dedupe_events }}</span>
+      Weak dedupe events
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge">Updates</span>
+      <span class="quality-number">{{ summary.events_recently_updated }}</span>
+      Events recently updated
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge success">Claims</span>
+      <span class="quality-number">{{ summary.events_with_multiple_source_claims }}</span>
+      Events with multiple source claims
+    </a>
+    <a class="quality-tile" href="/preview/events">
+      <span class="badge">Claims</span>
+      <span class="quality-number">{{ summary.events_with_single_source_claim }}</span>
+      Events with one source claim
+    </a>
+    <a class="quality-tile" href="/admin/duplicate-events">
+      <span class="badge failure">Conflicts</span>
+      <span class="quality-number">{{ summary.events_with_source_conflicts }}</span>
+      Events with source conflicts
+    </a>
+    <a class="quality-tile" href="/admin/api-feed-runs">
+      <span class="badge failure">API Review</span>
+      <span class="quality-number">{{ summary.api_records_pending_review }}</span>
+      API records pending review
+    </a>
+    <a class="quality-tile" href="/admin/api-feed-runs">
+      <span class="badge">API Held</span>
+      <span class="quality-number">{{ summary.api_records_held }}</span>
+      API records held
+    </a>
+    <a class="quality-tile" href="/admin/api-feed-runs">
+      <span class="badge">Enrichment</span>
+      <span class="quality-number">{{ summary.api_records_needing_enrichment }}</span>
+      API records needing enrichment
+    </a>
+    <a class="quality-tile" href="/admin/api-feed-runs">
+      <span class="badge failure">TTL</span>
+      <span class="quality-number">{{ summary.api_records_expiring_soon }}</span>
+      API records expiring soon
+    </a>
+    <a class="quality-tile" href="/admin/api-feed-runs">
+      <span class="badge failure">Rejected</span>
+      <span class="quality-number">{{ summary.api_records_rejected }}</span>
+      API records rejected
+    </a>
+    <a class="quality-tile" href="/admin/api-feed-runs?unknown_upstream_source=1">
+      <span class="badge failure">Provenance</span>
+      <span class="quality-number">{{ summary.api_records_unknown_upstream_source }}</span>
+      API records with unknown upstream source
+    </a>
+    <a class="quality-tile" href="/admin/api-feed-runs?api_backfill_required=1">
+      <span class="badge failure">Backfill</span>
+      <span class="quality-number">{{ summary.api_records_api_backfill_required }}</span>
+      API records requiring ticket backfill
+    </a>
+    <a class="quality-tile" href="/admin/api-feed-runs">
+      <span class="badge">Provenance</span>
+      <span class="quality-number">{{ summary.api_records_suspicious_provenance }}</span>
+      API records with provenance flags
+    </a>
+    {% for provider, count in summary.api_approved_events_by_provider %}
+      <a class="quality-tile" href="/preview/events">
+        <span class="badge success">API Provider</span>
+        <span class="quality-number">{{ count }}</span>
+        Approved API events from {{ provider }}
+      </a>
+    {% endfor %}
+    {% for provider, count in summary.api_events_by_ingestion_provider %}
+      <a class="quality-tile" href="/preview/events">
+        <span class="badge success">Ingestion</span>
+        <span class="quality-number">{{ count }}</span>
+        Approved events ingested by {{ provider }}
+      </a>
+    {% endfor %}
+    {% for source, count in summary.api_events_by_upstream_source %}
+      <a class="quality-tile" href="/preview/events">
+        <span class="badge">Upstream</span>
+        <span class="quality-number">{{ count }}</span>
+        Approved events with upstream source {{ source }}
+      </a>
+    {% endfor %}
+    {% for provider, count in summary.api_events_by_ticketing_provider %}
+      <a class="quality-tile" href="/preview/events">
+        <span class="badge">Tickets</span>
+        <span class="quality-number">{{ count }}</span>
+        Approved events ticketed by {{ provider }}
+      </a>
+    {% endfor %}
+    {% for classification, count in summary.api_ticket_link_classifications %}
+      <a class="quality-tile" href="/admin/api-feed-runs">
+        <span class="badge">Ticket QA</span>
+        <span class="quality-number">{{ count }}</span>
+        API ticket links classified as {{ classification | replace("_", " ") }}
+      </a>
+    {% endfor %}
+  </section>
+{% endblock %}

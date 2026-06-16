@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel">
+    <h1>POI Inventory Export History</h1>
+    <p>
+      Generated POI inventory artifacts for candidate dedupe, monthly audit, and
+      operational review. These files are private/admin-only snapshots.
+    </p>
+    <p><a class="button secondary" href="/admin/poi-inventory">Back to inventory</a></p>
+  </section>
+
+  {% if exports %}
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Export key</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Records</th>
+          <th>Duplicate keys</th>
+          <th>Size</th>
+          <th>Generated</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for export in exports %}
+          <tr>
+            <td data-label="ID">#{{ export.id }}</td>
+            <td data-label="Export key"><code>{{ export.export_key }}</code></td>
+            <td data-label="Type">{{ export.export_type }}</td>
+            <td data-label="Status"><span class="badge {{ 'success' if export.status == 'success' else 'failure' if export.status == 'failure' else 'warning' }}">{{ export.status | title }}</span></td>
+            <td data-label="Records">{{ export.record_count }}</td>
+            <td data-label="Duplicate keys">{{ export.duplicate_key_count }}</td>
+            <td data-label="Size">{{ export.output_size_bytes or 0 }} bytes</td>
+            <td data-label="Generated">{{ export.generated_at.strftime("%Y-%m-%d %H:%M") if export.generated_at else "n/a" }}</td>
+            <td data-label="Action"><a class="button secondary" href="/admin/poi-inventory/exports/{{ export.id }}">Open</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <section class="empty-state">
+      <h2>No export records yet</h2>
+      <p>Generate a POI inventory snapshot from the inventory page.</p>
+    </section>
+  {% endif %}
+{% endblock %}

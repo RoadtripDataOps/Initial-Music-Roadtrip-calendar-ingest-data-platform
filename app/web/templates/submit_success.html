@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel">
+    <h1>Thank you — your submission was received.</h1>
+    <p class="notice">
+      {% if submission_kind == "events" %}
+        Your event spreadsheet is ready for Music Roadtrip review.
+      {% elif submission_kind == "calendar-list" %}
+        Your calendar list is ready for Music Roadtrip review.
+      {% else %}
+        Your calendar link is ready for Music Roadtrip review.
+      {% endif %}
+    </p>
+
+    <h2>What happens next?</h2>
+    <ul>
+      <li>Music Roadtrip will review the calendar or file.</li>
+      <li>We may contact you if we need clarification.</li>
+    </ul>
+
+    <div class="actions">
+      <a class="button" href="/submit-calendar">Submit Calendar</a>
+      <a class="button secondary" href="/submit-events">Submit Events</a>
+    </div>
+  </section>
+{% endblock %}

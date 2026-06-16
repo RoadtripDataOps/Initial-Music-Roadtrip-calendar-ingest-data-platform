@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .feed-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin: 20px 0;
+    }
+
+    .feed-tile {
+      min-height: 126px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+      padding: 16px;
+    }
+
+    .feed-number {
+      display: block;
+      margin: 6px 0;
+      color: var(--admin-primary-dark);
+      font-size: 2rem;
+      font-weight: 850;
+      line-height: 1;
+    }
+
+    .feed-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .feed-export-form {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      max-width: none;
+    }
+
+    .feed-export-form select {
+      min-width: 150px;
+    }
+
+    @media (max-width: 960px) {
+      .feed-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .feed-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <p class="notice">Private app-facing contract layer. Public API access is disabled unless APP_FEED_PUBLIC=true.</p>
+  <h1>App Feed</h1>
+  <p>Preview sanitized, publishable events, POIs, and venues without exposing raw provider payloads or admin review data.</p>
+
+  <section class="feed-actions" aria-label="App feed actions">
+    <a class="button" href="/admin/app-feed/events.json">Preview Events JSON</a>
+    <a class="button secondary" href="/admin/app-feed/pois.json">Preview POIs JSON</a>
+    <a class="button secondary" href="/admin/app-feed/venues.json">Preview Venues JSON</a>
+    <a class="button secondary" href="/admin/app-feed/map-markers.json">Map Markers JSON</a>
+    <a class="button secondary" href="/admin/app-feed/filter-options.json">Filter Options JSON</a>
+    <a class="button secondary" href="/admin/app-feed/discovery.json">Discovery JSON</a>
+    <a class="button secondary" href="/admin/app-search">App Search</a>
+    <a class="button secondary" href="/admin/regions">Regional Feeds</a>
+    {% if latest_events_export %}
+      <a class="button secondary" href="/admin/app-feed/latest/events.json">Download latest events JSON</a>
+    {% endif %}
+    {% if latest_pois_export %}
+      <a class="button secondary" href="/admin/app-feed/latest/pois.json">Download latest POIs JSON</a>
+    {% endif %}
+  </section>
+
+  <form class="feed-export-form" method="post" action="/admin/app-feed/export">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="export_type">Generate export</label>
+    <select id="export_type" name="export_type">
+      <option value="full">Full</option>
+      <option value="events">Events</option>
+      <option value="pois">POIs</option>
+      <option value="venues">Venues</option>
+    </select>
+    <button type="submit">Generate Export</button>
+    <button type="submit" formaction="/admin/app-feed/export/background">Run in background</button>
+  </form>
+
+  <section class="feed-grid" aria-label="App feed metrics">
+    <div class="feed-tile">
+      <span class="badge success">Events</span>
+      <span class="feed-number">{{ summary.event_feed_record_count }}</span>
+      Event feed records
+    </div>
+    <div class="feed-tile">
+      <span class="badge success">POIs</span>
+      <span class="feed-number">{{ summary.poi_feed_record_count }}</span>
+      POI feed records
+    </div>
+    <div class="feed-tile">
+      <span class="badge info">Venues</span>
+      <span class="feed-number">{{ summary.venues_with_upcoming_events }}</span>
+      Venues with upcoming events
+    </div>
+    <div class="feed-tile">
+      <span class="badge warning">Blocked</span>
+      <span class="feed-number">{{ summary.records_blocked_from_publishing }}</span>
+      Records blocked from publishing
+    </div>
+    <div class="feed-tile">
+      <span class="badge failure">Images</span>
+      <span class="feed-number">{{ summary.events_needing_images }}</span>
+      Events needing images
+    </div>
+    <div class="feed-tile">
+      <span class="badge warning">Approval</span>
+      <span class="feed-number">{{ summary.events_pending_image_approval }}</span>
+      Events pending image approval but included
+    </div>
+    <div class="feed-tile">
+      <span class="badge failure">Dedupe</span>
+      <span class="feed-number">{{ summary.duplicate_candidates_excluded }}</span>
+      Duplicate candidates excluded
+    </div>
+    <div class="feed-tile">
+      <span class="badge failure">Lifecycle</span>
+      <span class="feed-number">{{ summary.cancelled_or_stale_events_excluded }}</span>
+      Cancelled or stale events excluded
+    </div>
+  </section>
+
+  <section>
+    <table>
+      <tbody>
+        <tr>
+          <th>Last export</th>
+          <td>
+            {% if summary.last_export %}
+              #{{ summary.last_export.id }} {{ summary.last_export.export_type }} at {{ summary.last_export.generated_at }}
+            {% else %}
+              No successful exports yet
+            {% endif %}
+          </td>
+        </tr>
+        <tr><th>Failed export count</th><td>{{ summary.failed_export_count }}</td></tr>
+        <tr><th>Private API events</th><td><code>/api/app/events</code></td></tr>
+        <tr><th>Private API POIs</th><td><code>/api/app/pois</code></td></tr>
+        <tr><th>Private API search</th><td><code>/api/app/search</code></td></tr>
+        <tr><th>Private API map markers</th><td><code>/api/app/map-markers</code></td></tr>
+        <tr><th>Private API filter options</th><td><code>/api/app/filter-options</code></td></tr>
+        <tr><th>Deferred app-team itinerary API</th><td><code>/api/app/itineraries</code> · Deferred / App team feature</td></tr>
+      </tbody>
+    </table>
+  </section>
+{% endblock %}

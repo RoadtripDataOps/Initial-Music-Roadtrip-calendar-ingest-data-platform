@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <p class="notice">Deferred / App team feature. Use this only to maintain existing compatibility records.</p>
+  <h1>Deferred Itinerary Record</h1>
+  <p>Route builders, saved trips, road trips, tours, and consumer navigation are outside Scott's ingest/data-quality scope.</p>
+
+  <form method="post" action="/admin/itineraries">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <div class="field">
+      <label for="title">Title</label>
+      <input id="title" name="title" required placeholder="Memphis Music Road Trip">
+    </div>
+
+    <div class="field">
+      <label for="subtitle">Subtitle</label>
+      <input id="subtitle" name="subtitle" placeholder="A two-day route through music landmarks">
+    </div>
+
+    <div class="field">
+      <label for="itinerary_type">Itinerary Type</label>
+      <select id="itinerary_type" name="itinerary_type">
+        {% for value in ["road_trip", "city_tour", "artist_tour", "festival_weekend", "venue_hop", "record_store_crawl", "certified_region", "custom"] %}
+          <option value="{{ value }}">{{ value.replace("_", " ").title() }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="display_label">App Label</label>
+      <select id="display_label" name="display_label">
+        <option value="">Auto</option>
+        {% for value in ["Road Trip", "Tour", "Setlist", "Route"] %}
+          <option value="{{ value }}">{{ value }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="region_id">Region</label>
+      <select id="region_id" name="region_id">
+        <option value="">None</option>
+        {% for region in references.regions %}
+          <option value="{{ region.id }}">{{ region.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="artist_id">Artist</label>
+      <select id="artist_id" name="artist_id">
+        <option value="">None</option>
+        {% for artist in references.artists %}
+          <option value="{{ artist.id }}">{{ artist.display_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <details class="filter-drawer">
+      <summary>Optional display details</summary>
+      <div class="card">
+        <div class="field">
+          <label for="description">Description</label>
+          <textarea id="description" name="description"></textarea>
+        </div>
+        <div class="field">
+          <label for="hero_image_url">Hero Image URL</label>
+          <input id="hero_image_url" name="hero_image_url" type="url" placeholder="https://images.example/route.jpg">
+        </div>
+        <div class="field">
+          <label for="music_theme">Music Theme</label>
+          <input id="music_theme" name="music_theme" placeholder="Blues, studios, and riverfront stages">
+        </div>
+        <div class="field">
+          <label for="normalized_genres">Genres</label>
+          <input id="normalized_genres" name="normalized_genres" placeholder="Blues, Soul, Rock">
+        </div>
+        <div class="field">
+          <label for="tags">Tags</label>
+          <input id="tags" name="tags" placeholder="certified, weekend, first-timer">
+        </div>
+        <label class="checkbox">
+          <input type="checkbox" name="featured" value="true">
+          <span>Feature in app discovery once approved</span>
+        </label>
+      </div>
+    </details>
+
+    <div class="actions">
+      <button type="submit">Create Itinerary</button>
+      <a class="button secondary" href="/admin/itineraries">Cancel</a>
+    </div>
+  </form>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel">
+    <p class="eyebrow">Provider Mapping</p>
+    <h1>{{ pipeline.provider.display_name }}</h1>
+    <p class="notice">
+      Field-by-field mapping for the private provider workbench. Provider
+      records normalize toward event candidates, not POIs.
+    </p>
+    <div class="actions">
+      <a class="button" href="/admin/api-feeds/{{ pipeline.provider.provider_key }}/pipeline">Pipeline</a>
+      <a class="button secondary" href="/admin/api-feeds/{{ pipeline.provider.provider_key }}">Review Records</a>
+      <a class="button secondary" href="/admin/api-feeds/{{ pipeline.provider.provider_key }}/pipeline.md">Markdown</a>
+      <a class="button secondary" href="/admin/api-feeds/{{ pipeline.provider.provider_key }}/pipeline.json">JSON</a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Mapping Rules</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Provider Field</th>
+          <th>Normalized Field</th>
+          <th>Transformation Rule</th>
+          <th>Required/Optional</th>
+          <th>QA Notes</th>
+          <th>Example Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in pipeline.spec.mapping_rows %}
+          <tr>
+            <td data-label="Provider Field">{{ row.provider_field }}</td>
+            <td data-label="Normalized Field">{{ row.normalized_field }}</td>
+            <td data-label="Transformation Rule">{{ row.transformation_rule }}</td>
+            <td data-label="Required/Optional">{{ row.requirement }}</td>
+            <td data-label="QA Notes">{{ row.qa_notes }}</td>
+            <td data-label="Example Value">{{ row.example_value }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endblock %}

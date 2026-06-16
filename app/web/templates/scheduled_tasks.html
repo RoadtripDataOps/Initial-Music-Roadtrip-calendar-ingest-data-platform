@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Scheduled Tasks</h1>
+  <p class="notice">
+    Manual scheduler definitions. The CLI enqueues due tasks with
+    <code>python -m app.tools.run_scheduler --once</code>.
+  </p>
+
+  <section class="actions">
+    <form method="post" action="/admin/scheduled-tasks/run-due">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Enqueue due tasks</button>
+    </form>
+    <a class="button secondary" href="/admin/jobs">View Jobs</a>
+  </section>
+
+  {% if tasks %}
+    <table>
+      <thead>
+        <tr>
+          <th>Task</th>
+          <th>Type</th>
+          <th>Enabled</th>
+          <th>Schedule</th>
+          <th>Next run</th>
+          <th>Last run</th>
+          <th>Last job</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for task in tasks %}
+          <tr>
+            <td data-label="Task"><a href="/admin/scheduled-tasks/{{ task.id }}">{{ task.task_key }}</a></td>
+            <td data-label="Type">{{ task.task_type }}</td>
+            <td data-label="Enabled"><span class="badge {{ 'success' if task.enabled else '' }}">{{ "Enabled" if task.enabled else "Manual/Off" }}</span></td>
+            <td data-label="Schedule">{{ task.schedule_type }}{% if task.interval_minutes %} · {{ task.interval_minutes }} min{% endif %}</td>
+            <td data-label="Next run">{{ task.next_run_at.strftime("%Y-%m-%d %H:%M") if task.next_run_at else "manual" }}</td>
+            <td data-label="Last run">{{ task.last_run_at.strftime("%Y-%m-%d %H:%M") if task.last_run_at else "never" }}</td>
+            <td data-label="Last job">
+              {% if task.last_job_id %}
+                <a href="/admin/jobs/{{ task.last_job_id }}">#{{ task.last_job_id }}</a>
+              {% else %}
+                n/a
+              {% endif %}
+            </td>
+            <td data-label="Action">
+              <form method="post" action="/admin/scheduled-tasks/{{ task.id }}/enqueue">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit">Enqueue now</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <section class="empty-state">
+      <h2>No scheduled tasks configured</h2>
+      <p>Default manual task definitions are created automatically in local mode.</p>
+    </section>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .filter-drawer {
+      margin: 18px 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+    }
+
+    .filter-drawer summary {
+      cursor: pointer;
+      padding: 14px 16px;
+      color: var(--admin-primary-dark);
+      font-weight: 800;
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      padding: 0 16px 16px;
+    }
+
+    @media (max-width: 720px) {
+      .filter-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <h1>Background Jobs</h1>
+  <p class="notice">
+    Local DB-backed operational jobs. Workers run manually with
+    <code>python -m app.tools.run_worker --once</code>.
+  </p>
+
+  <section class="actions">
+    <span class="badge">{{ counts.pending }} pending</span>
+    <span class="badge info">{{ counts.running }} running</span>
+    <span class="badge success">{{ counts.success }} successful</span>
+    <span class="badge failure">{{ counts.failure }} failed</span>
+    <a class="button secondary" href="/admin/scheduled-tasks">Scheduled Tasks</a>
+  </section>
+
+  <details class="filter-drawer" open>
+    <summary>Filters</summary>
+    <form method="get" action="/admin/jobs" class="filter-grid">
+      <div class="field">
+        <label for="status">Status</label>
+        <select id="status" name="status">
+          <option value="">All statuses</option>
+          {% for option in ["pending", "running", "success", "failure", "cancelled", "skipped"] %}
+            <option value="{{ option }}" {% if filters.status == option %}selected{% endif %}>{{ option | title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="job_type">Job type</label>
+        <input id="job_type" name="job_type" value="{{ filters.job_type }}">
+      </div>
+      <div class="field">
+        <label for="queue_name">Queue</label>
+        <input id="queue_name" name="queue_name" value="{{ filters.queue_name }}">
+      </div>
+      <button type="submit">Apply filters</button>
+      <a class="button secondary" href="/admin/jobs">Reset filters</a>
+    </form>
+  </details>
+
+  {% if jobs %}
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Queue</th>
+          <th>Attempts</th>
+          <th>Scheduled</th>
+          <th>Started</th>
+          <th>Completed</th>
+          <th>Error</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for job in jobs %}
+          <tr>
+            <td data-label="ID"><a href="/admin/jobs/{{ job.id }}">#{{ job.id }}</a></td>
+            <td data-label="Type">{{ job.job_type }}</td>
+            <td data-label="Status">
+              <span class="badge {{ 'success' if job.status == 'success' else 'failure' if job.status == 'failure' else 'info' if job.status == 'running' else 'warning' if job.status == 'pending' else '' }}">{{ job.status | title }}</span>
+            </td>
+            <td data-label="Queue">{{ job.queue_name }}</td>
+            <td data-label="Attempts">{{ job.attempts }} / {{ job.max_attempts }}</td>
+            <td data-label="Scheduled">{{ job.scheduled_for.strftime("%Y-%m-%d %H:%M") if job.scheduled_for else "now" }}</td>
+            <td data-label="Started">{{ job.started_at.strftime("%Y-%m-%d %H:%M") if job.started_at else "n/a" }}</td>
+            <td data-label="Completed">{{ job.completed_at.strftime("%Y-%m-%d %H:%M") if job.completed_at else "n/a" }}</td>
+            <td data-label="Error">{{ job.error_message or "none" }}</td>
+            <td data-label="Action">
+              <a class="button secondary" href="/admin/jobs/{{ job.id }}">Open</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <section class="empty-state">
+      <h2>No background jobs yet</h2>
+      <p>Use background buttons on crawl, provider sandbox, image QA, or app feed pages to queue work.</p>
+    </section>
+  {% endif %}
+{% endblock %}

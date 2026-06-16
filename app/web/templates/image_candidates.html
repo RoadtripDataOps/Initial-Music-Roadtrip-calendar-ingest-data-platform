@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .filter-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      padding: 7px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.055);
+      color: var(--admin-primary-dark);
+      font-weight: 750;
+      text-decoration: none;
+      box-shadow: 0 8px 18px rgba(23, 32, 38, 0.05);
+    }
+
+    .review-board {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .candidate-card {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+      box-shadow: var(--shadow);
+    }
+
+    .candidate-preview {
+      display: grid;
+      place-items: center;
+      aspect-ratio: 16 / 10;
+      background: var(--surface);
+      color: var(--muted);
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .candidate-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .candidate-body {
+      padding: 16px;
+    }
+
+    .candidate-body h2 {
+      margin-bottom: 6px;
+    }
+
+    .card-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .meta-pill {
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      font-size: 0.9rem;
+    }
+
+    .qa-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 12px 0;
+    }
+
+    .action-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .action-grid form {
+      display: inline-flex;
+      min-width: 0;
+    }
+
+    .action-grid button {
+      min-height: 34px;
+      padding: 6px 9px;
+      font-size: 0.86rem;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      padding-top: 12px;
+    }
+
+    @media (max-width: 1180px) {
+      .review-board {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .review-board,
+      .card-meta,
+      .field-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <p class="notice">
+    Candidate photos are scored and reviewed before they become selected event
+    or venue images. Unknown clearance stays reviewable as needs approval.
+  </p>
+
+  <nav class="chip-row" aria-label="Image QA filters">
+    <a class="filter-chip" href="/admin/image-candidates?selected_by_rescue=1">Photo Rescue</a>
+    <a class="filter-chip" href="/admin/image-candidates?needs_approval=1">Needs approval</a>
+    <a class="filter-chip" href="/admin/image-candidates?candidate_status=needs_review">Needs review</a>
+    <a class="filter-chip" href="/admin/image-candidates?selected_pending_approval=1">Selected pending approval</a>
+    <a class="filter-chip" href="/admin/image-candidates?missing_image=1">Missing image</a>
+    <a class="filter-chip" href="/admin/image-candidates?stock_placeholder_candidate=1">Generic provider photos</a>
+    <a class="filter-chip" href="/admin/image-candidates?poster_or_flyer=1">Poster/flyer/admat</a>
+    <a class="filter-chip" href="/admin/image-candidates?source_evidence_only=1">Social graphic evidence</a>
+    <a class="filter-chip" href="/admin/image-candidates?rescue_source=provider_artist_image">Artist image candidates</a>
+    <a class="filter-chip" href="/admin/image-candidates?rescue_source=provider_venue_image">Venue fallback candidates</a>
+    <a class="filter-chip" href="/admin/image-candidates?selected_by_rescue=1">Selected by rescue</a>
+    <a class="filter-chip" href="/admin/image-candidates?missing_artist_image=1">Missing artist image</a>
+    <a class="filter-chip" href="/admin/image-candidates?text_detected=1">Watermark/text</a>
+    <a class="filter-chip" href="/admin/image-candidates?image_role=venue_live">Venue fallback</a>
+    <a class="filter-chip" href="/admin/image-candidates?candidate_status=accepted">Accepted</a>
+    <a class="filter-chip" href="/admin/image-candidates?candidate_status=rejected">Rejected</a>
+    <a class="filter-chip" href="/admin/image-candidates">Reset</a>
+  </nav>
+  <div class="actions">
+    <form method="post" action="/admin/image-candidates/photo-rescue/recent-approved">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Run photo rescue for recently approved events</button>
+    </form>
+    <form method="post" action="/admin/image-candidates/photo-rescue/recent-approved/background">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Run recent photo rescue in background</button>
+    </form>
+  </div>
+
+  <details class="filter-drawer">
+    <summary>Show advanced filters</summary>
+    <form method="get" action="/admin/image-candidates">
+      <div class="field-grid">
+        <div class="field"><label for="event_id">Event ID</label><input id="event_id" name="event_id" value="{{ filters.event_id }}"></div>
+        <div class="field"><label for="venue_id">Venue ID</label><input id="venue_id" name="venue_id" value="{{ filters.venue_id }}"></div>
+        <div class="field"><label for="source_type">Source type</label><input id="source_type" name="source_type" value="{{ filters.source_type }}"></div>
+        <div class="field"><label for="source_provider">Source provider</label><input id="source_provider" name="source_provider" value="{{ filters.source_provider }}"></div>
+        <div class="field"><label for="candidate_status">Candidate status</label><input id="candidate_status" name="candidate_status" value="{{ filters.candidate_status }}"></div>
+        <div class="field"><label for="clearance_status">Clearance status</label><input id="clearance_status" name="clearance_status" value="{{ filters.clearance_status }}"></div>
+        <div class="field"><label for="image_role">Image role</label><input id="image_role" name="image_role" value="{{ filters.image_role }}"></div>
+        <div class="field"><label for="rescue_source">Rescue source</label><input id="rescue_source" name="rescue_source" value="{{ filters.rescue_source }}"></div>
+        <div class="field"><label for="quality_flag">Quality flag</label><input id="quality_flag" name="quality_flag" value="{{ filters.quality_flag }}"></div>
+        <div class="field">
+          <label for="selected">Selected</label>
+          <select id="selected" name="selected">
+            <option value="">Any</option>
+            <option value="1" {{ "selected" if filters.selected == "1" else "" }}>Selected</option>
+            <option value="0" {{ "selected" if filters.selected == "0" else "" }}>Not selected</option>
+          </select>
+        </div>
+        <label class="checkbox"><input type="checkbox" name="stock_placeholder_candidate" value="1" {{ "checked" if filters.stock_placeholder_candidate else "" }}><span>Stock placeholder candidate</span></label>
+        <label class="checkbox"><input type="checkbox" name="text_detected" value="1" {{ "checked" if filters.text_detected else "" }}><span>Text detected</span></label>
+        <label class="checkbox"><input type="checkbox" name="watermark_detected" value="1" {{ "checked" if filters.watermark_detected else "" }}><span>Watermark detected</span></label>
+        <label class="checkbox"><input type="checkbox" name="poster_or_flyer" value="1" {{ "checked" if filters.poster_or_flyer else "" }}><span>Poster/flyer</span></label>
+        <label class="checkbox"><input type="checkbox" name="needs_approval" value="1" {{ "checked" if filters.needs_approval else "" }}><span>Needs approval</span></label>
+        <label class="checkbox"><input type="checkbox" name="selected_pending_approval" value="1" {{ "checked" if filters.selected_pending_approval else "" }}><span>Selected pending approval</span></label>
+        <label class="checkbox"><input type="checkbox" name="selected_and_cleared" value="1" {{ "checked" if filters.selected_and_cleared else "" }}><span>Selected and cleared</span></label>
+        <label class="checkbox"><input type="checkbox" name="selected_but_needs_approval" value="1" {{ "checked" if filters.selected_but_needs_approval else "" }}><span>Selected but needs approval</span></label>
+        <label class="checkbox"><input type="checkbox" name="hard_blocked" value="1" {{ "checked" if filters.hard_blocked else "" }}><span>Hard-blocked</span></label>
+        <label class="checkbox"><input type="checkbox" name="missing_image" value="1" {{ "checked" if filters.missing_image else "" }}><span>Missing selected image</span></label>
+        <label class="checkbox"><input type="checkbox" name="source_evidence_only" value="1" {{ "checked" if filters.source_evidence_only else "" }}><span>Source evidence only</span></label>
+        <label class="checkbox"><input type="checkbox" name="selected_by_rescue" value="1" {{ "checked" if filters.selected_by_rescue else "" }}><span>Selected by rescue</span></label>
+        <label class="checkbox"><input type="checkbox" name="missing_artist_image" value="1" {{ "checked" if filters.missing_artist_image else "" }}><span>Missing artist image</span></label>
+      </div>
+      <div class="actions">
+        <button type="submit">Apply filters</button>
+        <a class="button secondary" href="/admin/image-candidates">Reset filters</a>
+      </div>
+    </form>
+  </details>
+
+  {% if candidates %}
+    <section class="review-board">
+      {% for candidate in candidates %}
+        {% set is_event_selected = candidate.event and candidate.event.selected_image_candidate_id == candidate.id %}
+        {% set is_venue_selected = candidate.venue and candidate.venue.selected_image_candidate_id == candidate.id %}
+        <article class="candidate-card">
+          <div class="candidate-preview">
+            {% if candidate.is_direct_image_asset %}
+              <img alt="" src="{{ candidate.image_url }}">
+            {% else %}
+              Preview withheld: not a direct image asset
+            {% endif %}
+          </div>
+          <div class="candidate-body">
+            <div class="qa-badges">
+              {% if is_event_selected or is_venue_selected %}
+                <span class="badge success">Selected/current</span>
+              {% endif %}
+              {% if (candidate.event and candidate.event.image_status == "selected_pending_approval") or (candidate.venue and candidate.venue.image_status == "selected_pending_approval") %}
+                <span class="badge warning">Selected · Needs Approval</span>
+              {% endif %}
+              <span class="badge">{{ candidate.clearance_status }}</span>
+            </div>
+            <h2>
+              {% if candidate.event %}
+                <a href="/admin/events/{{ candidate.event.id }}">{{ candidate.event.title }}</a>
+              {% elif candidate.venue %}
+                {{ candidate.venue.display_name }}
+              {% else %}
+                Candidate #{{ candidate.id }}
+              {% endif %}
+            </h2>
+            <p class="url">{{ candidate.image_url }}</p>
+
+            <div class="card-meta">
+              <div class="meta-pill"><strong>Role</strong><br>{{ candidate.image_role }}</div>
+              <div class="meta-pill"><strong>Provider</strong><br>{{ candidate.source_provider or candidate.source_type }}</div>
+              <div class="meta-pill"><strong>Score</strong><br>{{ candidate.quality_score if candidate.quality_score is not none else "n/a" }}</div>
+              <div class="meta-pill"><strong>Status</strong><br>{{ candidate.candidate_status }}</div>
+              <div class="meta-pill"><strong>Rescue source</strong><br>{{ candidate.rescue_source }}</div>
+              <div class="meta-pill"><strong>Payload path</strong><br>{{ candidate.source_payload_path or "n/a" }}</div>
+              <div class="meta-pill"><strong>Final eligible</strong><br>{{ "yes" if candidate.can_be_final_image else "no" }}</div>
+              <div class="meta-pill"><strong>Selected reason</strong><br>{{ candidate.selected_reason or "n/a" }}</div>
+            </div>
+
+            <div class="qa-badges">
+              {% for flag in candidate.qa_flags %}
+                <span class="badge warning">{{ flag }}</span>
+              {% else %}
+                <span class="badge success">No QA flags</span>
+              {% endfor %}
+              {% for reason in candidate.rejection_reasons %}
+                <span class="badge failure">{{ reason }}</span>
+              {% endfor %}
+            </div>
+
+            <div class="action-grid">
+              <form method="post" action="/admin/image-candidates/{{ candidate.id }}/accept">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit">Accept visual</button>
+              </form>
+              <form method="post" action="/admin/image-candidates/{{ candidate.id }}/clearance-approved">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit">Approve clearance</button>
+              </form>
+              <form method="post" action="/admin/image-candidates/{{ candidate.id }}/reject">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit">Reject</button>
+              </form>
+              <form method="post" action="/admin/image-candidates/{{ candidate.id }}/needs-approval">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit">Mark needs approval</button>
+              </form>
+              {% if candidate.event_id %}
+                <form method="post" action="/admin/image-candidates/{{ candidate.id }}/photo-rescue">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <button type="submit">Run photo rescue</button>
+                </form>
+                <form method="post" action="/admin/image-candidates/{{ candidate.id }}/photo-rescue/background">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <button type="submit">Queue photo rescue</button>
+                </form>
+                <form method="post" action="/admin/image-candidates/{{ candidate.id }}/select-event">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <button type="submit">Replace selected</button>
+                </form>
+              {% endif %}
+              {% if candidate.venue_id %}
+                <form method="post" action="/admin/image-candidates/{{ candidate.id }}/select-venue">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <button type="submit">Replace selected</button>
+                </form>
+              {% endif %}
+              <form method="post" action="/admin/image-candidates/{{ candidate.id }}/preflight">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit">Run safe preflight</button>
+                <button
+                  type="submit"
+                  formaction="/admin/image-candidates/{{ candidate.id }}/preflight/background"
+                >Run in background</button>
+              </form>
+            </div>
+
+            <details style="margin-top: 14px;">
+              <summary>Review fields</summary>
+              <form method="post" action="/admin/image-candidates/{{ candidate.id }}/update">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div class="field">
+                  <label for="role-{{ candidate.id }}">Image role</label>
+                  <select id="role-{{ candidate.id }}" name="image_role">
+                    <option value="">Keep current</option>
+                    {% for role in image_roles %}
+                      <option value="{{ role }}" {{ "selected" if candidate.image_role == role else "" }}>{{ role }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="field"><label for="status-{{ candidate.id }}">Candidate status</label><input id="status-{{ candidate.id }}" name="candidate_status" value="{{ candidate.candidate_status }}"></div>
+                <div class="field"><label for="clearance-{{ candidate.id }}">Clearance status</label><input id="clearance-{{ candidate.id }}" name="clearance_status" value="{{ candidate.clearance_status }}"></div>
+                <div class="field"><label for="notes-{{ candidate.id }}">Clearance notes</label><textarea id="notes-{{ candidate.id }}" name="clearance_notes">{{ candidate.clearance_notes or "" }}</textarea></div>
+                <label class="checkbox"><input type="checkbox" name="has_text_detected" value="1" {{ "checked" if candidate.has_text_detected else "" }}><span>Text detected</span></label>
+                <label class="checkbox"><input type="checkbox" name="has_watermark_detected" value="1" {{ "checked" if candidate.has_watermark_detected else "" }}><span>Watermark detected</span></label>
+                <label class="checkbox"><input type="checkbox" name="has_logo_detected" value="1" {{ "checked" if candidate.has_logo_detected else "" }}><span>Logo detected</span></label>
+                <label class="checkbox"><input type="checkbox" name="appears_poster_or_flyer" value="1" {{ "checked" if candidate.appears_poster_or_flyer else "" }}><span>Poster/flyer</span></label>
+                <label class="checkbox"><input type="checkbox" name="appears_stock_or_placeholder" value="1" {{ "checked" if candidate.appears_stock_or_placeholder else "" }}><span>Stock placeholder</span></label>
+                <label class="checkbox"><input type="checkbox" name="appears_live_performance" value="1" {{ "checked" if candidate.appears_live_performance else "" }}><span>Live performance</span></label>
+                <label class="checkbox"><input type="checkbox" name="appears_artist_subject" value="1" {{ "checked" if candidate.appears_artist_subject else "" }}><span>Artist subject</span></label>
+                <label class="checkbox"><input type="checkbox" name="appears_venue_in_action" value="1" {{ "checked" if candidate.appears_venue_in_action else "" }}><span>Venue in action</span></label>
+                <label class="checkbox"><input type="checkbox" name="appears_food_or_drink" value="1" {{ "checked" if candidate.appears_food_or_drink else "" }}><span>Food/drink</span></label>
+                <label class="checkbox"><input type="checkbox" name="appears_unrelated_place" value="1" {{ "checked" if candidate.appears_unrelated_place else "" }}><span>Unrelated place</span></label>
+                <label class="checkbox"><input type="checkbox" name="appears_generic_crowd" value="1" {{ "checked" if candidate.appears_generic_crowd else "" }}><span>Generic crowd</span></label>
+                <button type="submit">Update review fields</button>
+              </form>
+            </details>
+          </div>
+        </article>
+      {% endfor %}
+    </section>
+  {% else %}
+    <section class="empty-state">
+      <h2>No image candidates yet</h2>
+      <p>
+        This board reviews event and venue image candidates. It is empty when no
+        candidate has been created or the current filters exclude all candidates.
+      </p>
+      <a class="button" href="/preview/quality">Open quality dashboard</a>
+    </section>
+  {% endif %}
+{% endblock %}

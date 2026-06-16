@@ -1,0 +1,938 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ page_title }} | Music Roadtrip Calendar Ingest</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --admin-page: #090b0d;
+        --admin-card: #14171b;
+        --admin-elevated: #1b1f25;
+        --admin-border: #303842;
+        --admin-text: #f3f6f4;
+        --admin-muted: #a7b2ad;
+        --admin-primary: #28b86f;
+        --admin-primary-dark: #7ce7aa;
+        --admin-warning: #f5b84b;
+        --admin-danger: #ff6b5d;
+        --admin-info: #46c7f3;
+        --creative-violet: #9f7bff;
+        --creative-magenta: #ff4fb8;
+        --creative-blue: #3aa7ff;
+        --preview-bg: #090b0d;
+        --preview-card: #15181d;
+        --preview-border: #303842;
+        --preview-concert: #f2d40b;
+        --preview-warning: #f5b84b;
+        --preview-muted: #b9c0bd;
+        --ink: var(--admin-text);
+        --muted: var(--admin-muted);
+        --line: var(--admin-border);
+        --surface: #111418;
+        --accent: var(--admin-primary);
+        --accent-dark: var(--admin-primary-dark);
+        --warning: var(--admin-danger);
+        --radius: 8px;
+        --shadow: 0 20px 60px rgba(0, 0, 0, 0.34);
+        --glow-green: 0 0 0 1px rgba(40, 184, 111, 0.2),
+          0 18px 42px rgba(40, 184, 111, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 18% -8%, rgba(40, 184, 111, 0.16), transparent 30%),
+          radial-gradient(circle at 82% 0%, rgba(58, 167, 255, 0.14), transparent 30%),
+          linear-gradient(180deg, #0d1014 0%, #090b0d 42%, #070809 100%);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.5;
+      }
+
+      .public-header {
+        border-bottom: 1px solid var(--line);
+        background: rgba(10, 12, 15, 0.86);
+        backdrop-filter: blur(18px);
+      }
+
+      .public-nav,
+      .public-main {
+        width: min(1040px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      .public-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 68px;
+        gap: 16px;
+      }
+
+      .public-nav a,
+      .preview-nav a,
+      .admin-sidebar a {
+        color: var(--ink);
+        text-decoration: none;
+      }
+
+      .brand {
+        color: var(--admin-primary-dark);
+        font-weight: 700;
+      }
+
+      .brand-mark {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--ink);
+        text-decoration: none;
+      }
+
+      .brand-logo {
+        display: block;
+        width: auto;
+        max-width: 100%;
+        height: auto;
+        object-fit: contain;
+      }
+
+      .brand-logo--hero {
+        width: min(420px, 90%);
+        margin: 0 0 22px;
+        border-radius: 8px;
+        box-shadow:
+          0 24px 72px rgba(0, 0, 0, 0.38),
+          0 0 0 1px rgba(245, 184, 75, 0.24);
+      }
+
+      .brand-logo--header {
+        width: 44px;
+      }
+
+      .brand-logo--sidebar {
+        width: 52px;
+      }
+
+      .brand-logo--login {
+        width: min(160px, 70vw);
+        margin: 0 auto 16px;
+      }
+
+      .brand-copy {
+        display: grid;
+        gap: 1px;
+        line-height: 1.1;
+      }
+
+      .brand-copy strong {
+        color: #ffffff;
+        font-size: 0.98rem;
+      }
+
+      .brand-copy span {
+        color: var(--admin-muted);
+        font-size: 0.82rem;
+        font-weight: 700;
+      }
+
+      .public-brand-form {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+
+      .public-nav .links,
+      .preview-links {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .public-nav .team-login-link {
+        color: var(--admin-primary-dark);
+        font-weight: 700;
+      }
+
+      .logout-form {
+        display: inline-flex;
+        width: auto;
+        max-width: none;
+      }
+
+      .logout-form button {
+        min-height: auto;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--accent-dark);
+      }
+
+      .public-main {
+        padding: 36px 0 56px;
+      }
+
+      .admin-layout {
+        display: grid;
+        min-height: 100vh;
+        grid-template-columns: 280px minmax(0, 1fr);
+        background:
+          linear-gradient(135deg, rgba(40, 184, 111, 0.08), transparent 28%),
+          var(--admin-page);
+      }
+
+      .admin-sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        padding: 22px 18px;
+        border-right: 1px solid var(--admin-border);
+        background: rgba(13, 16, 20, 0.96);
+        box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.03);
+      }
+
+      .admin-sidebar .brand {
+        display: inline-flex;
+        margin-bottom: 22px;
+        color: var(--admin-primary-dark);
+      }
+
+      .sidebar-group {
+        margin-bottom: 22px;
+      }
+
+      .sidebar-heading {
+        margin: 0 0 8px;
+        color: var(--admin-muted);
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .sidebar-link {
+        display: flex;
+        align-items: center;
+        min-height: 36px;
+        padding: 7px 10px;
+        border-radius: var(--radius);
+        color: var(--admin-text);
+        font-weight: 650;
+      }
+
+      .sidebar-link:hover,
+      .sidebar-link.active {
+        background: linear-gradient(90deg, rgba(40, 184, 111, 0.18), rgba(58, 167, 255, 0.08));
+        color: #ffffff;
+        box-shadow: inset 3px 0 0 var(--admin-primary);
+      }
+
+      .admin-sidebar .logout-form {
+        display: block;
+        width: 100%;
+      }
+
+      .admin-sidebar button.sidebar-link {
+        width: 100%;
+        justify-content: flex-start;
+        min-height: 36px;
+        padding: 7px 10px;
+        border: 0;
+        background: transparent;
+        color: var(--admin-text);
+        font-weight: 650;
+      }
+
+      .admin-shell {
+        min-width: 0;
+      }
+
+      .admin-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        min-height: 72px;
+        padding: 14px 28px;
+        border-bottom: 1px solid var(--admin-border);
+        background: rgba(12, 14, 17, 0.9);
+        backdrop-filter: blur(12px);
+      }
+
+      .breadcrumbs {
+        margin: 0 0 3px;
+        color: var(--admin-muted);
+        font-size: 0.86rem;
+        font-weight: 750;
+      }
+
+      .topbar-title {
+        margin: 0;
+        font-size: 1.35rem;
+        line-height: 1.15;
+      }
+
+      .admin-user {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        white-space: nowrap;
+      }
+
+      .admin-content {
+        width: min(1260px, calc(100% - 48px));
+        margin: 0 auto;
+        padding: 28px 0 56px;
+      }
+
+      .preview-body {
+        background: var(--preview-bg);
+        color: #f3f3f4;
+      }
+
+      .preview-header {
+        border-bottom: 1px solid var(--preview-border);
+        background: rgba(9, 11, 13, 0.92);
+        backdrop-filter: blur(16px);
+      }
+
+      .preview-nav,
+      .preview-main {
+        width: min(1400px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      .preview-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 64px;
+        gap: 16px;
+      }
+
+      .preview-nav a,
+      .preview-nav .logout-form button {
+        color: #f3f3f4;
+      }
+
+      .preview-nav .brand {
+        color: var(--preview-concert);
+      }
+
+      .preview-main {
+        padding: 28px 0 56px;
+      }
+
+      .login-shell {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background:
+          radial-gradient(circle at 20% 0%, rgba(40, 184, 111, 0.22), transparent 36%),
+          radial-gradient(circle at 82% 18%, rgba(159, 123, 255, 0.2), transparent 34%),
+          var(--admin-page);
+      }
+
+      .login-card {
+        width: min(440px, 100%);
+        padding: 30px;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--radius);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent),
+          var(--admin-card);
+        box-shadow: var(--shadow), var(--glow-green);
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: clamp(2rem, 4vw, 3.25rem);
+        line-height: 1.05;
+      }
+
+      h2 {
+        margin: 0 0 16px;
+        font-size: 1.35rem;
+      }
+
+      p {
+        margin: 0 0 18px;
+        color: var(--muted);
+      }
+
+      .panel {
+        max-width: 760px;
+      }
+
+      .card,
+      .panel {
+        border-radius: var(--radius);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent),
+          var(--admin-card);
+        border: 1px solid var(--line);
+        padding: 20px;
+        box-shadow: var(--shadow);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .button,
+      button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        padding: 8px 14px;
+        border: 1px solid var(--accent);
+        border-radius: 6px;
+        background: linear-gradient(135deg, var(--accent), #178c54);
+        color: #061008;
+        font: inherit;
+        font-weight: 650;
+        text-decoration: none;
+        cursor: pointer;
+        box-shadow: 0 10px 24px rgba(40, 184, 111, 0.16);
+        transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+      }
+
+      .button:hover,
+      button:hover {
+        transform: translateY(-1px);
+        border-color: var(--admin-primary-dark);
+      }
+
+      .button.secondary {
+        background: rgba(255, 255, 255, 0.045);
+        color: var(--admin-primary-dark);
+        border-color: var(--line);
+        box-shadow: none;
+      }
+
+      form {
+        max-width: 680px;
+      }
+
+      .field {
+        margin-bottom: 18px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 650;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        min-height: 42px;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #0c0f13;
+        color: var(--ink);
+        font: inherit;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus,
+      button:focus-visible,
+      .button:focus-visible {
+        outline: 2px solid var(--admin-info);
+        outline-offset: 2px;
+      }
+
+      textarea {
+        min-height: 96px;
+      }
+
+      .checkbox {
+        display: grid;
+        grid-template-columns: 22px 1fr;
+        align-items: start;
+        gap: 10px;
+      }
+
+      .checkbox input {
+        width: 18px;
+        min-height: 18px;
+        margin-top: 3px;
+      }
+
+      .error {
+        margin-top: 6px;
+        color: var(--admin-danger);
+        font-size: 0.95rem;
+      }
+
+      .notice {
+        display: inline-block;
+        padding: 8px 10px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.055);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: var(--muted);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 3px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.11);
+        background: rgba(255, 255, 255, 0.06);
+        color: #dbe2de;
+        font-size: 0.88rem;
+        font-weight: 700;
+        text-transform: capitalize;
+      }
+
+      .badge.success {
+        background: rgba(40, 184, 111, 0.16);
+        border-color: rgba(40, 184, 111, 0.44);
+        color: #99efbd;
+      }
+
+      .badge.failure {
+        background: rgba(255, 107, 93, 0.14);
+        border-color: rgba(255, 107, 93, 0.45);
+        color: #ffafa6;
+      }
+
+      .badge.warning {
+        background: rgba(245, 184, 75, 0.15);
+        border-color: rgba(245, 184, 75, 0.5);
+        color: #ffd98b;
+      }
+
+      .badge.info {
+        background: rgba(70, 199, 243, 0.14);
+        border-color: rgba(70, 199, 243, 0.44);
+        color: #9ce7ff;
+      }
+
+      .flash {
+        margin-bottom: 18px;
+        padding: 12px 14px;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--radius);
+        background: var(--admin-card);
+        box-shadow: var(--shadow);
+      }
+
+      .flash.success {
+        border-color: rgba(40, 184, 111, 0.5);
+        background: rgba(40, 184, 111, 0.14);
+        color: #b9f4d0;
+      }
+
+      .flash.error {
+        border-color: rgba(255, 107, 93, 0.5);
+        background: rgba(255, 107, 93, 0.14);
+        color: #ffbbb4;
+      }
+
+      .empty-state {
+        max-width: 720px;
+        padding: 22px;
+        border: 1px dashed var(--admin-border);
+        border-radius: var(--radius);
+        background: rgba(20, 23, 27, 0.88);
+      }
+
+      .filter-drawer {
+        margin: 18px 0;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(20, 23, 27, 0.9);
+      }
+
+      .filter-drawer summary {
+        cursor: pointer;
+        padding: 14px 16px;
+        color: var(--admin-primary-dark);
+        font-weight: 800;
+      }
+
+      pre {
+        overflow: auto;
+        max-width: 100%;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #0b0d10;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid var(--line);
+        background: rgba(20, 23, 27, 0.88);
+      }
+
+      th,
+      td {
+        padding: 12px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: rgba(255, 255, 255, 0.055);
+        font-size: 0.9rem;
+      }
+
+      tr:hover td {
+        background: rgba(255, 255, 255, 0.025);
+      }
+
+      td form {
+        display: flex;
+        gap: 8px;
+        min-width: 220px;
+      }
+
+      td select {
+        min-width: 120px;
+      }
+
+      .url {
+        word-break: break-word;
+      }
+
+      .submission-hero,
+      .submission-card,
+      .provider-card,
+      .summary-card,
+      .source-table-wrap,
+      .count-box,
+      .filter-chip,
+      .candidate-card,
+      .meta-pill,
+      .preview-card {
+        border-color: var(--line) !important;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent),
+          var(--admin-card) !important;
+        color: var(--ink) !important;
+        box-shadow: var(--shadow) !important;
+      }
+
+      .provider-card,
+      .submission-card,
+      .candidate-card {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .provider-card::before,
+      .submission-card::before,
+      .candidate-card::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          var(--admin-primary),
+          var(--creative-blue),
+          var(--creative-magenta)
+        );
+        opacity: 0.82;
+      }
+
+      .candidate-preview {
+        background:
+          linear-gradient(135deg, rgba(40, 184, 111, 0.08), rgba(70, 199, 243, 0.06)),
+          #0b0e12 !important;
+      }
+
+      .path-number {
+        background: linear-gradient(135deg, var(--admin-primary), var(--creative-blue)) !important;
+        color: #061008 !important;
+      }
+
+      a {
+        color: var(--admin-primary-dark);
+      }
+
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      @media (max-width: 720px) {
+        .public-nav,
+        .preview-nav {
+          align-items: flex-start;
+          flex-direction: column;
+          padding: 16px 0;
+        }
+
+        .admin-layout {
+          display: block;
+        }
+
+        .admin-sidebar {
+          position: static;
+          height: auto;
+          border-right: 0;
+          border-bottom: 1px solid var(--admin-border);
+        }
+
+        .admin-topbar {
+          position: static;
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .admin-content {
+          width: min(100% - 28px, 1260px);
+        }
+
+        table,
+        thead,
+        tbody,
+        tr,
+        th,
+        td {
+          display: block;
+        }
+
+        thead {
+          display: none;
+        }
+
+        tr {
+          border-bottom: 1px solid var(--line);
+        }
+
+        td {
+          border-bottom: 0;
+          padding: 10px 12px;
+        }
+
+        td::before {
+          content: attr(data-label);
+          display: block;
+          margin-bottom: 4px;
+          color: var(--muted);
+          font-size: 0.82rem;
+          font-weight: 700;
+        }
+
+        td form {
+          min-width: 0;
+        }
+
+        .brand-logo--hero {
+          width: min(100%, 360px);
+        }
+      }
+    </style>
+  </head>
+  {% set current_path = request.url.path %}
+  {% set is_login_shell = current_path == "/admin/login" %}
+  {% set is_preview_shell = current_path.startswith("/preview") %}
+  {% set is_admin_shell = current_path.startswith("/admin") and not is_login_shell %}
+  <body class="{{ 'preview-body' if is_preview_shell else '' }}">
+    {% if is_login_shell %}
+      <main class="login-shell">
+    {% elif is_preview_shell %}
+      <header class="preview-header">
+        <nav class="preview-nav" aria-label="Preview">
+          <a class="brand brand-mark" href="/preview">
+            <img class="brand-logo brand-logo--header" src="/static/images/music-roadtrip-logo-circle.png" alt="Music Roadtrip logo">
+            <span>Music Roadtrip Preview</span>
+          </a>
+          <div class="preview-links">
+            <a href="/preview">Preview Home</a>
+            <a href="/preview/events">Events</a>
+            <a href="/preview/venues">Venues</a>
+            <a href="/preview/quality">Quality</a>
+            <a href="/admin/dashboard">Back to Admin</a>
+          </div>
+        </nav>
+      </header>
+      <main class="preview-main">
+    {% elif is_admin_shell %}
+      <div class="admin-layout">
+        <aside class="admin-sidebar" aria-label="Admin">
+          <a class="brand brand-mark" href="/admin/dashboard">
+            <img class="brand-logo brand-logo--sidebar" src="/static/images/music-roadtrip-logo-circle.png" alt="Music Roadtrip logo">
+            <span class="brand-copy">
+              <strong>Music Roadtrip</strong>
+              <span>Calendar Ingest</span>
+            </span>
+          </a>
+          <div class="sidebar-group">
+            <p class="sidebar-heading">Overview</p>
+            <a class="sidebar-link {{ 'active' if current_path == '/admin/dashboard' else '' }}" href="/admin/dashboard">Dashboard</a>
+          </div>
+          <div class="sidebar-group">
+            <p class="sidebar-heading">Intake</p>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/sources') else '' }}" href="/admin/sources">Submissions</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/import-batches') else '' }}" href="/admin/import-batches">Import Batches</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/suspicious-submissions') else '' }}" href="/admin/suspicious-submissions">Suspicious Submissions</a>
+          </div>
+          <div class="sidebar-group">
+            <p class="sidebar-heading">Sources</p>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/master-calendar-sources') else '' }}" href="/admin/master-calendar-sources">Master Calendar Sources</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/crawl-queue') else '' }}" href="/admin/crawl-queue">Crawl Queue</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/crawl-runs') else '' }}" href="/admin/crawl-runs">Crawl Runs</a>
+          </div>
+          <div class="sidebar-group">
+            <p class="sidebar-heading">Operations</p>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/jobs') else '' }}" href="/admin/jobs">Jobs</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/scheduled-tasks') else '' }}" href="/admin/scheduled-tasks">Scheduled Tasks</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/security') else '' }}" href="/admin/security">Security</a>
+          </div>
+          <div class="sidebar-group">
+            <p class="sidebar-heading">Data</p>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/events') else '' }}" href="/admin/events">Events</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/event-quality') else '' }}" href="/admin/event-quality">Event Quality</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/artists') or current_path.startswith('/admin/artist-duplicates') else '' }}" href="/admin/artists">Artists</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/extracted-events') else '' }}" href="/admin/extracted-events">Extracted Candidates</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/regions') else '' }}" href="/admin/regions">Regions</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/search-seeds') else '' }}" href="/admin/search-seeds">Search Seeds</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/source-quality') else '' }}" href="/admin/source-quality">Source Quality</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/partner-reports') else '' }}" href="/admin/partner-reports">Partner Reports</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/poi-candidates') or current_path.startswith('/admin/poi-audit') else '' }}" href="/admin/poi-candidates">POI Candidates</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/poi-locations') else '' }}" href="/admin/poi-locations">POI Registry</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/poi-inventory') else '' }}" href="/admin/poi-inventory">POI Inventory</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/image-candidates') else '' }}" href="/admin/image-candidates">Image QA</a>
+            <a class="sidebar-link" href="/admin/duplicate-events">Duplicate Events</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/poi-duplicates') else '' }}" href="/admin/poi-duplicates">Duplicate POIs</a>
+          </div>
+          <div class="sidebar-group">
+            <p class="sidebar-heading">Feeds</p>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/app-search') else '' }}" href="/admin/app-search">App Search</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/app-feed') else '' }}" href="/admin/app-feed">App Feed</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/api-feed') else '' }}" href="/admin/api-feeds">API Feeds</a>
+          </div>
+          <div class="sidebar-group">
+            <p class="sidebar-heading">Preview</p>
+            <a class="sidebar-link" href="/preview">Preview Sandbox</a>
+            <a class="sidebar-link" href="/preview/quality">Quality Dashboard</a>
+          </div>
+          <div class="sidebar-group">
+            <p class="sidebar-heading">Settings / Help</p>
+            <a class="sidebar-link" href="/templates/events-template.csv">Templates</a>
+            <a class="sidebar-link" href="/admin/api-feeds">Provider Docs</a>
+            <form class="logout-form" method="post" action="/admin/logout">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button class="sidebar-link" type="submit">Logout</button>
+            </form>
+          </div>
+          <div class="sidebar-group">
+            <p class="sidebar-heading">Future / App Team</p>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/itineraries') else '' }}" href="/admin/itineraries">Deferred Itineraries</a>
+          </div>
+        </aside>
+        <div class="admin-shell">
+          <header class="admin-topbar">
+            <div>
+              <p class="breadcrumbs">
+                {% if current_path.startswith('/admin/master-calendar-sources') %}Sources &gt; Master Calendar Sources
+                {% elif current_path.startswith('/admin/crawl-queue') %}Sources &gt; Crawl Queue
+                {% elif current_path.startswith('/admin/crawl-runs') %}Sources &gt; Crawl Runs
+                {% elif current_path.startswith('/admin/jobs') %}Operations &gt; Jobs
+                {% elif current_path.startswith('/admin/scheduled-tasks') %}Operations &gt; Scheduled Tasks
+                {% elif current_path.startswith('/admin/security') %}Operations &gt; Security
+                {% elif current_path.startswith('/admin/app-search') %}Feeds &gt; App Search
+                {% elif current_path.startswith('/admin/app-feed') %}Feeds &gt; App Feed
+                {% elif current_path.startswith('/admin/api-feed') %}Feeds &gt; API Feeds
+                {% elif current_path.startswith('/admin/image-candidates') %}Data &gt; Image QA
+                {% elif current_path.startswith('/admin/extracted-events') %}Data &gt; Extracted Candidates
+                {% elif current_path.startswith('/admin/regions') %}Data &gt; Regions
+                {% elif current_path.startswith('/admin/search-seeds') %}Data &gt; Search Seeds
+                {% elif current_path.startswith('/admin/source-quality') %}Data &gt; Source Quality
+                {% elif current_path.startswith('/admin/partner-reports') %}Data &gt; Partner Reports
+                {% elif current_path.startswith('/admin/artists') or current_path.startswith('/admin/artist-duplicates') %}Data &gt; Artists
+                {% elif current_path.startswith('/admin/itineraries') %}Future / App Team &gt; Deferred Itineraries
+                {% elif current_path.startswith('/admin/event-quality') %}Data &gt; Event Quality
+                {% elif current_path.startswith('/admin/events') %}Data &gt; Events
+                {% elif current_path.startswith('/admin/sources') %}Intake &gt; Submissions
+                {% elif current_path.startswith('/admin/import-batches') %}Intake &gt; Import Batches
+                {% elif current_path.startswith('/admin/suspicious-submissions') %}Intake &gt; Suspicious Submissions
+                {% else %}Dashboard{% endif %}
+              </p>
+              <h1 class="topbar-title">{{ page_title }}</h1>
+            </div>
+            <div class="admin-user">
+              <span class="notice">Signed in as {{ admin_user }}</span>
+              <form class="logout-form" method="post" action="/admin/logout">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit">Log out</button>
+              </form>
+            </div>
+          </header>
+          <main class="admin-content">
+    {% else %}
+      <header class="public-header">
+        <nav class="public-nav" aria-label="Primary">
+          <a class="brand brand-mark" href="/">
+            <img class="brand-logo brand-logo--header" src="/static/images/music-roadtrip-logo-circle.png" alt="Music Roadtrip logo">
+            <span>Music Roadtrip Calendar Ingest</span>
+          </a>
+          <div class="links">
+            <a href="/submit-calendar">Submit Calendar</a>
+            <a href="/submit-events">Submit Events</a>
+            <a class="team-login-link" href="/admin/login">Team Login</a>
+          </div>
+        </nav>
+      </header>
+      <main class="public-main">
+    {% endif %}
+      {% if not is_login_shell and request.query_params.get("success") %}
+        <div class="flash success">{{ request.query_params.get("success") }}</div>
+      {% endif %}
+      {% if not is_login_shell and request.query_params.get("error") %}
+        <div class="flash error">{{ request.query_params.get("error") }}</div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    {% if is_login_shell %}
+      </main>
+    {% elif is_preview_shell %}
+      </main>
+    {% elif is_admin_shell %}
+          </main>
+        </div>
+      </div>
+    {% else %}
+      </main>
+    {% endif %}
+  </body>
+</html>

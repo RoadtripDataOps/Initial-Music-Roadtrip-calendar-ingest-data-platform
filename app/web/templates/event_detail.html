@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel">
+    <h1>{{ event.title }}</h1>
+    <p>
+      <a href="/admin/events">Back to events</a>
+    </p>
+
+    <table>
+      <tbody>
+        <tr>
+          <th>Title</th>
+          <td>{{ event.title }}</td>
+        </tr>
+        <tr>
+          <th>Description</th>
+          <td>{{ event.description if event.description else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Start</th>
+          <td>{{ event.start_datetime.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+        </tr>
+        <tr>
+          <th>End</th>
+          <td>{{ event.end_datetime.strftime("%Y-%m-%d %H:%M:%S") if event.end_datetime else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Timezone</th>
+          <td>{{ event.timezone if event.timezone else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Location</th>
+          <td>{{ event.location_text if event.location_text else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Source URL</th>
+          <td class="url">
+            {% if event.source_url %}
+              <a href="{{ event.source_url }}">{{ event.source_url }}</a>
+            {% else %}
+              n/a
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>Source event ID</th>
+          <td>{{ event.source_event_id if event.source_event_id else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Category</th>
+          <td>{{ event.category }}</td>
+        </tr>
+        <tr>
+          <th>Provider event type</th>
+          <td>{{ event.provider_event_type if event.provider_event_type else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Provider music segment</th>
+          <td>{{ event.provider_music_segment if event.provider_music_segment else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Ingestion provider</th>
+          <td>{{ event.ingestion_provider or event.api_provider_key or "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Upstream event source</th>
+          <td>{{ event.upstream_event_source or "unknown" }}{% if event.upstream_event_id %} / {{ event.upstream_event_id }}{% endif %}</td>
+        </tr>
+        <tr>
+          <th>Ticketing provider</th>
+          <td>{{ event.ticketing_provider or "unknown" }}{% if event.ticketing_provider_domain %} / {{ event.ticketing_provider_domain }}{% endif %}</td>
+        </tr>
+        <tr>
+          <th>Provider genre/subgenre</th>
+          <td>{{ event.provider_genre or "n/a" }}{% if event.provider_subgenre %} / {{ event.provider_subgenre }}{% endif %}</td>
+        </tr>
+        <tr>
+          <th>Normalized genre/music category</th>
+          <td>
+            {{ event.normalized_genres | join(", ") if event.normalized_genres else event.normalized_genre or "n/a" }}
+            {% if event.music_category %} / {{ event.music_category }}{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>Genre confidence/source</th>
+          <td>
+            {{ "%.2f"|format(event.genre_confidence) if event.genre_confidence is not none else "n/a" }}
+            {% if event.genre_source %} / {{ event.genre_source }}{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>Music relevance</th>
+          <td>
+            {{ "%.0f"|format(event.music_relevance_score) if event.music_relevance_score is not none else "n/a" }}
+            {% if event.music_relevance_flags %}
+              / {{ event.music_relevance_flags | join(", ") }}
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>Ticket-link classification</th>
+          <td>{{ event.ticket_link_classification if event.ticket_link_classification else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Recommended ticket link</th>
+          <td class="url">{{ event.recommended_ticket_link if event.recommended_ticket_link else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Ticket repair suggestion</th>
+          <td>{{ event.ticket_link_repair_suggestion if event.ticket_link_repair_suggestion else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Ticket repair strategy/source</th>
+          <td>{{ event.ticket_link_repair_strategy or "n/a" }}{% if event.ticket_link_repair_source %} / {{ event.ticket_link_repair_source }}{% endif %}</td>
+        </tr>
+        <tr>
+          <th>Record type</th>
+          <td>{{ event.record_type }}</td>
+        </tr>
+        <tr>
+          <th>Source type</th>
+          <td>{{ event.source_type }}</td>
+        </tr>
+        <tr>
+          <th>Import batch</th>
+          <td>{{ "#" ~ event.import_batch_id if event.import_batch_id else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Dedupe key</th>
+          <td>{{ event.dedupe_key }}</td>
+        </tr>
+        <tr>
+          <th>Dedupe status</th>
+          <td>
+            {{ event.dedupe_confidence }} /
+            {{ event.duplicate_status }}
+            {% if event.duplicate_candidate_group_id %}
+              / <a href="/admin/duplicate-events/{{ event.duplicate_candidate_group_id }}">Group #{{ event.duplicate_candidate_group_id }}</a>
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>Source claims</th>
+          <td>{{ event.source_claim_count }} claim(s), latest #{{ event.latest_source_claim_id or "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Lifecycle</th>
+          <td>{{ event.event_lifecycle_status }}{% if event.event_status %} / {{ event.event_status }}{% endif %}</td>
+        </tr>
+        <tr>
+          <th>Seen / updates</th>
+          <td>
+            first {{ event.first_seen_at.strftime("%Y-%m-%d %H:%M") if event.first_seen_at else "n/a" }},
+            last {{ event.last_seen_at.strftime("%Y-%m-%d %H:%M") if event.last_seen_at else "n/a" }},
+            updates {{ event.update_count }}
+          </td>
+        </tr>
+        <tr>
+          <th>Dedupe source fields</th>
+          <td>{{ event.dedupe_source_fields_json if event.dedupe_source_fields_json else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Venue match fields</th>
+          <td>{{ event.venue_match_fields_json if event.venue_match_fields_json else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Source chain</th>
+          <td>{{ event.source_chain_json if event.source_chain_json else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>External identifiers</th>
+          <td>{{ event.external_identifiers_json if event.external_identifiers_json else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Ticket offers</th>
+          <td>{{ event.ticket_offers_json if event.ticket_offers_json else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Provenance flags</th>
+          <td>{{ event.provenance_flags | join(", ") if event.provenance_flags else "none" }}</td>
+        </tr>
+        <tr>
+          <th>Provider documentation notes</th>
+          <td>{{ event.provider_doc_notes if event.provider_doc_notes else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Source</th>
+          <td>{{ event.source.organization_name if event.source else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Crawl run</th>
+          <td>
+            {% if event.crawl_run_id %}
+              <a href="/admin/crawl-runs/{{ event.crawl_run_id }}">#{{ event.crawl_run_id }}</a>
+            {% else %}
+              n/a
+            {% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Linked Artists</h2>
+    {% if event.artist_links %}
+      <table>
+        <thead>
+          <tr>
+            <th>Artist</th>
+            <th>Role</th>
+            <th>Rank</th>
+            <th>Provider Artist ID</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for link in event.artist_links %}
+            <tr>
+              <td data-label="Artist">
+                {% if link.artist %}
+                  <a href="/admin/artists/{{ link.artist.id }}">{{ link.artist.display_name }}</a>
+                {% else %}
+                  n/a
+                {% endif %}
+              </td>
+              <td data-label="Role">{{ link.role }}</td>
+              <td data-label="Rank">{{ link.performance_rank or "n/a" }}</td>
+              <td data-label="Provider Artist ID">{{ link.provider_artist_id or "n/a" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="notice">No artist links recorded for this event.</p>
+    {% endif %}
+
+    <h2>Source Claims</h2>
+    {% if source_claims %}
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Type</th>
+            <th>Provider</th>
+            <th>Record ID</th>
+            <th>Confidence</th>
+            <th>Seen</th>
+            <th>Source URL</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for claim in source_claims %}
+            <tr>
+              <td>#{{ claim.id }}</td>
+              <td>{{ claim.source_type }}</td>
+              <td>{{ claim.ingestion_provider or "n/a" }}</td>
+              <td>{{ claim.source_record_id or claim.provider_event_id or "n/a" }}</td>
+              <td>{{ claim.claim_dedupe_confidence }} / {{ claim.match_confidence if claim.match_confidence is not none else "n/a" }}</td>
+              <td>{{ claim.seen_at.strftime("%Y-%m-%d %H:%M") }}</td>
+              <td class="url">{{ claim.source_url or "n/a" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="notice">No source claims recorded for this event.</p>
+    {% endif %}
+
+    <h2>Photo Decision</h2>
+    <div class="panel">
+      {% if event.selected_main_image_url %}
+        <p><img alt="" src="{{ event.selected_main_image_url }}" style="max-width: 360px; border-radius: 8px;"></p>
+      {% endif %}
+      <p><strong>Selected image:</strong> <span class="url">{{ event.selected_main_image_url or "none selected" }}</span></p>
+      <p><strong>Legacy provider/upload image:</strong> <span class="url">{{ event.main_image_url or "none" }}</span></p>
+      <p><strong>Status:</strong> {{ event.image_status or "missing" }}</p>
+      <p><strong>Role:</strong> {{ event.image_role or "n/a" }}</p>
+      <p><strong>Source:</strong> {{ event.image_source_type or "n/a" }}{% if event.image_source_provider %} / {{ event.image_source_provider }}{% endif %}</p>
+      <p><strong>Clearance:</strong> {{ event.image_clearance_status or "n/a" }}</p>
+      <p><strong>Quality score:</strong> {{ event.image_quality_score if event.image_quality_score is not none else "n/a" }}</p>
+      <p><strong>Selection reason:</strong> {{ event.image_selection_reason or "n/a" }}</p>
+      <p><strong>Selected candidate source path:</strong> {{ selected_image_candidate.source_payload_path if selected_image_candidate else "n/a" }}</p>
+      <p><strong>Selected rescue source:</strong> {{ selected_image_candidate.rescue_source if selected_image_candidate else "n/a" }}</p>
+      <p><strong>Blocked candidate count:</strong> {{ blocked_image_candidate_count }}</p>
+      <p><strong>Fallback used:</strong> {{ "yes" if photo_decision.get("fallback_used") else "no" }}</p>
+      {% if photo_decision %}
+        <p><strong>Photo rescue explanation:</strong></p>
+        <pre>{{ photo_decision }}</pre>
+      {% endif %}
+      <p><strong>Selected at:</strong> {{ event.image_selected_at.strftime("%Y-%m-%d %H:%M") if event.image_selected_at else "n/a" }}</p>
+      <p><strong>Image flags:</strong> {{ event.image_quality_flags | join(", ") if event.image_quality_flags else "none" }}</p>
+      <p><strong>Badges:</strong> {{ image_badges | join(", ") if image_badges else "none" }}</p>
+      <form method="post" action="/admin/events/{{ event.id }}/photo-rescue">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Run photo rescue</button>
+      </form>
+      <form method="post" action="/admin/events/{{ event.id }}/photo-rescue/background">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Run photo rescue in background</button>
+      </form>
+      <form method="post" action="/admin/events/{{ event.id }}/select-best-image">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Re-run best image selection</button>
+      </form>
+      <p><a href="/admin/image-candidates?event_id={{ event.id }}">View all image candidates</a></p>
+    </div>
+
+    <h3>Image Candidates</h3>
+    {% if image_candidates %}
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Role</th>
+            <th>Source</th>
+            <th>Status</th>
+            <th>Clearance</th>
+            <th>Score</th>
+            <th>Flags</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for candidate in image_candidates %}
+            <tr>
+              <td><a href="/admin/image-candidates?event_id={{ event.id }}">#{{ candidate.id }}</a></td>
+              <td>{{ candidate.image_role }}</td>
+              <td>{{ candidate.source_type }}{% if candidate.source_provider %} / {{ candidate.source_provider }}{% endif %}</td>
+              <td>{{ candidate.candidate_status }}</td>
+              <td>{{ candidate.clearance_status }}</td>
+              <td>{{ candidate.quality_score if candidate.quality_score is not none else "n/a" }}</td>
+              <td>{{ candidate.qa_flags | join(", ") if candidate.qa_flags else "none" }}</td>
+              <td>
+                <div class="actions">
+                  <form method="post" action="/admin/image-candidates/{{ candidate.id }}/accept">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit">Accept</button>
+                  </form>
+                  <form method="post" action="/admin/image-candidates/{{ candidate.id }}/reject">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit">Reject</button>
+                  </form>
+                  <form method="post" action="/admin/image-candidates/{{ candidate.id }}/needs-approval">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit">Needs approval</button>
+                  </form>
+                  <form method="post" action="/admin/image-candidates/{{ candidate.id }}/select-event">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit">Replace selected image</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="notice">No image candidates exist for this event yet.</p>
+    {% endif %}
+
+    <h2>Raw Event JSON Preview</h2>
+    <pre>{{ raw_event_preview }}</pre>
+    {% if raw_event_was_truncated %}
+      <p class="notice">Preview truncated to 5,000 characters.</p>
+    {% endif %}
+  </section>
+{% endblock %}

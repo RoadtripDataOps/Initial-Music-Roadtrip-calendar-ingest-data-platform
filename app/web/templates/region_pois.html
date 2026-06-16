@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ region.name }} POIs</h1>
+  <p><a href="/admin/regions/{{ region.id }}">Back to region</a></p>
+  {% if pois %}
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Category</th>
+          <th>City</th>
+          <th>Certified</th>
+          <th>Publish</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for poi in pois %}
+          <tr>
+            <td data-label="Name"><a href="/admin/poi-locations/{{ poi.id }}">{{ poi.display_name }}</a></td>
+            <td data-label="Category">{{ poi.category }}{% if poi.subcategory %} · {{ poi.subcategory }}{% endif %}</td>
+            <td data-label="City">{{ [poi.city, poi.state] | select | join(", ") }}</td>
+            <td data-label="Certified">{{ "Yes" if poi.certified else "No" }}</td>
+            <td data-label="Publish">{{ poi.publish_status }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <section class="empty-state"><h2>No region POIs</h2></section>
+  {% endif %}
+{% endblock %}

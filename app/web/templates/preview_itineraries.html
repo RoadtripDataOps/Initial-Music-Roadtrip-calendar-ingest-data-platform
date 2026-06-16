@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .itinerary-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .itinerary-preview-card {
+      min-height: 220px;
+      border: 1px solid var(--preview-border);
+      border-radius: 8px;
+      background:
+        linear-gradient(150deg, rgba(159, 123, 255, 0.16), transparent 42%),
+        var(--preview-card);
+      padding: 18px;
+    }
+
+    .itinerary-preview-card h2 {
+      margin-top: 10px;
+    }
+
+    @media (max-width: 980px) {
+      .itinerary-preview-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <p class="notice">Deferred / App team feature. This preview remains available only to keep existing itinerary contracts stable.</p>
+  <h1>Deferred Itineraries</h1>
+  <p>Scott's preview workflow should prioritize Events, Venues, POI audit, image quality, ticket QA, and source quality.</p>
+
+  <section class="itinerary-preview-grid">
+    {% for itinerary in itineraries %}
+      <article class="itinerary-preview-card">
+        <span class="badge info">{{ itinerary.display_label }}</span>
+        <span class="badge {{ 'success' if itinerary.app_feed_ready else 'warning' }}">{{ itinerary.status.replace("_", " ").title() }}</span>
+        <h2>{{ itinerary.title }}</h2>
+        <p>{{ itinerary.subtitle or itinerary.description or "Draft itinerary preview." }}</p>
+        <div class="actions">
+          <span class="badge">{{ itinerary.stops|length }} stops</span>
+          <span class="badge {{ 'success' if itinerary.quality_score and itinerary.quality_score >= 70 else 'warning' }}">Quality {{ itinerary.quality_score or 0 }}</span>
+        </div>
+        <a class="button" href="/preview/itineraries/{{ itinerary.id }}">Open Preview</a>
+      </article>
+    {% else %}
+      <div class="empty-state">No deferred itinerary previews yet.</div>
+    {% endfor %}
+  </section>
+{% endblock %}

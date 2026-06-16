@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Admin Sources</h1>
+
+  {% if sources %}
+    <table>
+      <thead>
+        <tr>
+          <th>Organization</th>
+          <th>Calendar URL</th>
+          <th>Contact</th>
+          <th>Status</th>
+          <th>Review</th>
+          <th>Risk</th>
+          <th>Actions</th>
+          <th>Submitted</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for source in sources %}
+          <tr>
+            <td data-label="Organization">{{ source.organization_name }}</td>
+            <td class="url" data-label="Calendar URL">
+              <a href="{{ source.calendar_url }}">{{ source.calendar_url }}</a>
+            </td>
+            <td data-label="Contact">{{ source.contact_email }}</td>
+            <td data-label="Status">
+              <form method="post" action="/admin/sources/{{ source.id }}/status">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <select name="status" aria-label="Status for {{ source.organization_name }}">
+                  {% for status in statuses %}
+                    <option value="{{ status.value }}" {% if source.status == status.value %}selected{% endif %}>
+                      {{ status.value | title }}
+                    </option>
+                  {% endfor %}
+                </select>
+                <button type="submit">Update</button>
+              </form>
+            </td>
+            <td data-label="Review">{{ source.review_status | replace("_", " ") | title }}</td>
+            <td data-label="Risk">
+              <span class="badge {{ source.risk_level }}">{{ source.risk_level }}</span>
+              {% if source.risk_flags %}
+                <br>{{ source.risk_flags | join(", ") }}
+              {% endif %}
+            </td>
+            <td data-label="Actions">
+              {% if source.status == "approved" and source.review_status == "approved" %}
+                <form method="post" action="/admin/sources/{{ source.id }}/crawl">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <button type="submit">Run Crawl</button>
+                </form>
+              {% else %}
+                <span class="notice">Review and approve to crawl</span>
+              {% endif %}
+            </td>
+            <td data-label="Submitted">{{ source.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="notice">No submitted calendar sources yet.</p>
+  {% endif %}
+{% endblock %}

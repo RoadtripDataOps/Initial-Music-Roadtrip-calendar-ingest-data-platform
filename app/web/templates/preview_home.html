@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    body {
+      background: #101011;
+      color: #f3f3f4;
+    }
+
+    header {
+      border-bottom-color: #262629;
+      background: #101011;
+    }
+
+    nav a,
+    nav .logout-form button {
+      color: #f3f3f4;
+    }
+
+    p {
+      color: #c8c2c4;
+    }
+
+    .preview-hero {
+      display: grid;
+      gap: 24px;
+      align-items: end;
+      min-height: 280px;
+      padding: 28px;
+      border: 1px solid #343437;
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(242, 212, 11, 0.16), rgba(63, 162, 255, 0.12)),
+        #151516;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .preview-card {
+      min-height: 190px;
+      padding: 18px;
+      border: 1px solid #343437;
+      border-radius: 8px;
+      background: #151516;
+    }
+
+    .preview-card h2 {
+      margin-bottom: 8px;
+    }
+
+    .button,
+    button {
+      border-color: #f2d40b;
+      background: #f2d40b;
+      color: #141414;
+    }
+
+    .badge.success {
+      background: #f2d40b;
+      color: #171717;
+    }
+
+    @media (max-width: 840px) {
+      .preview-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <section class="preview-hero">
+    <div>
+      <span class="badge success">Music Roadtrip Preview Sandbox</span>
+      <h1>Visual QA Preview</h1>
+      <p>
+        Review normalized events, venue containers, nested venue events, and
+        enrichment gaps before any production app surface exists.
+      </p>
+    </div>
+    <p class="notice">
+      This sandbox is read-only and admin-only. It is not the public product.
+    </p>
+  </section>
+
+  <section class="preview-grid" aria-label="Preview destinations">
+    <article class="preview-card">
+      <h2>Music Events</h2>
+      <p>Open the event list with filters and a side-by-side detail preview.</p>
+      <a class="button" href="/preview/events">Open events preview</a>
+    </article>
+    <article class="preview-card">
+      <h2>Venue Profiles</h2>
+      <p>Inspect POI-style venue containers with nested events.</p>
+      <a class="button" href="/preview/venues">Open venue preview</a>
+    </article>
+    <article class="preview-card">
+      <h2>Data Quality</h2>
+      <p>Check missing images, ticket links, venue coordinates, and tracking flags.</p>
+      <a class="button" href="/preview/quality">Open quality dashboard</a>
+    </article>
+    <article class="preview-card">
+      <h2>App Feed</h2>
+      <p>Preview the sanitized event and POI contract for the app developer.</p>
+      <a class="button" href="/admin/app-feed">Open app feed</a>
+    </article>
+  </section>
+{% endblock %}

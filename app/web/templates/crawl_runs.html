@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Crawl Runs</h1>
+
+  {% if crawl_runs %}
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Source</th>
+          <th>URL</th>
+          <th>Status</th>
+          <th>HTTP</th>
+          <th>Fetched</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for crawl_run in crawl_runs %}
+          <tr>
+            <td data-label="ID">
+              <a href="/admin/crawl-runs/{{ crawl_run.id }}">#{{ crawl_run.id }}</a>
+            </td>
+            <td data-label="Source">{{ crawl_run.source.organization_name }}</td>
+            <td class="url" data-label="URL">
+              <a href="{{ crawl_run.source_url }}">{{ crawl_run.source_url }}</a>
+            </td>
+            <td data-label="Status">
+              <span class="badge {{ crawl_run.status }}">{{ crawl_run.status }}</span>
+            </td>
+            <td data-label="HTTP">
+              {{ crawl_run.http_status_code if crawl_run.http_status_code else "n/a" }}
+            </td>
+            <td data-label="Fetched">{{ crawl_run.fetched_at.strftime("%Y-%m-%d %H:%M") }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="notice">No crawl runs yet.</p>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Import Batch #{{ batch.id }}</h1>
+  <p class="notice">
+    {{ batch.submission_type | replace("_", " ") | title }} from
+    {{ batch.organization_name or "unknown organization" }}.
+  </p>
+
+  <section class="panel">
+    <h2>Batch Metadata</h2>
+    <table>
+      <tbody>
+        <tr><th>Filename</th><td>{{ batch.original_filename or "n/a" }}</td></tr>
+        <tr><th>File type</th><td>{{ batch.file_type or "n/a" }}</td></tr>
+        <tr><th>Contact</th><td>{{ batch.contact_name or "n/a" }} / {{ batch.contact_email or "n/a" }}</td></tr>
+        <tr><th>Status</th><td>{{ batch.status | replace("_", " ") | title }}</td></tr>
+        <tr><th>Review</th><td>{{ batch.review_status | replace("_", " ") | title }}</td></tr>
+        <tr><th>Risk</th><td>{{ batch.risk_level }}{% if batch.risk_flags %}: {{ batch.risk_flags | join(", ") }}{% endif %}</td></tr>
+        <tr><th>Rows</th><td>{{ batch.valid_row_count }} valid, {{ batch.invalid_row_count }} invalid, {{ batch.duplicate_row_count }} duplicate</td></tr>
+        <tr>
+          <th>Approval summary</th>
+          <td>
+            {{ batch.events_created_count }} created,
+            {{ batch.events_updated_count }} updated,
+            {{ batch.duplicate_candidate_count }} duplicate candidates,
+            {{ batch.source_claims_created_count }} source claims,
+            {{ batch.rows_rejected_count }} rejected rows,
+            {{ batch.rows_quarantined_count }} quarantined rows
+          </td>
+        </tr>
+        <tr><th>Error summary</th><td>{{ batch.error_summary or "n/a" }}</td></tr>
+        <tr><th>Notes</th><td>{{ batch.notes or "n/a" }}</td></tr>
+      </tbody>
+    </table>
+
+    <div class="actions">
+      <form method="post" action="/admin/import-batches/{{ batch.id }}/approve-valid-rows">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">
+          {% if batch.submission_type == "calendar_sources_file" %}
+            Approve valid calendar sources
+          {% else %}
+            Approve valid rows
+          {% endif %}
+        </button>
+      </form>
+      {% if batch.submission_type == "calendar_sources_file" %}
+        <form method="post" action="/admin/import-batches/{{ batch.id }}/crawl-approved-sources">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit">Run crawl for approved sources in this batch</button>
+          <button
+            type="submit"
+            formaction="/admin/import-batches/{{ batch.id }}/crawl-approved-sources/background"
+          >Run in background</button>
+        </form>
+      {% endif %}
+      <form method="post" action="/admin/import-batches/{{ batch.id }}/review">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" name="action" value="reject">Reject batch</button>
+        <button type="submit" name="action" value="quarantine">Quarantine batch</button>
+      </form>
+    </div>
+  </section>
+
+  {% if event_rows %}
+    <section>
+      <h2>Staged Events</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Row</th>
+            <th>Status</th>
+            <th>Event</th>
+            <th>Headliner</th>
+            <th>Start</th>
+            <th>Venue</th>
+            <th>Risk / Errors</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in event_rows %}
+            <tr>
+              <td data-label="Row">{{ row.row_number }}</td>
+              <td data-label="Status">{{ row.validation_status | title }}</td>
+              <td data-label="Event">{{ row.event_name or "n/a" }}</td>
+              <td data-label="Headliner">{{ row.headliner or "n/a" }}</td>
+              <td data-label="Start">{{ row.start_date or "n/a" }} {{ row.start_time or "" }} {{ row.timezone or "" }}</td>
+              <td data-label="Venue">{{ row.venue_name or "n/a" }}{% if row.city %}<br>{{ row.city }}, {{ row.state }}{% endif %}</td>
+              <td data-label="Risk / Errors">
+                {{ row.risk_level }}
+                {% if row.risk_flags %}<br>{{ row.risk_flags | join(", ") }}{% endif %}
+                {% if row.validation_errors %}<br>{{ row.validation_errors }}{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% endif %}
+
+  {% if source_rows %}
+    <section>
+      <h2>Staged Calendar Sources</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Row</th>
+            <th>Status</th>
+            <th>Organization</th>
+            <th>Calendar</th>
+            <th>Location</th>
+            <th>Dedupe</th>
+            <th>Risk / Errors</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in source_rows %}
+            <tr>
+              <td data-label="Row">{{ row.row_number }}</td>
+              <td data-label="Status">{{ row.validation_status | title }}</td>
+              <td data-label="Organization">{{ row.organization_name or "n/a" }}</td>
+              <td class="url" data-label="Calendar">
+                {{ row.calendar_name or "n/a" }}<br>{{ row.canonical_url or row.calendar_url or "n/a" }}
+              </td>
+              <td data-label="Location">{{ row.city or "n/a" }}{% if row.state %}, {{ row.state }}{% endif %}</td>
+              <td data-label="Dedupe">
+                {{ row.dedupe_status }}
+                {% if row.existing_master_calendar_source_id %}
+                  <br>Existing #{{ row.existing_master_calendar_source_id }}
+                {% endif %}
+              </td>
+              <td data-label="Risk / Errors">
+                {{ row.risk_level }}
+                {% if row.risk_flags %}<br>{{ row.risk_flags | join(", ") }}{% endif %}
+                {% if row.validation_errors %}<br>{{ row.validation_errors }}{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% endif %}
+{% endblock %}

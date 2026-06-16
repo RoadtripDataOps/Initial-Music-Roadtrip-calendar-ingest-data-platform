@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>API Feed Runs</h1>
+  <p class="notice">All provider demo and manual JSON import runs.</p>
+
+  {% if runs %}
+    <table>
+      <thead>
+        <tr>
+          <th>Run</th>
+          <th>Provider</th>
+          <th>Mode</th>
+          <th>Status</th>
+          <th>Raw</th>
+          <th>Normalized</th>
+          <th>Approved</th>
+          <th>Held</th>
+          <th>Rejected</th>
+          <th>Started</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for run in runs %}
+          <tr>
+            <td data-label="Run"><a href="/admin/api-feed-runs/{{ run.id }}">#{{ run.id }}</a></td>
+            <td data-label="Provider">{{ provider_display_name(run.provider_key) }}</td>
+            <td data-label="Mode">{{ run.run_mode | replace("_", " ") }}</td>
+            <td data-label="Status">{{ run.status }}</td>
+            <td data-label="Raw">{{ run.raw_record_count }}</td>
+            <td data-label="Normalized">{{ run.normalized_candidate_count }}</td>
+            <td data-label="Approved">{{ run.approved_count }}</td>
+            <td data-label="Held">{{ run.held_count }}</td>
+            <td data-label="Rejected">{{ run.rejected_count }}</td>
+            <td data-label="Started">{{ run.started_at.strftime("%Y-%m-%d %H:%M") }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="notice">No API feed runs yet.</p>
+  {% endif %}
+{% endblock %}

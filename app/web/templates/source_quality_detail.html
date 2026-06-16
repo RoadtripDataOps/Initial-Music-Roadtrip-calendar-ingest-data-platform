@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ score.display_name }}</h1>
+  <p class="notice">Source quality score #{{ score.id }}. This is an internal QA signal and does not publish or crawl anything by itself.</p>
+
+  <section class="actions">
+    <a class="button secondary" href="/admin/source-quality">Back to source quality</a>
+    {% if score.region_id %}
+      <a class="button secondary" href="/admin/regions/{{ score.region_id }}/report">Region report</a>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Score</h2>
+    <table>
+      <tbody>
+        <tr><th>Kind</th><td>{{ score.source_kind | replace("_", " ") }}</td></tr>
+        <tr><th>Score</th><td>{{ "%.1f"|format(score.score) }}</td></tr>
+        <tr><th>Grade</th><td><span class="badge">{{ score.score_grade }}</span></td></tr>
+        <tr><th>Provider</th><td>{{ score.provider_key or "-" }}</td></tr>
+        <tr><th>Region ID</th><td>{{ score.region_id or "-" }}</td></tr>
+        <tr><th>Partner ID</th><td>{{ score.partner_id or "-" }}</td></tr>
+        <tr><th>Created</th><td>{{ score.created_at.strftime("%Y-%m-%d %H:%M") }}</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel" style="margin-top: 20px;">
+    <h2>Metrics</h2>
+    <table>
+      <tbody>
+        <tr><th>Events</th><td>{{ score.event_count }}</td></tr>
+        <tr><th>Created / Updated</th><td>{{ score.event_created_count }} / {{ score.event_updated_count }}</td></tr>
+        <tr><th>Duplicates</th><td>{{ score.duplicate_candidate_count }} ({{ "%.0f"|format(score.duplicate_rate * 100) }}%)</td></tr>
+        <tr><th>Extraction success / failure / unsupported</th><td>{{ score.extraction_success_count }} / {{ score.extraction_failure_count }} / {{ score.unsupported_count }}</td></tr>
+        <tr><th>Tickets missing / bad</th><td>{{ score.missing_ticket_count }} / {{ score.bad_ticket_count }}</td></tr>
+        <tr><th>Images missing / generic blocked / pending approval</th><td>{{ score.missing_image_count }} / {{ score.generic_image_blocked_count }} / {{ score.selected_pending_approval_image_count }}</td></tr>
+        <tr><th>Venue / geo missing</th><td>{{ score.missing_venue_count }} / {{ score.missing_geo_count }}</td></tr>
+        <tr><th>App-feed ready / blocked</th><td>{{ score.app_feed_ready_count }} / {{ score.app_feed_blocked_count }}</td></tr>
+        <tr><th>Last failure reason</th><td>{{ score.last_failure_reason or "-" }}</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel" style="margin-top: 20px;">
+    <h2>Recommendations</h2>
+    <ul>
+      {% for recommendation in score.recommendations %}
+        <li>{{ recommendation }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="panel" style="margin-top: 20px;">
+    <h2>Score Inputs JSON</h2>
+    <pre class="code-block">{{ score_inputs_json }}</pre>
+  </section>
+{% endblock %}

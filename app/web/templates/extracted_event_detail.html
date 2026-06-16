@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Extracted Candidate #{{ candidate.id }}</h1>
+  <p class="notice">
+    Review staged extractor output before approving it into normalized Concert
+    events. Approval preserves source provenance and keeps image/ticket QA in
+    the normal workflow.
+  </p>
+
+  <section class="actions">
+    <a class="button secondary" href="/admin/extracted-events">Back to extracted events</a>
+    <a class="button secondary" href="/admin/crawl-runs/{{ candidate.crawl_run_id }}">Open crawl run</a>
+    {% if candidate.created_event_id %}
+      <a class="button secondary" href="/admin/events/{{ candidate.created_event_id }}">Open event</a>
+    {% endif %}
+    {% if candidate.validation_status == "valid" and not candidate.created_event_id %}
+      <form method="post" action="/admin/extracted-events/{{ candidate.id }}/approve">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Approve</button>
+      </form>
+      <form method="post" action="/admin/extracted-events/{{ candidate.id }}/approve/background">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Approve in background</button>
+      </form>
+    {% endif %}
+    <form method="post" action="/admin/extracted-events/{{ candidate.id }}/duplicate-review">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Send to duplicate review</button>
+    </form>
+    <form method="post" action="/admin/extracted-events/{{ candidate.id }}/reject">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button class="danger" type="submit">Reject</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>Normalized Preview</h2>
+    <table>
+      <tbody>
+        <tr><th>Event</th><td>{{ candidate.event_name or "Untitled" }}</td></tr>
+        <tr><th>Date</th><td>{{ candidate.start_datetime.strftime("%Y-%m-%d %H:%M") if candidate.start_datetime else "missing" }}</td></tr>
+        <tr><th>Venue</th><td>{{ candidate.venue_name or "needs review" }}</td></tr>
+        <tr><th>Event URL</th><td class="url">{{ candidate.event_url or "n/a" }}</td></tr>
+        <tr><th>Extractor</th><td>{{ candidate.extractor_type }}</td></tr>
+        <tr><th>Review</th><td>{{ candidate.review_status | replace("_", " ") }}</td></tr>
+        <tr><th>Validation</th><td>{{ candidate.validation_status }}</td></tr>
+        <tr><th>Errors</th><td>{{ candidate.validation_errors | join(", ") if candidate.validation_errors else "none" }}</td></tr>
+        <tr><th>Quality flags</th><td>{{ candidate.quality_flags | join(", ") if candidate.quality_flags else "none" }}</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>Source Claim Preview</h2>
+    <pre class="code-block">{{ source_claim_preview }}</pre>
+  </section>
+
+  <section class="panel">
+    <h2>Normalized Payload</h2>
+    <pre class="code-block">{{ normalized_preview }}</pre>
+  </section>
+
+  <section class="panel">
+    <h2>Raw Fragment</h2>
+    <pre class="code-block">{{ raw_preview }}</pre>
+  </section>
+{% endblock %}

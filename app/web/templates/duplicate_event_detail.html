@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <p><a href="/admin/duplicate-events">Back to duplicate review</a></p>
+  <h1>Duplicate Group #{{ view.group.id }}</h1>
+  <p>Status: <span class="badge">{{ view.group.status }}</span> Confidence: {{ view.group.confidence }}</p>
+  <p>Reason: {{ view.group.reasons | join(", ") if view.group.reasons else "n/a" }}</p>
+
+  <section class="panel">
+    <h2>Review Actions</h2>
+    <div class="action-row">
+      <form method="post" action="/admin/duplicate-events/{{ view.group.id }}/merge">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label for="primary_event_id">Canonical event</label>
+        <select id="primary_event_id" name="primary_event_id">
+          {% for member in view.members %}
+            {% if member.event %}
+              <option value="{{ member.event.id }}">#{{ member.event.id }} {{ member.event.title }}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+        <button type="submit">Merge Into Selected</button>
+      </form>
+      <form method="post" action="/admin/duplicate-events/{{ view.group.id }}/keep-both">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="secondary">Keep Separate</button>
+      </form>
+      <form method="post" action="/admin/duplicate-events/{{ view.group.id }}/reject">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="secondary">Mark Not Duplicate</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="grid two">
+    {% for member in view.members %}
+      {% set event = member.event %}
+      <article class="card">
+        {% if event %}
+          <p class="notice">{{ member.member.role }}</p>
+          <h2><a href="/admin/events/{{ event.id }}">#{{ event.id }} {{ event.title }}</a></h2>
+          <p>{{ event.start_datetime.strftime("%Y-%m-%d %H:%M") }}</p>
+          <p>{{ event.location_text or (event.venue.display_name if event.venue else "Venue missing") }}</p>
+          <p>
+            <span class="badge">Dedupe {{ event.dedupe_confidence }}</span>
+            <span class="badge">{{ event.duplicate_status }}</span>
+            <span class="badge">{{ event.source_claim_count }} claim(s)</span>
+          </p>
+          <dl>
+            <dt>Lifecycle</dt>
+            <dd>{{ event.event_lifecycle_status }}</dd>
+            <dt>Source type</dt>
+            <dd>{{ event.source_type }}</dd>
+            <dt>Source URL</dt>
+            <dd><span class="url">{{ event.source_url or "n/a" }}</span></dd>
+            <dt>Ticket link</dt>
+            <dd><span class="url">{{ event.tickets_link or "n/a" }}</span></dd>
+          </dl>
+          <h3>Source Claims</h3>
+          {% if member.source_claims %}
+            <ul>
+              {% for claim in member.source_claims %}
+                <li>
+                  #{{ claim.id }} {{ claim.source_type }}
+                  {% if claim.ingestion_provider %}/ {{ claim.ingestion_provider }}{% endif %}
+                  {% if claim.source_record_id %}/ {{ claim.source_record_id }}{% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>No source claims recorded.</p>
+          {% endif %}
+        {% else %}
+          <h2>Missing event</h2>
+          <p>This group member points to an event that no longer exists.</p>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </section>
+{% endblock %}

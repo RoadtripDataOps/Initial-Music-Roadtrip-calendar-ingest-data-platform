@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Partner Reports</h1>
+  <p class="notice">Generated destination and source-quality snapshots for tourism board reporting, partner review, and Certified Music Region QA.</p>
+
+  <section class="actions">
+    <form method="post" action="/admin/partner-reports/source-quality">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Generate All-Source Quality Report</button>
+    </form>
+    <a class="button secondary" href="/admin/regions">Regions</a>
+    <a class="button secondary" href="/admin/source-quality">Source Quality</a>
+  </section>
+
+  <section class="panel" style="margin-top: 20px;">
+    <h2>Generate Regional Source Quality Report</h2>
+    <form method="post" action="/admin/partner-reports/source-quality">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="field">
+        <label for="region_id">Region</label>
+        <select id="region_id" name="region_id" required>
+          {% for region in regions %}
+            <option value="{{ region.id }}">{{ region.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit">Generate Report</button>
+    </form>
+  </section>
+
+  {% if reports %}
+    <table style="margin-top: 20px;">
+      <thead>
+        <tr>
+          <th>Report</th>
+          <th>Region</th>
+          <th>Partner</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Generated</th>
+          <th>Key Metrics</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for report in reports %}
+          <tr>
+            <td data-label="Report"><a href="/admin/partner-reports/{{ report.id }}">#{{ report.id }}</a></td>
+            <td data-label="Region">{{ report.region.name if report.region else "-" }}</td>
+            <td data-label="Partner">{{ report.partner.name if report.partner else "-" }}</td>
+            <td data-label="Type">{{ report.report_type | replace("_", " ") }}</td>
+            <td data-label="Status"><span class="badge {{ 'success' if report.status == 'generated' else 'warning' }}">{{ report.status }}</span></td>
+            <td data-label="Generated">{{ report.generated_at.strftime("%Y-%m-%d %H:%M") if report.generated_at else "-" }}</td>
+            <td data-label="Key Metrics">
+              Events {{ report.metrics.event_count or report.metrics.score_count or 0 }},
+              App-ready {{ report.metrics.app_feed_ready_events or 0 }},
+              Avg {{ report.metrics.average_score or report.metrics.region_quality_score or 0 }}
+            </td>
+            <td data-label="Actions">
+              <a href="/admin/partner-reports/{{ report.id }}/report.json">JSON</a>
+              <a href="/admin/partner-reports/{{ report.id }}/report.csv">CSV</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <section class="empty-state" style="margin-top: 20px;">
+      <h2>No partner reports yet</h2>
+      <p>Generate a region report from a region detail page or create an all-source quality report here.</p>
+    </section>
+  {% endif %}
+{% endblock %}

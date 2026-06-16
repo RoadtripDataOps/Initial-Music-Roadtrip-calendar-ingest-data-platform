@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .pipeline-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    .pipeline-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .pipeline-badges,
+    .pipeline-actions,
+    .pipeline-counts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .pipeline-counts {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      margin-top: 16px;
+    }
+
+    .pipeline-count {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.045);
+      padding: 10px;
+      text-align: center;
+    }
+
+    .pipeline-count strong {
+      display: block;
+      color: var(--admin-primary-dark);
+      font-size: 1.45rem;
+      line-height: 1;
+    }
+
+    .pipeline-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .pipeline-steps {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .pipeline-step {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 14px;
+    }
+
+    .pipeline-step h3,
+    .pipeline-panel h2 {
+      margin-top: 0;
+    }
+
+    .code-block {
+      overflow: auto;
+      max-height: 420px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 12px;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 1180px) {
+      .pipeline-hero,
+      .pipeline-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .pipeline-steps {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .pipeline-counts,
+      .pipeline-steps {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <section class="pipeline-hero">
+    <article class="pipeline-panel">
+      <p class="eyebrow">Provider Pipeline</p>
+      <h1>{{ pipeline.provider.display_name }}</h1>
+      <p class="notice">
+        Private developer handoff for request shape, mapping, cleanup, QA,
+        provenance, and normalized event output. This page does not make
+        provider calls.
+      </p>
+      <div class="pipeline-badges" aria-label="Provider statuses">
+        <span class="badge success">{{ pipeline.provider.workbench_status }}</span>
+        <span class="badge info">{{ pipeline.provider.live_api_status }}</span>
+        <span class="badge success">{{ pipeline.provider.provider_type_display }}</span>
+        {% if pipeline.spec.api_version %}
+          <span class="badge info">API {{ pipeline.spec.api_version }}</span>
+        {% endif %}
+        {% for badge in pipeline.compliance_badges %}
+          <span class="badge {{ 'warning' if 'Required' in badge or 'Review' in badge or 'Retention' in badge else 'success' }}">{{ badge }}</span>
+        {% endfor %}
+      </div>
+      <div class="pipeline-actions" style="margin-top: 16px;">
+        <a class="button" href="/admin/api-feeds/{{ pipeline.provider.provider_key }}">Review Records</a>
+        {% if pipeline.provider.provider_key in ["jambase", "cityspark"] %}
+          <a class="button secondary" href="/admin/api-feeds/{{ pipeline.provider.provider_key }}/live-sandbox">Live Sandbox</a>
+        {% endif %}
+        <a class="button secondary" href="/admin/api-feed-runs?provider_key={{ pipeline.provider.provider_key }}">Runs</a>
+        <a class="button secondary" href="/admin/api-feeds/{{ pipeline.provider.provider_key }}/mapping">Mapping</a>
+        <a class="button secondary" href="/admin/api-feeds/{{ pipeline.provider.provider_key }}/pipeline.md">Markdown</a>
+        <a class="button secondary" href="/admin/api-feeds/{{ pipeline.provider.provider_key }}/pipeline.json">JSON</a>
+      </div>
+    </article>
+
+    <aside class="pipeline-panel">
+      <h2>Run Snapshot</h2>
+      <p>
+        <strong>Latest run:</strong>
+        {% if pipeline.latest_run %}
+          <a href="/admin/api-feed-runs/{{ pipeline.latest_run.id }}">#{{ pipeline.latest_run.id }}</a>
+          {{ pipeline.latest_run.status }}
+        {% else %}
+          Never run
+        {% endif %}
+      </p>
+      <div class="pipeline-counts">
+        <div class="pipeline-count"><strong>{{ pipeline.counts.pending }}</strong>Pending</div>
+        <div class="pipeline-count"><strong>{{ pipeline.counts.approved }}</strong>Approved</div>
+        <div class="pipeline-count"><strong>{{ pipeline.counts.rejected }}</strong>Rejected</div>
+        <div class="pipeline-count"><strong>{{ pipeline.counts.held }}</strong>Held</div>
+        <div class="pipeline-count"><strong>{{ pipeline.counts.needs_enrichment }}</strong>Needs enrichment</div>
+      </div>
+    </aside>
+  </section>
+
+  {% if pipeline.provider.provider_key in ["jambase", "cityspark"] %}
+    <section class="pipeline-panel">
+      <h2>Live Sandbox</h2>
+      <p>
+        Live sandbox requests are admin-only, feature-flagged, credential-gated,
+        and redacted. Successful fetches create pending API Feed Review records,
+        not published events.
+      </p>
+      <div class="pipeline-actions">
+        <span class="badge info">{{ pipeline.provider.live_api_status }}</span>
+        <span class="badge {{ 'success' if pipeline.provider.credential_status == 'Credentials Configured' else 'warning' }}">{{ pipeline.provider.credential_status }}</span>
+        <a class="button secondary" href="/admin/api-feeds/{{ pipeline.provider.provider_key }}/live-sandbox">Open Live Sandbox</a>
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="pipeline-panel">
+    <h2>App Feed Handoff</h2>
+    <p>
+      Provider records do not flow directly to the app. Normalized provider data
+      becomes app-facing only after normalization, dedupe and source claims,
+      ticket-link QA, image QA, venue/POI linkage, and publish readiness scoring.
+    </p>
+    <div class="pipeline-actions">
+      <a class="button secondary" href="/admin/app-feed">Open App Feed</a>
+      <a class="button secondary" href="/admin/app-feed/events.json">Preview Events JSON</a>
+    </div>
+  </section>
+
+  <section class="pipeline-grid">
+    <article class="pipeline-panel">
+      <h2>API Request Preview</h2>
+      <p class="notice">Credential values are redacted. Env var names are visible for implementation planning.</p>
+      <pre class="code-block">{{ pipeline.spec.request_preview.method }} {{ pipeline.spec.request_preview.example_url }}</pre>
+      <table>
+        <tbody>
+          {% if pipeline.spec.api_title %}
+            <tr><th>API title</th><td>{{ pipeline.spec.api_title }}</td></tr>
+          {% endif %}
+          {% if pipeline.spec.openapi_version %}
+            <tr><th>OpenAPI</th><td>{{ pipeline.spec.openapi_version }}</td></tr>
+          {% endif %}
+          {% if pipeline.spec.postman_collection_version %}
+            <tr><th>Postman collection</th><td>{{ pipeline.spec.postman_collection_version }}</td></tr>
+          {% endif %}
+          <tr><th>Base URL</th><td>{{ pipeline.spec.request_preview.base_url }}</td></tr>
+          <tr><th>Endpoint</th><td>{{ pipeline.spec.request_preview.endpoint }}</td></tr>
+          <tr><th>Auth method</th><td>{{ pipeline.spec.request_preview.auth_method }}</td></tr>
+          <tr><th>Env vars</th><td>{{ pipeline.spec.request_preview.required_env_vars | join(", ") if pipeline.spec.request_preview.required_env_vars else "none" }}</td></tr>
+          <tr><th>Pagination</th><td>{{ pipeline.spec.request_preview.pagination_strategy }}</td></tr>
+          <tr><th>Rate limits</th><td>{{ pipeline.spec.request_preview.rate_limit_notes }}</td></tr>
+          <tr><th>Redaction</th><td>{{ pipeline.spec.request_preview.redaction_behavior }}</td></tr>
+        </tbody>
+      </table>
+      {% if pipeline.spec.request_preview.headers %}
+        <h3>Headers</h3>
+        <table>
+          <tbody>
+            {% for key, value in pipeline.spec.request_preview.headers %}
+              <tr><th>{{ key }}</th><td>{{ value }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+      {% if request_body_json %}
+        <h3>Body</h3>
+        <pre class="code-block">{{ request_body_json }}</pre>
+      {% endif %}
+    </article>
+
+    <article class="pipeline-panel">
+      <h2>Request Notes</h2>
+      <ul>
+        {% for note in pipeline.spec.request_preview.notes %}
+          <li>{{ note }}</li>
+        {% endfor %}
+      </ul>
+      {% if pipeline.spec.supported_endpoints %}
+        <h2>Supported Endpoints</h2>
+        <ul>
+          {% for endpoint in pipeline.spec.supported_endpoints %}
+            <li><code>{{ endpoint }}</code></li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+      {% if pipeline.spec.query_parameter_notes or pipeline.spec.source_taxonomy_notes %}
+        <h2>Query And Taxonomy Notes</h2>
+        <ul>
+          {% for note in pipeline.spec.query_parameter_notes %}
+            <li>{{ note }}</li>
+          {% endfor %}
+          {% for note in pipeline.spec.source_taxonomy_notes %}
+            <li>{{ note }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+      <h2>Compliance</h2>
+      <ul>
+        {% for rule in pipeline.spec.compliance_rules %}
+          <li>{{ rule }}</li>
+        {% endfor %}
+      </ul>
+    </article>
+  </section>
+
+  <section class="pipeline-panel" style="margin-top: 18px;">
+    <h2>Transformation Pipeline</h2>
+    <div class="pipeline-steps">
+      {% for step in pipeline.spec.pipeline_steps %}
+        <article class="pipeline-step">
+          <h3>{{ loop.index }}. {{ step.label }}</h3>
+          <p><strong>Code:</strong> {{ step.code_area }}</p>
+          <p><strong>Reads:</strong> {{ step.fields_read | join(", ") }}</p>
+          <p><strong>Writes:</strong> {{ step.fields_written | join(", ") }}</p>
+          <p><strong>QA:</strong> {{ step.qa_flags | join(", ") if step.qa_flags else "none" }}</p>
+          <p><strong>Inspect:</strong> {{ step.inspect_at }}</p>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="pipeline-grid">
+    <article class="pipeline-panel">
+      <h2>Mapping Table</h2>
+      <p class="notice">Focused field mapping is also available on the mapping page.</p>
+      <table>
+        <thead>
+          <tr><th>Provider Field</th><th>Normalized Field</th><th>Rule</th><th>QA</th></tr>
+        </thead>
+        <tbody>
+          {% for row in pipeline.spec.mapping_rows %}
+            <tr>
+              <td data-label="Provider Field">{{ row.provider_field }}</td>
+              <td data-label="Normalized Field">{{ row.normalized_field }}</td>
+              <td data-label="Rule">{{ row.transformation_rule }}</td>
+              <td data-label="QA">{{ row.qa_notes }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </article>
+
+    <article class="pipeline-panel">
+      <h2>Cleanup Rules</h2>
+      <ul>
+        {% for rule in pipeline.spec.cleanup_rules %}
+          <li>{{ rule }}</li>
+        {% endfor %}
+      </ul>
+      <h2>Ticket-Link Rules</h2>
+      <ul>
+        {% for rule in pipeline.spec.ticket_link_rules %}
+          <li>{{ rule }}</li>
+        {% endfor %}
+      </ul>
+    </article>
+  </section>
+
+  <section class="pipeline-grid">
+    <article class="pipeline-panel">
+      <h2>Image QA Rules</h2>
+      <ul>
+        {% for rule in pipeline.spec.image_qa_rules %}
+          <li>{{ rule }}</li>
+        {% endfor %}
+      </ul>
+    </article>
+
+    <article class="pipeline-panel">
+      <h2>Venue And POI Distinction</h2>
+      <ul>
+        {% for rule in pipeline.spec.venue_poi_rules %}
+          <li>{{ rule }}</li>
+        {% endfor %}
+      </ul>
+    </article>
+  </section>
+
+  <section class="pipeline-grid">
+    <article class="pipeline-panel">
+      <h2>Sample Raw Provider JSON</h2>
+      <pre class="code-block">{{ sample_raw_json }}</pre>
+    </article>
+
+    <article class="pipeline-panel">
+      <h2>Sample Normalized Candidate JSON</h2>
+      <pre class="code-block">{{ sample_normalized_json }}</pre>
+    </article>
+  </section>
+
+  <section class="pipeline-panel" style="margin-top: 18px;">
+    <h2>Code References</h2>
+    <ul>
+      {% for reference in pipeline.spec.code_references %}
+        <li><code>{{ reference }}</code></li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endblock %}

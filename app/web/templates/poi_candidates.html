@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel">
+    <h1>Incoming POI Candidate Audit</h1>
+    <p>
+      Scraped, extracted, uploaded, and provider-discovered places stop here
+      before they can enter the POI Master Registry. Concert records remain
+      events and never become POIs.
+    </p>
+    <p>
+      <a class="button secondary" href="/admin/poi-locations">POI Registry</a>
+      <a class="button secondary" href="/admin/poi-inventory">Inventory Snapshots</a>
+    </p>
+  </section>
+
+  <section class="actions">
+    {% for bucket in buckets %}
+      <a class="badge {{ 'success' if selected_bucket == bucket.key else '' }}" href="/admin/poi-candidates?bucket={{ bucket.key }}">
+        {{ bucket.label }}: {{ bucket.count }}
+      </a>
+    {% endfor %}
+    <a class="button secondary" href="/admin/poi-candidates">Reset filters</a>
+  </section>
+
+  <section class="panel">
+    <form method="get" class="inline-form">
+      <label for="search">Search</label>
+      <input id="search" name="search" value="{{ filters.search or '' }}">
+      <label for="review_status">Review</label>
+      <select id="review_status" name="review_status">
+        <option value="">Any</option>
+        {% for option in ["pending_review", "approved", "rejected", "needs_research", "quarantined"] %}
+          <option value="{{ option }}" {{ "selected" if filters.review_status == option else "" }}>{{ option | replace("_", " ") }}</option>
+        {% endfor %}
+      </select>
+      <label for="match_status">Match</label>
+      <select id="match_status" name="match_status">
+        <option value="">Any</option>
+        {% for option in ["unmatched", "matched_existing", "possible_duplicate", "new_candidate", "approved_created", "approved_updated", "event_venue_only", "rejected"] %}
+          <option value="{{ option }}" {{ "selected" if filters.match_status == option else "" }}>{{ option | replace("_", " ") }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit">Filter</button>
+    </form>
+  </section>
+
+  {% if candidates %}
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Suggestion</th>
+          <th>City / State</th>
+          <th>Source</th>
+          <th>Match</th>
+          <th>Quality</th>
+          <th>Image</th>
+          <th>Review</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for candidate in candidates %}
+          <tr>
+            <td data-label="Name">
+              <a href="/admin/poi-candidates/{{ candidate.id }}">{{ candidate.candidate_name }}</a>
+            </td>
+            <td data-label="Suggestion">
+              {{ candidate.suggested_category or candidate.category or "unknown" }}
+              {% if candidate.suggested_subcategory or candidate.subcategory %}
+                · {{ candidate.suggested_subcategory or candidate.subcategory }}
+              {% endif %}
+            </td>
+            <td data-label="City / State">
+              {{ candidate.city or "n/a" }}{% if candidate.state %}, {{ candidate.state }}{% endif %}
+            </td>
+            <td data-label="Source">
+              <span class="badge">{{ candidate.source_type }}</span>
+              {% if candidate.source_provider %}<span class="badge secondary">{{ candidate.source_provider }}</span>{% endif %}
+            </td>
+            <td data-label="Match">
+              <span class="badge">{{ candidate.match_status | replace("_", " ") }}</span>
+              <span class="badge secondary">{{ candidate.match_confidence }}</span>
+            </td>
+            <td data-label="Quality">{{ "%.0f"|format(candidate.poi_quality_score) }}</td>
+            <td data-label="Image">
+              {% if "missing_image" in candidate.poi_quality_flags %}
+                <span class="badge failure">Missing</span>
+              {% elif "social_image_url" in candidate.poi_quality_flags or "non_direct_image_url" in candidate.poi_quality_flags or "music_roadtrip_logo_image" in candidate.poi_quality_flags %}
+                <span class="badge failure">Flagged</span>
+              {% else %}
+                <span class="badge success">Candidate</span>
+              {% endif %}
+            </td>
+            <td data-label="Review">{{ candidate.review_status | replace("_", " ") }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <section class="empty-state">
+      <h2>No POI candidates match this view</h2>
+      <p>Newly discovered venue/place data will appear here before registry approval.</p>
+    </section>
+  {% endif %}
+{% endblock %}

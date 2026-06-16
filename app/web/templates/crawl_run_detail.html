@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel">
+    <h1>Crawl Run #{{ crawl_run.id }}</h1>
+    <p>
+      <a href="/admin/crawl-runs">Back to crawl runs</a>
+    </p>
+
+    <table>
+      <tbody>
+        <tr>
+          <th>Source</th>
+          <td>{{ crawl_run.source.organization_name }}</td>
+        </tr>
+        <tr>
+          <th>URL</th>
+          <td class="url">
+            <a href="{{ crawl_run.source_url }}">{{ crawl_run.source_url }}</a>
+          </td>
+        </tr>
+        <tr>
+          <th>Status</th>
+          <td><span class="badge {{ crawl_run.status }}">{{ crawl_run.status }}</span></td>
+        </tr>
+        <tr>
+          <th>HTTP status</th>
+          <td>{{ crawl_run.http_status_code if crawl_run.http_status_code else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Content type</th>
+          <td>{{ crawl_run.content_type if crawl_run.content_type else "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Fetched</th>
+          <td>{{ crawl_run.fetched_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+        </tr>
+        {% if crawl_run.error_message %}
+          <tr>
+            <th>Error</th>
+            <td>{{ crawl_run.error_message }}</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <h2>Event Extraction</h2>
+    <p class="notice">
+      Extractor:
+      <strong>{{ crawl_run.extractor_type or ("ics" if is_ics_crawl else "unsupported") }}</strong>
+      · Status:
+      <strong>{{ crawl_run.extraction_status or "not run" }}</strong>
+      · Staged candidates:
+      <strong>{{ crawl_run.event_candidates_count }}</strong>
+      · Discovered links:
+      <strong>{{ crawl_run.discovered_links_count }}</strong>
+    </p>
+    {% if crawl_run.unsupported_reason %}
+      <p class="notice">{{ crawl_run.unsupported_reason }}</p>
+    {% elif is_ics_crawl %}
+      <p class="notice">{{ extracted_event_count }} events extracted from this ICS crawl.</p>
+    {% endif %}
+    {% if crawl_run.extraction_warnings %}
+      <div class="notice warning">
+        <strong>Warnings:</strong> {{ crawl_run.extraction_warnings | join(", ") }}
+      </div>
+    {% endif %}
+    {% if crawl_run.extraction_errors %}
+      <div class="notice error">
+        <strong>Errors:</strong> {{ crawl_run.extraction_errors | join(", ") }}
+      </div>
+    {% endif %}
+    <table>
+      <tbody>
+        <tr><th>Events created</th><td>{{ crawl_run.events_created_count }}</td></tr>
+        <tr><th>Events updated</th><td>{{ crawl_run.events_updated_count }}</td></tr>
+        <tr><th>Duplicate candidates</th><td>{{ crawl_run.duplicate_candidate_count }}</td></tr>
+        <tr><th>Events skipped</th><td>{{ crawl_run.events_skipped_count }}</td></tr>
+        <tr><th>Cancelled events</th><td>{{ crawl_run.events_cancelled_count }}</td></tr>
+        <tr><th>Source claims created</th><td>{{ crawl_run.source_claims_created_count }}</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Staged Extracted Candidates</h2>
+    {% if extracted_candidates %}
+      <form method="post" action="/admin/crawl-runs/{{ crawl_run.id }}/extracted-events/approve-selected">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <table>
+          <thead>
+            <tr>
+              <th>Select</th>
+              <th>Candidate</th>
+              <th>Date</th>
+              <th>Venue</th>
+              <th>Extractor</th>
+              <th>Review</th>
+              <th>Quality</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for candidate in extracted_candidates %}
+              <tr>
+                <td data-label="Select">
+                  {% if candidate.validation_status == "valid" and not candidate.created_event_id %}
+                    <input type="checkbox" name="candidate_ids" value="{{ candidate.id }}">
+                  {% else %}
+                    <span class="badge">{{ candidate.validation_status }}</span>
+                  {% endif %}
+                </td>
+                <td data-label="Candidate">
+                  <a href="/admin/extracted-events/{{ candidate.id }}">{{ candidate.event_name or "Untitled" }}</a>
+                  {% if candidate.event_url %}<br><span class="url">{{ candidate.event_url }}</span>{% endif %}
+                </td>
+                <td data-label="Date">{{ candidate.start_datetime.strftime("%Y-%m-%d %H:%M") if candidate.start_datetime else "missing" }}</td>
+                <td data-label="Venue">{{ candidate.venue_name or "needs review" }}</td>
+                <td data-label="Extractor">{{ candidate.extractor_type }}</td>
+                <td data-label="Review">{{ candidate.review_status | replace("_", " ") }}</td>
+                <td data-label="Quality">{{ candidate.quality_flags | join(", ") if candidate.quality_flags else "none" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class="actions">
+          <button type="submit">Approve selected candidates</button>
+          <button
+            type="submit"
+            formaction="/admin/crawl-runs/{{ crawl_run.id }}/extracted-events/reject-selected"
+          >Reject selected candidates</button>
+        </div>
+      </form>
+    {% else %}
+      <p class="notice">No staged extracted event candidates for this crawl.</p>
+    {% endif %}
+
+    <h2>Discovered Event Links</h2>
+    {% if discovered_links %}
+      <table>
+        <thead>
+          <tr>
+            <th>Link</th>
+            <th>Anchor</th>
+            <th>Confidence</th>
+            <th>Reason</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for link in discovered_links %}
+            <tr>
+              <td class="url" data-label="Link"><a href="{{ link.discovered_url }}">{{ link.discovered_url }}</a></td>
+              <td data-label="Anchor">{{ link.anchor_text }}</td>
+              <td data-label="Confidence">{{ link.confidence }}</td>
+              <td data-label="Reason">{{ link.reason }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="notice">No possible event-detail links were discovered.</p>
+    {% endif %}
+
+    <h2>Raw Content Preview</h2>
+    {% if raw_preview %}
+      <pre>{{ raw_preview }}</pre>
+      {% if raw_was_truncated %}
+        <p class="notice">Preview truncated to 5,000 characters.</p>
+      {% endif %}
+    {% else %}
+      <p class="notice">No raw response body was stored for this run.</p>
+    {% endif %}
+  </section>
+{% endblock %}

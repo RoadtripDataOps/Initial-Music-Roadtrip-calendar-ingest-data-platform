@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .feed-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin: 20px 0;
+    }
+
+    .feed-tile {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+      padding: 16px;
+    }
+
+    .feed-number {
+      display: block;
+      color: var(--admin-primary-dark);
+      font-size: 2rem;
+      font-weight: 850;
+      line-height: 1;
+    }
+  </style>
+
+  <h1>{{ region.name }} Quality</h1>
+  <section class="actions">
+    <a class="button secondary" href="/admin/regions/{{ region.id }}">Back to region</a>
+    <a class="button secondary" href="/admin/regions/{{ region.id }}/report">Partner report</a>
+    <form method="post" action="/admin/regions/{{ region.id }}/quality/generate">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Generate region quality snapshot</button>
+    </form>
+    <form method="post" action="/admin/regions/{{ region.id }}/report/generate">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Generate partner report</button>
+    </form>
+  </section>
+  {% if snapshot %}
+    <section class="feed-grid" aria-label="Region quality counts">
+      <article class="feed-tile"><span class="feed-number">{{ snapshot.event_count }}</span>Events</article>
+      <article class="feed-tile"><span class="feed-number">{{ snapshot.poi_count }}</span>POIs</article>
+      <article class="feed-tile"><span class="feed-number">{{ snapshot.source_count }}</span>Sources</article>
+      <article class="feed-tile"><span class="feed-number">{{ snapshot.app_feed_event_count }}</span>App-feed events</article>
+      <article class="feed-tile"><span class="feed-number">{{ snapshot.app_feed_poi_count }}</span>App-feed POIs</article>
+      <article class="feed-tile"><span class="feed-number">{{ snapshot.missing_image_count }}</span>Missing images</article>
+      <article class="feed-tile"><span class="feed-number">{{ snapshot.bad_ticket_count }}</span>Ticket issues</article>
+      <article class="feed-tile"><span class="feed-number">{{ snapshot.extraction_failure_count }}</span>Extraction issues</article>
+    </section>
+    {% if latest_report %}
+      <section class="panel" style="margin-top: 20px;">
+        <h2>Latest Partner Report</h2>
+        <p>Generated {{ latest_report.generated_at.strftime("%Y-%m-%d %H:%M") if latest_report.generated_at else "recently" }}.</p>
+        <a class="button secondary" href="/admin/partner-reports/{{ latest_report.id }}">Open Report</a>
+      </section>
+    {% endif %}
+    {% if source_scores %}
+      <section style="margin-top: 20px;">
+        <h2>Source Trust</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Source</th>
+              <th>Score</th>
+              <th>Grade</th>
+              <th>Tickets</th>
+              <th>Images</th>
+              <th>Recommendation</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for score in source_scores %}
+              <tr>
+                <td data-label="Source"><a href="/admin/source-quality/{{ score.id }}">{{ score.display_name }}</a></td>
+                <td data-label="Score">{{ "%.1f"|format(score.score) }}</td>
+                <td data-label="Grade"><span class="badge">{{ score.score_grade }}</span></td>
+                <td data-label="Tickets">{{ score.missing_ticket_count + score.bad_ticket_count }}</td>
+                <td data-label="Images">{{ score.missing_image_count + score.generic_image_blocked_count }}</td>
+                <td data-label="Recommendation">{{ score.recommendations[0] if score.recommendations else "Monitor source quality." }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    {% endif %}
+    <section class="panel">
+      <h2>Snapshot JSON</h2>
+      <pre class="code-block">{{ snapshot_json }}</pre>
+    </section>
+  {% else %}
+    <section class="empty-state">
+      <h2>No quality snapshot yet</h2>
+      <p>Generate a snapshot to capture region readiness metrics.</p>
+    </section>
+  {% endif %}
+{% endblock %}

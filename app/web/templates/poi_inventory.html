@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% macro export_card(title, export) %}
+  <article class="summary-card">
+    <span class="summary-number">{{ export.record_count if export else 0 }}</span>
+    <strong>{{ title }}</strong>
+    {% if export %}
+      <span class="badge {{ 'success' if export.status == 'success' else 'failure' if export.status == 'failure' else 'warning' }}">{{ export.status | title }}</span>
+      <p>Generated {{ export.generated_at.strftime("%Y-%m-%d %H:%M") if export.generated_at else "n/a" }}</p>
+      <p><code>{{ export.output_path or "No file path" }}</code></p>
+      {% if export.sha256_hash %}
+        <p><code>{{ export.sha256_hash[:16] }}...</code></p>
+      {% endif %}
+      <a class="button secondary" href="/admin/poi-inventory/exports/{{ export.id }}">Open export</a>
+    {% else %}
+      <p>No successful export yet.</p>
+    {% endif %}
+  </article>
+{% endmacro %}
+
+{% block content %}
+  <section class="panel">
+    <h1>POI Inventory Snapshots</h1>
+    <p>
+      Portable monthly POI inventory exports for incoming candidate dedupe.
+      The database remains the source of truth; JSON and JSONL files are
+      generated review artifacts only.
+    </p>
+    <p class="notice">
+      Concert records are excluded from POI inventory snapshots. Music Roadtrip
+      logo assets and social/video URLs are not exported as valid POI images.
+    </p>
+    <p><code>{{ output_dir }}</code></p>
+  </section>
+
+  <section class="actions">
+    <form method="post" action="/admin/poi-inventory/generate">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Generate POI inventory snapshot</button>
+    </form>
+    <form method="post" action="/admin/poi-inventory/generate-dedupe-index">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button class="secondary" type="submit">Generate dedupe index only</button>
+    </form>
+    <a class="button secondary" href="/admin/poi-inventory/exports">Export history</a>
+    <a class="button secondary" href="/admin/poi-locations">POI Registry</a>
+  </section>
+
+  <section class="summary-grid">
+    {{ export_card("Current Inventory JSONL", latest_inventory) }}
+    {{ export_card("Current Dedupe Index JSON", latest_dedupe) }}
+    {{ export_card("Current Manifest JSON", latest_manifest) }}
+  </section>
+
+  <section class="panel">
+    <h2>Recent Exports</h2>
+    {% if recent_exports %}
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Records</th>
+            <th>Duplicate keys</th>
+            <th>Generated</th>
+            <th>Path</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for export in recent_exports %}
+            <tr>
+              <td data-label="ID"><a href="/admin/poi-inventory/exports/{{ export.id }}">#{{ export.id }}</a></td>
+              <td data-label="Type">{{ export.export_type }}</td>
+              <td data-label="Status"><span class="badge {{ 'success' if export.status == 'success' else 'failure' if export.status == 'failure' else 'warning' }}">{{ export.status | title }}</span></td>
+              <td data-label="Records">{{ export.record_count }}</td>
+              <td data-label="Duplicate keys">{{ export.duplicate_key_count }}</td>
+              <td data-label="Generated">{{ export.generated_at.strftime("%Y-%m-%d %H:%M") if export.generated_at else "n/a" }}</td>
+              <td data-label="Path"><code>{{ export.output_path or "n/a" }}</code></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <section class="empty-state">
+        <h2>No POI inventory exports yet</h2>
+        <p>Generate a dedupe index or full inventory snapshot to create the first export record.</p>
+      </section>
+    {% endif %}
+  </section>
+{% endblock %}

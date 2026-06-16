@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Regions</h1>
+  <p class="notice">Destination and Certified Music Region layer for events, POIs, calendar sources, QA, and regional app feeds.</p>
+
+  <section class="actions">
+    <form method="post" action="/admin/regions/infer">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Infer Unassigned Records</button>
+    </form>
+    <form method="post" action="/admin/search-seeds/seed">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Seed Search Locations</button>
+    </form>
+    <a class="button secondary" href="/admin/search-seeds">Search Seeds</a>
+  </section>
+
+  <section class="panel">
+    <h2>Create Region</h2>
+    <form method="post" action="/admin/regions">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="form-grid">
+        <div class="field">
+          <label for="name">Name</label>
+          <input id="name" name="name" required>
+        </div>
+        <div class="field">
+          <label for="region_type">Type</label>
+          <select id="region_type" name="region_type">
+            {% for value in region_types %}
+              <option value="{{ value }}">{{ value | replace("_", " ") }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="city">City</label>
+          <input id="city" name="city">
+        </div>
+        <div class="field">
+          <label for="state">State</label>
+          <input id="state" name="state">
+        </div>
+        <div class="field">
+          <label for="country">Country</label>
+          <input id="country" name="country" value="US">
+        </div>
+        <div class="field">
+          <label for="timezone">Timezone</label>
+          <input id="timezone" name="timezone" placeholder="America/Chicago">
+        </div>
+        <div class="field">
+          <label for="latitude">Latitude</label>
+          <input id="latitude" name="latitude" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="longitude">Longitude</label>
+          <input id="longitude" name="longitude" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="radius_miles">Radius miles</label>
+          <input id="radius_miles" name="radius_miles" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="partner_status">Partner status</label>
+          <select id="partner_status" name="partner_status">
+            {% for value in partner_statuses %}
+              <option value="{{ value }}">{{ value | replace("_", " ") }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="launch_status">Launch status</label>
+          <select id="launch_status" name="launch_status">
+            {% for value in launch_statuses %}
+              <option value="{{ value }}">{{ value | replace("_", " ") }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <label class="checkbox-field">
+          <input type="checkbox" name="certified" value="true">
+          Certified Music Region
+        </label>
+      </div>
+      <button type="submit">Save Region</button>
+    </form>
+  </section>
+
+  {% if summaries %}
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Location</th>
+          <th>Partner</th>
+          <th>Launch</th>
+          <th>Events</th>
+          <th>POIs</th>
+          <th>Sources</th>
+          <th>Quality</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in summaries %}
+          <tr>
+            <td data-label="Name"><a href="/admin/regions/{{ item.region.id }}">{{ item.region.name }}</a></td>
+            <td data-label="Type">{{ item.region.region_type | replace("_", " ") }}</td>
+            <td data-label="Location">{{ [item.region.city, item.region.state, item.region.country] | select | join(", ") }}</td>
+            <td data-label="Partner"><span class="badge">{{ item.region.partner_status | replace("_", " ") }}</span></td>
+            <td data-label="Launch"><span class="badge">{{ item.region.launch_status }}</span></td>
+            <td data-label="Events">{{ item.event_count }}</td>
+            <td data-label="POIs">{{ item.poi_count }}</td>
+            <td data-label="Sources">{{ item.source_count }}</td>
+            <td data-label="Quality">{{ item.quality_score }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <section class="empty-state">
+      <h2>No regions yet</h2>
+      <p>Create a city, metro, tourism-board, or Certified Music Region to begin grouping records.</p>
+    </section>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .metric-card {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+    }
+
+    .metric-card strong {
+      display: block;
+      color: var(--admin-primary-dark);
+      font-size: 1.7rem;
+      line-height: 1.1;
+    }
+  </style>
+
+  <h1>Source Quality</h1>
+  <p class="notice">Trust scoring for calendar sources, API providers, destination partners, and regions. Scores support review and prioritization only; they do not auto-publish records.</p>
+
+  <section class="actions">
+    <form method="post" action="/admin/source-quality/compute">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="source_kind" value="all">
+      <button type="submit">Compute All Scores</button>
+    </form>
+    <form method="post" action="/admin/source-quality/queue">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Queue Rollup Job</button>
+    </form>
+    <a class="button secondary" href="/admin/partner-reports">Partner Reports</a>
+  </section>
+
+  <section class="metric-grid" aria-label="Source quality summary">
+    <article class="metric-card"><strong>{{ summary.average_score }}</strong>Average score</article>
+    <article class="metric-card"><strong>{{ summary.poor_source_count }}</strong>Poor / blocked</article>
+    <article class="metric-card"><strong>{{ summary.failed_extraction_source_count }}</strong>Extraction failures</article>
+    <article class="metric-card"><strong>{{ summary.missing_ticket_source_count }}</strong>Missing tickets</article>
+    <article class="metric-card"><strong>{{ summary.bad_image_source_count }}</strong>Image issues</article>
+    <article class="metric-card"><strong>{{ summary.app_feed_ready_region_count }}</strong>Ready regions</article>
+    <article class="metric-card"><strong>{{ summary.region_report_due_count }}</strong>Reports due</article>
+  </section>
+
+  <details class="filter-drawer">
+    <summary>Filters</summary>
+    <form method="get" action="/admin/source-quality" class="form-grid" style="padding: 0 16px 16px;">
+      <div class="field">
+        <label for="source_kind">Source kind</label>
+        <select id="source_kind" name="source_kind">
+          <option value="">All</option>
+          {% for value in source_kinds %}
+            <option value="{{ value }}" {% if filters.source_kind == value %}selected{% endif %}>{{ value | replace("_", " ") }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="grade">Grade</label>
+        <select id="grade" name="grade">
+          <option value="">All</option>
+          {% for value in grades %}
+            <option value="{{ value }}" {% if filters.grade == value %}selected{% endif %}>{{ value }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="region_id">Region</label>
+        <select id="region_id" name="region_id">
+          <option value="">All</option>
+          {% for region in regions %}
+            <option value="{{ region.id }}" {% if filters.region_id == region.id|string %}selected{% endif %}>{{ region.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="provider_key">Provider key</label>
+        <input id="provider_key" name="provider_key" value="{{ filters.provider_key }}">
+      </div>
+      <button type="submit">Apply Filters</button>
+      <a class="button secondary" href="/admin/source-quality">Reset</a>
+    </form>
+  </details>
+
+  {% if scores %}
+    <table>
+      <thead>
+        <tr>
+          <th>Source</th>
+          <th>Kind</th>
+          <th>Provider</th>
+          <th>Score</th>
+          <th>Grade</th>
+          <th>Events</th>
+          <th>Duplicate rate</th>
+          <th>Ticket issues</th>
+          <th>Image issues</th>
+          <th>Last result</th>
+          <th>Recommendation</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for score in scores %}
+          <tr>
+            <td data-label="Source"><a href="/admin/source-quality/{{ score.id }}">{{ score.display_name }}</a></td>
+            <td data-label="Kind">{{ score.source_kind | replace("_", " ") }}</td>
+            <td data-label="Provider">{{ score.provider_key or "-" }}</td>
+            <td data-label="Score">{{ "%.1f"|format(score.score) }}</td>
+            <td data-label="Grade"><span class="badge {{ 'success' if score.score_grade in ['excellent', 'good'] else 'warning' if score.score_grade == 'fair' else 'failure' }}">{{ score.score_grade }}</span></td>
+            <td data-label="Events">{{ score.event_count }}</td>
+            <td data-label="Duplicate rate">{{ "%.0f"|format(score.duplicate_rate * 100) }}%</td>
+            <td data-label="Ticket issues">{{ score.missing_ticket_count + score.bad_ticket_count }}</td>
+            <td data-label="Image issues">{{ score.missing_image_count + score.generic_image_blocked_count }}</td>
+            <td data-label="Last result">
+              {% if score.last_failure_at %}Failed {{ score.last_failure_at.strftime("%Y-%m-%d") }}
+              {% elif score.last_success_at %}Success {{ score.last_success_at.strftime("%Y-%m-%d") }}
+              {% else %}No run{% endif %}
+            </td>
+            <td data-label="Recommendation">{{ score.recommendations[0] if score.recommendations else "Monitor source quality." }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <section class="empty-state">
+      <h2>No source quality scores yet</h2>
+      <p>Compute all scores to create the first local trust snapshot.</p>
+    </section>
+  {% endif %}
+{% endblock %}

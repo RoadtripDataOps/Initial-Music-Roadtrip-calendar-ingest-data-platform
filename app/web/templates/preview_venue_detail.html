@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    body {
+      background: #101011;
+      color: #f3f3f4;
+    }
+
+    header {
+      border-bottom-color: #262629;
+      background: #101011;
+    }
+
+    nav a,
+    nav .logout-form button {
+      color: #f3f3f4;
+    }
+
+    main {
+      width: min(1280px, calc(100% - 32px));
+    }
+
+    p {
+      color: #c8c2c4;
+    }
+
+    .venue-hero {
+      display: grid;
+      grid-template-columns: minmax(320px, 1fr) minmax(360px, 0.9fr);
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .hero-image {
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      min-height: 380px;
+      border: 1px solid #343437;
+      border-radius: 8px;
+      background: #242427;
+      color: #aaa5a7;
+      font-weight: 750;
+    }
+
+    .hero-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .venue-copy {
+      padding: 20px;
+      border: 1px solid #343437;
+      border-radius: 8px;
+      background: #151516;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+    }
+
+    .button-row,
+    .flag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 14px 0;
+    }
+
+    .button.muted {
+      border-color: #333336;
+      background: #202023;
+      color: #aaa5a7;
+      cursor: default;
+    }
+
+    .flag {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #3b201b;
+      color: #ffb19e;
+      font-size: 0.82rem;
+      font-weight: 750;
+    }
+
+    .badge {
+      background: #202023;
+      color: #d7d2d3;
+    }
+
+    .badge.success {
+      background: #3fa2ff;
+      color: #07121b;
+    }
+
+    .button,
+    button {
+      border-color: #3fa2ff;
+      background: #3fa2ff;
+      color: #07121b;
+    }
+
+    .button.secondary {
+      border-color: #333336;
+      background: #202023;
+      color: #f3f3f4;
+    }
+
+    .venue-details {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 22px 0;
+    }
+
+    .detail-block,
+    .nested-event {
+      padding: 14px;
+      border: 1px solid #343437;
+      border-radius: 8px;
+      background: #18181a;
+    }
+
+    .nested-event {
+      display: grid;
+      grid-template-columns: 78px 1fr;
+      gap: 14px;
+      margin-bottom: 12px;
+      background: #151516;
+    }
+
+    .thumb {
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      width: 78px;
+      height: 78px;
+      border: 1px solid #333336;
+      border-radius: 8px;
+      background: #242427;
+      color: #aaa5a7;
+      font-size: 0.78rem;
+      font-weight: 750;
+      text-align: center;
+    }
+
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    @media (max-width: 980px) {
+      .venue-hero,
+      .venue-details {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <p class="notice">Music Roadtrip Preview Sandbox</p>
+  <p><a href="/preview/venues">Back to venues</a></p>
+  {% set venue_display_image_url = venue.selected_main_image_url or venue.main_image_url %}
+  <section class="venue-hero">
+    <div class="hero-image">
+      {% if previewable_image_url(venue_display_image_url) %}
+        <img alt="" src="{{ previewable_image_url(venue_display_image_url) }}">
+      {% else %}
+        Venue Image QA
+      {% endif %}
+    </div>
+    <div class="venue-copy">
+      <span class="badge success">{{ venue.category }}</span>
+      <span class="badge">{{ venue.subcategory }}</span>
+      <span class="badge">Certified pending</span>
+      <h1>{{ venue.display_name }}</h1>
+      <p>{{ venue.description or "No venue description has been enriched yet." }}</p>
+      <div class="button-row">
+        <a class="button" href="{{ maps_url }}">Map</a>
+        <a class="button secondary" href="{{ maps_url }}">Nav</a>
+        <a class="button secondary" href="{{ street_url }}">Street</a>
+        {% if venue.website %}
+          <a class="button secondary" href="{{ venue.website }}">Web</a>
+        {% else %}
+          <span class="button muted">Web missing</span>
+        {% endif %}
+      </div>
+      <div class="flag-row">
+        {% for badge in image_badges %}
+          <span class="flag">{{ badge }}</span>
+        {% endfor %}
+        {% for flag in quality_flags %}
+          <span class="flag">{{ flag }}</span>
+        {% else %}
+          <span class="badge success">No preview flags</span>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="venue-details">
+    <div class="detail-block">
+      <h2>Address</h2>
+      <p>{{ venue.address or "Missing address" }}</p>
+      <p>{{ venue.city or "" }} {{ venue.state or "" }} {{ venue.zip_code or "" }} {{ venue.country or "" }}</p>
+      <p>
+        Coordinates:
+        {% if venue.latitude is not none and venue.longitude is not none %}
+          {{ venue.latitude }}, {{ venue.longitude }}
+        {% else %}
+          Missing
+        {% endif %}
+      </p>
+    </div>
+    <div class="detail-block">
+      <h2>Contact</h2>
+      <p>Website: <span class="url">{{ venue.website or "Missing" }}</span></p>
+      <p>Phone: {{ venue.phone or "Missing" }}</p>
+    </div>
+    <div class="detail-block">
+      <h2>Photos</h2>
+      <p>Selected image URL: <span class="url">{{ venue.selected_main_image_url or "Missing" }}</span></p>
+      <p>Provider/upload image URL: <span class="url">{{ venue.main_image_url or "Missing" }}</span></p>
+      <p>Additional image URL(s): <span class="url">{{ venue.additional_image_urls or "n/a" }}</span></p>
+      <p>Status: {{ venue.image_status or "missing" }}</p>
+      <p>Role: {{ venue.image_role or "n/a" }}</p>
+      <p>Clearance: {{ venue.image_clearance_status or "n/a" }}</p>
+      <p>Quality score: {{ venue.image_quality_score if venue.image_quality_score is not none else "n/a" }}</p>
+      <p>Selection reason: {{ venue.image_selection_reason or "n/a" }}</p>
+      <p>Selected at: {{ venue.image_selected_at.strftime("%Y-%m-%d %H:%M") if venue.image_selected_at else "n/a" }}</p>
+      <p>Flags: {{ venue.image_quality_flags | join(", ") if venue.image_quality_flags else "none" }}</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Events at this venue</h2>
+    {% for row in event_rows %}
+      {% set event_display_image_url = row.event.selected_main_image_url or row.event.main_image_url %}
+      <article class="nested-event">
+        <div class="thumb">
+          {% if previewable_image_url(event_display_image_url) %}
+            <img alt="" src="{{ previewable_image_url(event_display_image_url) }}">
+          {% else %}
+            Event Image QA
+          {% endif %}
+        </div>
+        <div>
+          <span class="badge">{{ row.event.start_datetime.strftime("%b %-d, %I:%M %p") }}</span>
+          <h2><a href="/preview/events/{{ row.event.id }}">{{ row.event.title }}</a></h2>
+          {% if row.event.headliner and row.event.headliner != row.event.title %}
+            <p>{{ row.event.headliner }}</p>
+          {% endif %}
+          <div class="flag-row">
+            {% for badge in row.image_badges %}
+              <span class="flag">{{ badge }}</span>
+            {% endfor %}
+            {% for flag in row.quality_flags %}
+              <span class="flag">{{ flag }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </article>
+    {% else %}
+      <p class="notice">No events are linked to this venue.</p>
+    {% endfor %}
+  </section>
+
+  <details class="detail-block">
+    <summary>More</summary>
+    <p>Venue key: {{ venue.venue_key }}</p>
+    <p>Distance is shown when a calling view provides a comparison point.</p>
+  </details>
+{% endblock %}

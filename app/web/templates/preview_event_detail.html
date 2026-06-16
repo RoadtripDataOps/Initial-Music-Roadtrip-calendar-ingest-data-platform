@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    body {
+      background: #101011;
+      color: #f3f3f4;
+    }
+
+    header {
+      border-bottom-color: #262629;
+      background: #101011;
+    }
+
+    nav a,
+    nav .logout-form button {
+      color: #f3f3f4;
+    }
+
+    main {
+      width: min(1280px, calc(100% - 32px));
+    }
+
+    p {
+      color: #c8c2c4;
+    }
+
+    .profile-hero {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.95fr) minmax(360px, 1.05fr);
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .hero-image {
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      min-height: 360px;
+      border: 1px solid #343437;
+      border-radius: 8px;
+      background: #242427;
+      color: #aaa5a7;
+      font-weight: 750;
+      text-align: center;
+    }
+
+    .hero-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile-copy {
+      padding: 20px;
+      border: 1px solid #343437;
+      border-radius: 8px;
+      background: #151516;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+    }
+
+    .button-row,
+    .flag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 14px 0;
+    }
+
+    .button.muted {
+      border-color: #333336;
+      background: #202023;
+      color: #aaa5a7;
+      cursor: default;
+    }
+
+    .flag {
+      display: inline-flex;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #3b201b;
+      color: #ffb19e;
+      font-size: 0.82rem;
+      font-weight: 750;
+    }
+
+    .badge {
+      background: #202023;
+      color: #d7d2d3;
+    }
+
+    .badge.success {
+      background: #f2d40b;
+      color: #171717;
+    }
+
+    .button,
+    button {
+      border-color: #f2d40b;
+      background: #f2d40b;
+      color: #141414;
+    }
+
+    .button.secondary {
+      border-color: #333336;
+      background: #202023;
+      color: #f3f3f4;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .detail-block {
+      padding: 14px;
+      border: 1px solid #343437;
+      border-radius: 8px;
+      background: #18181a;
+    }
+
+    .detail-block h2 {
+      margin-bottom: 8px;
+    }
+
+    .image-candidate {
+      max-width: 180px;
+      border-radius: 8px;
+    }
+
+    @media (max-width: 980px) {
+      .profile-hero,
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <p class="notice">Music Roadtrip Preview Sandbox</p>
+  <p><a href="/preview/events">Back to visual events</a></p>
+  {% set display_image_url = event.selected_main_image_url or event.main_image_url %}
+  <section class="profile-hero">
+    <div class="hero-image">
+      {% if previewable_image_url(display_image_url) %}
+        <img alt="" src="{{ previewable_image_url(display_image_url) }}">
+      {% else %}
+        Event Image QA
+      {% endif %}
+    </div>
+    <div class="profile-copy">
+      <span class="badge success">Event</span>
+      <span class="badge">Dedupe {{ event.dedupe_confidence }}</span>
+      <span class="badge">{{ event.duplicate_status }}</span>
+      <span class="badge">{{ event.source_claim_count }} claim(s)</span>
+      <h1>{{ event.title }}</h1>
+      <p>{{ event.start_datetime.strftime("%A, %B %-d at %I:%M %p") }}</p>
+      {% if event.headliner %}
+        <p><strong>Headliner:</strong> {{ event.headliner }}</p>
+      {% endif %}
+      {% if event.supporting_artists %}
+        <p><strong>Supporting artists:</strong> {{ event.supporting_artists }}</p>
+      {% endif %}
+      <div class="button-row">
+        <a class="button" href="{{ maps_url }}">Map</a>
+        <a class="button secondary" href="{{ maps_url }}">Nav</a>
+        <a class="button secondary" href="{{ street_url }}">Street</a>
+        {% if event.source_url %}
+          <a class="button secondary" href="{{ event.source_url }}">Web</a>
+        {% else %}
+          <span class="button muted">Web missing</span>
+        {% endif %}
+        {% if event.tickets_link %}
+          <a class="button" href="{{ event.tickets_link }}">Tickets</a>
+        {% else %}
+          <span class="button muted">Tickets missing</span>
+        {% endif %}
+        <a class="button secondary" href="/preview/events/{{ event.id }}/reminder.ics">Set Reminder</a>
+      </div>
+      <div class="flag-row">
+        {% for badge in image_badges %}
+          <span class="flag">{{ badge }}</span>
+        {% endfor %}
+        {% for flag in quality_flags %}
+          <span class="flag">{{ flag }}</span>
+        {% else %}
+          <span class="badge success">No preview flags</span>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="detail-grid">
+    <div class="detail-block">
+      <h2>Dedupe</h2>
+      <p>Status: {{ event.duplicate_status }}</p>
+      <p>Confidence: {{ event.dedupe_confidence }}</p>
+      <p>Lifecycle: {{ event.event_lifecycle_status }}</p>
+      <p>Source claims: {{ event.source_claim_count }}</p>
+      {% if event.duplicate_candidate_group_id %}
+        <p><a href="/admin/duplicate-events/{{ event.duplicate_candidate_group_id }}">Review duplicate group #{{ event.duplicate_candidate_group_id }}</a></p>
+      {% endif %}
+      <p>Last significant change: {{ event.last_significant_change_at.strftime("%Y-%m-%d %H:%M") if event.last_significant_change_at else "n/a" }}</p>
+      <p>Update count: {{ event.update_count }}</p>
+    </div>
+
+    <div class="detail-block">
+      <h2>Venue</h2>
+      {% if event.venue %}
+        <p><a href="/preview/venues/{{ event.venue.id }}">{{ event.venue.display_name }}</a></p>
+        <p>{{ event.venue.category }} / {{ event.venue.subcategory }}</p>
+        <p>{{ event.venue.address or "Missing address" }}</p>
+        <p>{{ event.venue.city or "" }} {{ event.venue.state or "" }} {{ event.venue.zip_code or "" }} {{ event.venue.country or "" }}</p>
+      {% else %}
+        <p>{{ event.location_text or "Missing venue profile" }}</p>
+      {% endif %}
+    </div>
+
+    <div class="detail-block">
+      <h2>Links</h2>
+      <p>Event URL: <span class="url">{{ event.source_url or "Missing" }}</span></p>
+      <p>Tickets: <span class="url">{{ event.tickets_link or "Missing" }}</span></p>
+      <p>Ticket QA: {{ event.ticket_link_classification or "not classified" }}</p>
+      <p>Ticketing provider: {{ event.ticketing_provider or "unknown" }}{% if event.ticketing_provider_domain %} / {{ event.ticketing_provider_domain }}{% endif %}</p>
+      <p>Recommended ticket: <span class="url">{{ event.recommended_ticket_link or "n/a" }}</span></p>
+      <p>Repair strategy: {{ event.ticket_link_repair_strategy or "n/a" }}{% if event.ticket_link_repair_source %} / {{ event.ticket_link_repair_source }}{% endif %}</p>
+      <p>Repair suggestion: {{ event.ticket_link_repair_suggestion or "n/a" }}</p>
+      <p>Spotify: <span class="url">{{ event.spotify_url or "Spotify enrichment missing" }}</span></p>
+    </div>
+
+    <div class="detail-block">
+      <h2>Event Details</h2>
+      <p>Price: {{ event.price or "n/a" }}</p>
+      <p>Age restriction: {{ event.age_restriction or "n/a" }}</p>
+      <p>Doors: {{ event.doors_time or "n/a" }}</p>
+      <p>End: {{ event.end_datetime.strftime("%Y-%m-%d %H:%M") if event.end_datetime else "n/a" }}</p>
+      <p>Provider event type: {{ event.provider_event_type or "n/a" }}</p>
+      <p>Genre: {{ event.normalized_genres | join(", ") if event.normalized_genres else event.normalized_genre or event.provider_genre or "n/a" }}</p>
+      <p>Music category: {{ event.music_category or "n/a" }}</p>
+      <p>Music relevance: {{ "%.0f"|format(event.music_relevance_score) if event.music_relevance_score is not none else "n/a" }}</p>
+      <p>Relevance flags: {{ event.music_relevance_flags | join(", ") if event.music_relevance_flags else "none" }}</p>
+    </div>
+
+    <div class="detail-block">
+      <h2>Artists</h2>
+      {% if event.artist_links %}
+        {% for link in event.artist_links %}
+          {% if link.artist %}
+            <p>
+              <a href="/admin/artists/{{ link.artist.id }}">{{ link.artist.display_name }}</a>
+              · {{ link.role }}
+              {% if link.artist.primary_genre %} · {{ link.artist.primary_genre }}{% endif %}
+            </p>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <p>No linked artist registry records yet.</p>
+      {% endif %}
+    </div>
+
+    {% if event.source_type == "api_feed" %}
+      <div class="detail-block">
+        <h2>API Provenance</h2>
+        <p>Provider: {{ event.ingestion_provider or event.api_provider_key or "n/a" }}</p>
+        <p>Upstream event: {{ event.upstream_event_source or "unknown" }}{% if event.upstream_event_id %} / {{ event.upstream_event_id }}{% endif %}</p>
+        <p>Ticketing provider: {{ event.ticketing_provider or "unknown" }}</p>
+        <p>Provider music segment: {{ event.provider_music_segment or "n/a" }}</p>
+        <p>Source record ID: {{ event.api_source_record_id or "n/a" }}</p>
+        <p>API feed run:
+          {% if event.api_feed_run_id %}
+            <a href="/admin/api-feed-runs/{{ event.api_feed_run_id }}">#{{ event.api_feed_run_id }}</a>
+          {% else %}
+            n/a
+          {% endif %}
+        </p>
+        <p>Normalized from API: yes</p>
+        <p>Mapping warnings: {{ event.api_mapping_warnings_json or "none" }}</p>
+        <p>QA scores: {{ event.api_quality_scores_json or "none" }}</p>
+        <p>Dedupe source fields: {{ event.dedupe_source_fields_json or "n/a" }}</p>
+        <p>Venue match fields: {{ event.venue_match_fields_json or "n/a" }}</p>
+        <p>Source chain: {{ event.source_chain_json or "n/a" }}</p>
+        <p>External identifiers: {{ event.external_identifiers_json or "n/a" }}</p>
+        <p>Ticket offers: {{ event.ticket_offers_json or "n/a" }}</p>
+        <p>Provenance flags: {{ event.provenance_flags | join(", ") if event.provenance_flags else "none" }}</p>
+        <p>Provider docs: {{ event.provider_doc_notes or "n/a" }}</p>
+      </div>
+    {% endif %}
+
+    <div class="detail-block">
+      <h2>Source Claims</h2>
+      {% if source_claims %}
+        {% for claim in source_claims[:5] %}
+          <p>#{{ claim.id }} {{ claim.source_type }}{% if claim.ingestion_provider %} / {{ claim.ingestion_provider }}{% endif %}</p>
+        {% endfor %}
+      {% else %}
+        <p>No source claims recorded.</p>
+      {% endif %}
+    </div>
+
+    <div class="detail-block">
+      <h2>Image QA</h2>
+      <p>Selected image URL: <span class="url">{{ event.selected_main_image_url or "Missing" }}</span></p>
+      <p>Provider/upload image URL: <span class="url">{{ event.main_image_url or "Missing" }}</span></p>
+      <p>Additional image URL(s): <span class="url">{{ event.additional_image_urls or "n/a" }}</span></p>
+      <p>Status: {{ event.image_status or "missing" }}</p>
+      <p>Role: {{ event.image_role or "n/a" }}</p>
+      <p>Source: {{ event.image_source_type or "n/a" }}{% if event.image_source_provider %} / {{ event.image_source_provider }}{% endif %}</p>
+      <p>Clearance: {{ event.image_clearance_status or "n/a" }}</p>
+      <p>Quality score: {{ event.image_quality_score if event.image_quality_score is not none else "n/a" }}</p>
+      <p>Selection reason: {{ event.image_selection_reason or "n/a" }}</p>
+      {% if "photo_rescue_selected" in event.image_quality_flags %}
+        <p><span class="badge success">Selected by photo rescue</span></p>
+      {% endif %}
+      {% if event.image_clearance_status == "needs_approval" %}
+        <p><span class="badge">Selected · Needs Approval</span></p>
+      {% endif %}
+      {% if "generic_provider_image" in event.image_quality_flags or "photo_rescue_blocked_candidates" in event.image_quality_flags %}
+        <p><span class="badge failure">Generic/provider candidates blocked</span></p>
+      {% endif %}
+      <p>Selected at: {{ event.image_selected_at.strftime("%Y-%m-%d %H:%M") if event.image_selected_at else "n/a" }}</p>
+      <p>Flags: {{ event.image_quality_flags | join(", ") if event.image_quality_flags else "none" }}</p>
+      <p><a href="/admin/events/{{ event.id }}">Review image candidates</a></p>
+    </div>
+
+    <div class="detail-block">
+      <h2>Spotify Placeholder</h2>
+      {% if event.spotify_image_url %}
+        <img class="image-candidate" alt="" src="{{ event.spotify_image_url }}">
+      {% endif %}
+      <p>Artist ID: {{ event.spotify_artist_id or "Missing" }}</p>
+      <p>Artist name: {{ event.spotify_artist_name or "Missing" }}</p>
+      <p>Match confidence: {{ event.spotify_match_confidence if event.spotify_match_confidence is not none else "n/a" }}</p>
+    </div>
+
+    <div class="detail-block">
+      <h2>Enrichment Placeholder</h2>
+      <p>Status: {{ event.enrichment_status or "not started" }}</p>
+      <p>Flags: {{ event.enrichment_flags_json }}</p>
+      <p>Suggestions: {{ event.enrichment_suggestions_json }}</p>
+    </div>
+  </section>
+
+  <details class="detail-block" style="margin-top: 14px;">
+    <summary>More</summary>
+    <p>Source type: {{ event.source_type }}</p>
+    <p>Source URL: <span class="url">{{ event.source_url or "n/a" }}</span></p>
+    <p><a href="/admin/events/{{ event.id }}">Admin provenance</a></p>
+  </details>
+{% endblock %}

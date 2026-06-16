@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .route-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 22px;
+      align-items: stretch;
+      margin-bottom: 22px;
+    }
+
+    .route-hero-panel,
+    .route-feed-panel,
+    .route-stop-card {
+      border: 1px solid var(--preview-border);
+      border-radius: 8px;
+      background:
+        linear-gradient(145deg, rgba(159, 123, 255, 0.18), transparent 40%),
+        var(--preview-card);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .route-stop-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .route-stop-card {
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .route-stop-index {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      background: #f2d40b;
+      color: #121212;
+      font-weight: 900;
+    }
+
+    .segment-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .marker-preview-grid {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 920px) {
+      .route-hero {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <div class="route-hero">
+    <section class="route-hero-panel">
+      <p class="notice">Deferred / App team feature. This preview is compatibility-only.</p>
+      <div class="actions">
+        <span class="badge info">{{ itinerary.display_label }}</span>
+        <span class="badge">{{ itinerary.itinerary_type.replace("_", " ").title() }}</span>
+        <span class="badge {{ 'success' if itinerary.app_feed_ready else 'warning' }}">{{ itinerary.status.replace("_", " ").title() }}</span>
+      </div>
+      <h1>{{ itinerary.title }}</h1>
+      <p>{{ itinerary.description or itinerary.subtitle or "Preview how this itinerary will read in the Music Roadtrip app." }}</p>
+      <div class="actions">
+        {% if itinerary.region %}<span class="badge info">{{ itinerary.region.name }}</span>{% endif %}
+        {% if itinerary.artist %}<span class="badge info">{{ itinerary.artist.display_name }}</span>{% endif %}
+        {% for tag in itinerary.tags %}
+          <span class="badge">{{ tag }}</span>
+        {% endfor %}
+      </div>
+    </section>
+
+    <aside class="route-feed-panel">
+      <h2>Quality</h2>
+      <span class="badge {{ 'success' if itinerary.quality_score and itinerary.quality_score >= 70 else 'warning' }}">Score {{ itinerary.quality_score or 0 }}</span>
+      <div class="actions">
+        {% for flag in itinerary.quality_flags %}
+          <span class="badge warning">{{ flag.replace("_", " ") }}</span>
+        {% else %}
+          <span class="badge success">No blocking flags</span>
+        {% endfor %}
+      </div>
+      <a class="button secondary" href="/admin/itineraries/{{ itinerary.id }}/app-feed.json">App Feed JSON</a>
+    </aside>
+  </div>
+
+  <section class="route-stop-list">
+    {% for stop in itinerary.stops %}
+      <article class="route-stop-card">
+        <div class="route-stop-index">{{ stop.stop_order }}</div>
+        <div>
+          <span class="badge info">{{ stop.stop_type.replace("_", " ").title() }}</span>
+          <h2>{{ stop.title }}</h2>
+          <p>{{ stop.description or stop.subtitle or "" }}</p>
+          <div class="actions">
+            {% if stop.city or stop.state %}
+              <span class="badge">{{ stop.city }}{% if stop.state %}, {{ stop.state }}{% endif %}</span>
+            {% endif %}
+            {% if stop.ticket_url %}<a class="button secondary" href="{{ stop.ticket_url }}">Tickets</a>{% endif %}
+            {% if stop.website_url %}<a class="button secondary" href="{{ stop.website_url }}">Website</a>{% endif %}
+            <a class="button secondary" href="{{ feed.stops[loop.index0].links.navigation_url }}">Navigate</a>
+          </div>
+        </div>
+      </article>
+    {% else %}
+      <div class="empty-state">No stops yet.</div>
+    {% endfor %}
+  </section>
+
+  <section class="route-feed-panel">
+    <h2>Segments</h2>
+    <div class="segment-list">
+      {% for segment in itinerary.segments %}
+        <div class="notice">
+          Stop {{ segment.segment_order }} to {{ segment.segment_order + 1 }}
+          {% if segment.distance_miles %} · {{ segment.distance_miles }} miles{% endif %}
+          {% if segment.estimated_drive_time_text %} · {{ segment.estimated_drive_time_text }}{% endif %}
+          {% if segment.navigation_url %} · <a href="{{ segment.navigation_url }}">External navigation</a>{% endif %}
+        </div>
+      {% else %}
+        <div class="notice">Segments appear after two or more stops are available.</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="route-feed-panel">
+    <h2>Map Marker Metadata Preview</h2>
+    <div class="marker-preview-grid">
+      {% for marker in stop_markers %}
+        <div class="notice">{{ marker.title }} · {{ marker.marker.icon_key }} · {{ marker.marker.marker_color }}</div>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}
