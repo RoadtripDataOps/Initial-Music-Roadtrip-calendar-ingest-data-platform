@@ -138,6 +138,7 @@
     <a class="filter-chip" href="/admin/image-candidates?stock_placeholder_candidate=1">Generic provider photos</a>
     <a class="filter-chip" href="/admin/image-candidates?poster_or_flyer=1">Poster/flyer/admat</a>
     <a class="filter-chip" href="/admin/image-candidates?source_evidence_only=1">Social graphic evidence</a>
+    <a class="filter-chip" href="/admin/image-candidates?rescue_source=ticketing_page_image">Ticket-page fallback</a>
     <a class="filter-chip" href="/admin/image-candidates?rescue_source=provider_artist_image">Artist image candidates</a>
     <a class="filter-chip" href="/admin/image-candidates?rescue_source=provider_venue_image">Venue fallback candidates</a>
     <a class="filter-chip" href="/admin/image-candidates?selected_by_rescue=1">Selected by rescue</a>
@@ -156,6 +157,10 @@
     <form method="post" action="/admin/image-candidates/photo-rescue/recent-approved/background">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <button type="submit">Run recent photo rescue in background</button>
+    </form>
+    <form method="post" action="/admin/image-candidates/ticket-image-fallback/recent/background">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit">Find recent ticket-page images in background</button>
     </form>
   </div>
 
@@ -222,6 +227,9 @@
               {% if (candidate.event and candidate.event.image_status == "selected_pending_approval") or (candidate.venue and candidate.venue.image_status == "selected_pending_approval") %}
                 <span class="badge warning">Selected · Needs Approval</span>
               {% endif %}
+              {% if candidate.rescue_source == "ticketing_page_image" %}
+                <span class="badge info">Ticket-page fallback</span>
+              {% endif %}
               <span class="badge">{{ candidate.clearance_status }}</span>
             </div>
             <h2>
@@ -282,6 +290,14 @@
                 <form method="post" action="/admin/image-candidates/{{ candidate.id }}/photo-rescue/background">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                   <button type="submit">Queue photo rescue</button>
+                </form>
+                <form method="post" action="/admin/image-candidates/{{ candidate.id }}/ticket-image-fallback">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <button type="submit">Find ticket image</button>
+                </form>
+                <form method="post" action="/admin/image-candidates/{{ candidate.id }}/ticket-image-fallback/background">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <button type="submit">Queue ticket image</button>
                 </form>
                 <form method="post" action="/admin/image-candidates/{{ candidate.id }}/select-event">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

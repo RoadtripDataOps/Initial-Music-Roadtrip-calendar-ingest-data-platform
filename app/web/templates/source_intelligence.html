@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Source Intelligence</h1>
+  <p>Approved-source scrape recipes, health signals, event yield, and developer notes.</p>
+
+  <section class="card-grid">
+    <article class="card">
+      <h2>Total</h2>
+      <p class="metric">{{ summary.total }}</p>
+    </article>
+    <article class="card">
+      <h2>Healthy</h2>
+      <p class="metric">{{ summary.healthy }}</p>
+    </article>
+    <article class="card">
+      <h2>Needs Review</h2>
+      <p class="metric">{{ summary.needs_review }}</p>
+    </article>
+    <article class="card">
+      <h2>Failing / Unsupported</h2>
+      <p class="metric">{{ summary.failing + summary.unsupported }}</p>
+    </article>
+  </section>
+
+  <section class="panel">
+    <h2>Filters</h2>
+    <form method="get" action="/admin/source-intelligence">
+      <div class="field">
+        <label for="health_status">Source health</label>
+        <select id="health_status" name="health_status">
+          <option value="">Any health state</option>
+          {% for value in health_statuses %}
+            <option value="{{ value }}" {% if filters.health_status == value %}selected{% endif %}>{{ value | replace("_", " ") | title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="platform_type">Platform type</label>
+        <select id="platform_type" name="platform_type">
+          <option value="">Any platform</option>
+          {% for value in platform_types %}
+            <option value="{{ value }}" {% if filters.platform_type == value %}selected{% endif %}>{{ value | replace("_", " ") | title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="extractor_type">Extractor type</label>
+        <select id="extractor_type" name="extractor_type">
+          <option value="">Any extractor</option>
+          {% for value in extractor_types %}
+            <option value="{{ value }}" {% if filters.extractor_type == value %}selected{% endif %}>{{ value | replace("_", " ") | title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="requires_javascript">Requires JavaScript</label>
+        <select id="requires_javascript" name="requires_javascript">
+          <option value="">Any</option>
+          <option value="true" {% if filters.requires_javascript == "true" %}selected{% endif %}>Yes</option>
+          <option value="false" {% if filters.requires_javascript == "false" %}selected{% endif %}>No</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="checkbox">
+          <input type="checkbox" name="no_successful_crawl" value="1" {% if filters.no_successful_crawl %}checked{% endif %}>
+          <span>No successful crawl</span>
+        </label>
+      </div>
+      <div class="field">
+        <label class="checkbox">
+          <input type="checkbox" name="event_count_dropped" value="1" {% if filters.event_count_dropped %}checked{% endif %}>
+          <span>Event count dropped</span>
+        </label>
+      </div>
+      <div class="field">
+        <label class="checkbox">
+          <input type="checkbox" name="high_duplicate_rate" value="1" {% if filters.high_duplicate_rate %}checked{% endif %}>
+          <span>High duplicate rate</span>
+        </label>
+      </div>
+      <div class="field">
+        <label class="checkbox">
+          <input type="checkbox" name="high_missing_ticket_rate" value="1" {% if filters.high_missing_ticket_rate %}checked{% endif %}>
+          <span>High missing ticket rate</span>
+        </label>
+      </div>
+      <div class="field">
+        <label class="checkbox">
+          <input type="checkbox" name="high_missing_image_rate" value="1" {% if filters.high_missing_image_rate %}checked{% endif %}>
+          <span>High missing image rate</span>
+        </label>
+      </div>
+      <div class="actions">
+        <button type="submit">Apply Filters</button>
+        <a class="button secondary" href="/admin/source-intelligence">Reset</a>
+      </div>
+    </form>
+  </section>
+
+  <section>
+    <h2>Scrape Profiles</h2>
+    {% if rows %}
+      <table>
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Scrape recipe</th>
+            <th>Health</th>
+            <th>Crawls</th>
+            <th>Yield / Issues</th>
+            <th>Last crawl</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            {% set profile = row.profile %}
+            <tr>
+              <td data-label="Source">
+                <a href="/admin/master-calendar-sources/{{ row.source.id }}">{{ row.source.source_name }}</a><br>
+                <span class="url">{{ row.source.canonical_url }}</span>
+              </td>
+              <td data-label="Scrape recipe">
+                <span class="badge info">{{ profile.platform_type | replace("_", " ") | title }}</span>
+                <span class="badge">{{ profile.extractor_type | replace("_", " ") | title }}</span>
+                <span class="badge">{{ profile.extractor_confidence | title }}</span>
+                {% if profile.requires_javascript %}<span class="badge warning">Requires JS</span>{% endif %}
+                {% if profile.recipe_locked_by_admin %}<span class="badge success">Recipe Locked</span>{% endif %}
+              </td>
+              <td data-label="Health">
+                {% if profile.source_health_status == "healthy" %}
+                  <span class="badge success">Healthy</span>
+                {% elif profile.source_health_status in ["failing", "unsupported"] %}
+                  <span class="badge failure">{{ profile.source_health_status | replace("_", " ") | title }}</span>
+                {% else %}
+                  <span class="badge warning">{{ profile.source_health_status | replace("_", " ") | title }}</span>
+                {% endif %}
+              </td>
+              <td data-label="Crawls">
+                {{ profile.total_crawl_count }} total<br>
+                {{ profile.successful_crawl_count }} success / {{ profile.failed_crawl_count }} failed
+              </td>
+              <td data-label="Yield / Issues">
+                Last {{ profile.last_event_count }} events<br>
+                Avg {{ "%.1f"|format(profile.average_event_count) }}<br>
+                Dups {{ "%.0f"|format(profile.duplicate_rate * 100) }}% · Tickets {{ "%.0f"|format(profile.missing_ticket_rate * 100) }}% · Images {{ "%.0f"|format(profile.missing_image_rate * 100) }}%
+              </td>
+              <td data-label="Last crawl">
+                {% if row.last_crawl %}
+                  <a href="/admin/crawl-runs/{{ row.last_crawl.id }}">#{{ row.last_crawl.id }}</a>
+                  {{ row.last_crawl.status }}<br>
+                  {{ row.last_crawl.fetched_at.strftime("%Y-%m-%d %H:%M") }}
+                {% else %}
+                  <span class="notice">No crawl yet</span>
+                {% endif %}
+              </td>
+              <td data-label="Actions">
+                <form method="post" action="/admin/source-intelligence/{{ profile.id }}/action">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <textarea name="developer_note" placeholder="Developer note"></textarea>
+                  <div class="actions">
+                    <button type="submit" name="action" value="mark_needs_review">Needs Review</button>
+                    <button type="submit" name="action" value="recompute">Recompute</button>
+                    {% if profile.recipe_locked_by_admin %}
+                      <button type="submit" name="action" value="unlock_recipe">Unlock</button>
+                    {% else %}
+                      <button type="submit" name="action" value="lock_recipe">Lock</button>
+                    {% endif %}
+                    <button type="submit" name="action" value="mark_unsupported">Unsupported</button>
+                    <button type="submit" name="action" value="add_developer_note">Add Note</button>
+                  </div>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="notice">No sources match these filters.</p>
+    {% endif %}
+  </section>
+{% endblock %}

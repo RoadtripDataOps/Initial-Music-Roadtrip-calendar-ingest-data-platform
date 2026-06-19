@@ -233,7 +233,7 @@
       <p class="notice">No artist links recorded for this event.</p>
     {% endif %}
 
-    <h2>Source Claims</h2>
+    <h2 id="source-claims">Source Claims</h2>
     {% if source_claims %}
       <table>
         <thead>
@@ -282,6 +282,12 @@
       <p><strong>Selected rescue source:</strong> {{ selected_image_candidate.rescue_source if selected_image_candidate else "n/a" }}</p>
       <p><strong>Blocked candidate count:</strong> {{ blocked_image_candidate_count }}</p>
       <p><strong>Fallback used:</strong> {{ "yes" if photo_decision.get("fallback_used") else "no" }}</p>
+      <p>
+        <strong>Ticket-page fallback:</strong>
+        {{ "ready" if ticket_image_fallback_decision.should_run else "not eligible" }}
+        · {{ ticket_image_fallback_decision.reason }}
+      </p>
+      <p><strong>Ticket-page image candidates:</strong> {{ ticket_page_image_candidate_count }}</p>
       {% if photo_decision %}
         <p><strong>Photo rescue explanation:</strong></p>
         <pre>{{ photo_decision }}</pre>
@@ -296,6 +302,14 @@
       <form method="post" action="/admin/events/{{ event.id }}/photo-rescue/background">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <button type="submit">Run photo rescue in background</button>
+      </form>
+      <form method="post" action="/admin/events/{{ event.id }}/ticket-image-fallback">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Find ticket-page image</button>
+      </form>
+      <form method="post" action="/admin/events/{{ event.id }}/ticket-image-fallback/background">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Find ticket-page image in background</button>
       </form>
       <form method="post" action="/admin/events/{{ event.id }}/select-best-image">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -324,7 +338,10 @@
             <tr>
               <td><a href="/admin/image-candidates?event_id={{ event.id }}">#{{ candidate.id }}</a></td>
               <td>{{ candidate.image_role }}</td>
-              <td>{{ candidate.source_type }}{% if candidate.source_provider %} / {{ candidate.source_provider }}{% endif %}</td>
+              <td>
+                {{ candidate.source_type }}{% if candidate.source_provider %} / {{ candidate.source_provider }}{% endif %}
+                {% if candidate.rescue_source == "ticketing_page_image" %}<br><span class="badge">Ticket-page fallback</span>{% endif %}
+              </td>
               <td>{{ candidate.candidate_status }}</td>
               <td>{{ candidate.clearance_status }}</td>
               <td>{{ candidate.quality_score if candidate.quality_score is not none else "n/a" }}</td>

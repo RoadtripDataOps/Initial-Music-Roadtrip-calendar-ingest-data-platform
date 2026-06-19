@@ -77,6 +77,7 @@
     <label for="bulk-action">Bulk action</label>
     <select id="bulk-action" name="action" required>
       <option value="photo_rescue">Run photo rescue for selected</option>
+      <option value="ticket_image_fallback">Find ticket-page images for selected</option>
       <option value="needs_image_review">Mark selected needs image review</option>
       <option value="recompute_quality">Recompute event quality for selected</option>
       <option value="duplicate_review">Send selected to duplicate review if suspicious</option>
@@ -164,6 +165,12 @@
                 <input type="hidden" name="action" value="photo_rescue">
                 <input type="hidden" name="event_ids" value="{{ event.id }}">
                 <button class="compact-action" type="submit">Run photo rescue</button>
+              </form>
+              <form method="post" action="/admin/event-quality/bulk-action">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="action" value="ticket_image_fallback">
+                <input type="hidden" name="event_ids" value="{{ event.id }}">
+                <button class="compact-action" type="submit">Find ticket image</button>
               </form>
             </div>
           </td>

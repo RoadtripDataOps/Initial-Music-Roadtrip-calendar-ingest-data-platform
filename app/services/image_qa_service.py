@@ -50,9 +50,12 @@ STOCK_TOKENS = (
     "no-image",
     "missing",
     "jambase-default",
+    "cityspark-default",
     "event-placeholder",
+    "concert-placeholder",
 )
 POSTER_TOKENS = ("poster", "flyer", "admat", "logo")
+THUMBNAIL_TOKENS = ("thumbnail", "thumb", "smallimageurl")
 IMAGE_ROLES = (
     "artist_live",
     "artist_press",
@@ -87,10 +90,10 @@ RESCUE_SOURCE_PRIORITIES = {
     "provider_artist_image": 30,
     "provider_event_image": 58,
     "event_page_og_image": 62,
+    "ticketing_page_image": 52,
     "official_venue_site": 82,
     "provider_venue_image": 88,
     "provider_promo_image": 160,
-    "ticketing_page_image": 170,
     "manual_upload": 72,
     "social_graphic_reference": 220,
     "unknown": 180,
@@ -287,6 +290,7 @@ def provenance_score(source_type: str, clearance_status: str) -> float:
         "manual": 78.0,
         "upload": 72.0,
         "provider": 58.0,
+        "ticket_page": 74.0,
         "spotify": 54.0,
         "serpapi": 45.0,
         "venue": 50.0,
@@ -443,6 +447,10 @@ def rescue_priority_for_candidate(candidate: ImageCandidate) -> int:
         path_priority = 40
     elif "primaryimage.large" in path:
         path_priority = 60
+    elif "meta.og:image" in path or "jsonld" in path:
+        path_priority = 52
+    elif "meta.twitter:image" in path:
+        path_priority = 56
     elif "jambase.image" in path:
         path_priority = 70
     elif "location.image" in path:
@@ -467,8 +475,14 @@ def generic_detection_reasons_for_candidate(candidate: ImageCandidate) -> list[s
     reasons = set(_json_string_list(candidate.generic_detection_reasons_json))
     if any(token in lowered for token in STOCK_TOKENS):
         reasons.add("generic or placeholder filename")
+    if any(token in lowered for token in THUMBNAIL_TOKENS):
+        reasons.add("small or thumbnail-only image signal")
     if candidate.image_role == "stock_placeholder":
         reasons.add("image role is stock placeholder")
+    if "x-promoimage" in lowered:
+        reasons.add("JamBase x-promoImage is promo/admat evidence")
+    if "links" in lowered and "logourl" in lowered:
+        reasons.add("CitySpark logoUrl is logo evidence only")
     if candidate.appears_stock_or_placeholder:
         reasons.add("stock or placeholder detected")
     if (
@@ -808,6 +822,8 @@ def score_image_candidate(
         qa_flags.append("artist_image_candidate")
     if candidate.rescue_source == "provider_venue_image":
         qa_flags.append("venue_fallback_candidate")
+    if candidate.rescue_source == "ticketing_page_image":
+        qa_flags.append("ticket_page_image_candidate")
     if candidate.clearance_status == "needs_approval":
         qa_flags.append("needs image approval")
         qa_flags.append("used_pending_approval")
@@ -1605,6 +1621,13 @@ def event_image_badges(event: Event) -> list[str]:
             badges.append("Artist source")
         if selected_candidate.rescue_source == "provider_venue_image":
             badges.append("Venue fallback source")
+        if selected_candidate.rescue_source == "ticketing_page_image":
+            badges.append("Ticket fallback selected")
+    if any(
+        candidate.rescue_source == "ticketing_page_image"
+        for candidate in event.image_candidates
+    ):
+        badges.append("Ticket page image candidate")
     if "stock_placeholder_candidate" in flags or any(
         candidate.appears_stock_or_placeholder for candidate in event.image_candidates
     ):

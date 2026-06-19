@@ -388,6 +388,20 @@
         box-shadow: var(--shadow);
       }
 
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 22px;
+      }
+
+      .metric {
+        margin: 0;
+        color: #ffffff;
+        font-size: 2rem;
+        font-weight: 800;
+      }
+
       .actions {
         display: flex;
         flex-wrap: wrap;
@@ -418,6 +432,14 @@
       button:hover {
         transform: translateY(-1px);
         border-color: var(--admin-primary-dark);
+      }
+
+      .button.secondary,
+      button.secondary {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--admin-text);
+        border-color: var(--admin-border);
+        box-shadow: none;
       }
 
       .button.secondary {
@@ -802,6 +824,14 @@
             <a class="sidebar-link {{ 'active' if current_path == '/admin/dashboard' else '' }}" href="/admin/dashboard">Dashboard</a>
           </div>
           <div class="sidebar-group">
+            <p class="sidebar-heading">Daily Workbench</p>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/event-review') else '' }}" href="/admin/event-review">Event Review</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/source-research') else '' }}" href="/admin/source-research">Source Research</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/poi-candidates') or current_path.startswith('/admin/poi-audit') else '' }}" href="/admin/poi-candidates">POI Candidates</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/api-feed') else '' }}" href="/admin/api-feeds">API Feeds</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/jobs') else '' }}" href="/admin/jobs">Jobs</a>
+          </div>
+          <div class="sidebar-group">
             <p class="sidebar-heading">Intake</p>
             <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/sources') else '' }}" href="/admin/sources">Submissions</a>
             <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/import-batches') else '' }}" href="/admin/import-batches">Import Batches</a>
@@ -810,6 +840,8 @@
           <div class="sidebar-group">
             <p class="sidebar-heading">Sources</p>
             <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/master-calendar-sources') else '' }}" href="/admin/master-calendar-sources">Master Calendar Sources</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/source-research') else '' }}" href="/admin/source-research">Source Research</a>
+            <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/source-intelligence') else '' }}" href="/admin/source-intelligence">Source Intelligence</a>
             <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/crawl-queue') else '' }}" href="/admin/crawl-queue">Crawl Queue</a>
             <a class="sidebar-link {{ 'active' if current_path.startswith('/admin/crawl-runs') else '' }}" href="/admin/crawl-runs">Crawl Runs</a>
           </div>
@@ -866,8 +898,11 @@
             <div>
               <p class="breadcrumbs">
                 {% if current_path.startswith('/admin/master-calendar-sources') %}Sources &gt; Master Calendar Sources
+                {% elif current_path.startswith('/admin/source-research') %}Sources &gt; Source Research
+                {% elif current_path.startswith('/admin/source-intelligence') %}Sources &gt; Source Intelligence
                 {% elif current_path.startswith('/admin/crawl-queue') %}Sources &gt; Crawl Queue
                 {% elif current_path.startswith('/admin/crawl-runs') %}Sources &gt; Crawl Runs
+                {% elif current_path.startswith('/admin/event-review') %}Daily Workbench &gt; Event Review
                 {% elif current_path.startswith('/admin/jobs') %}Operations &gt; Jobs
                 {% elif current_path.startswith('/admin/scheduled-tasks') %}Operations &gt; Scheduled Tasks
                 {% elif current_path.startswith('/admin/security') %}Operations &gt; Security

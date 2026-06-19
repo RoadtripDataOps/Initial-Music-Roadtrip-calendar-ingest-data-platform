@@ -472,6 +472,8 @@ def run_event_photo_rescue(
             reason = "photo_rescue_selected_artist_image"
         elif selected.rescue_source == "provider_venue_image":
             reason = "photo_rescue_selected_venue_candidate"
+        elif selected.rescue_source == "ticketing_page_image":
+            reason = "photo_rescue_selected_ticket_page_image"
         elif selected.rescue_source == "provider_event_image":
             reason = "photo_rescue_selected_provider_event_image"
         else:

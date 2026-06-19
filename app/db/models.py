@@ -300,6 +300,9 @@ class BackgroundJobType(StrEnum):
     event_photo_rescue = "event_photo_rescue"
     api_feed_run_photo_rescue = "api_feed_run_photo_rescue"
     recent_events_photo_rescue = "recent_events_photo_rescue"
+    ticket_page_image_enrichment = "ticket_page_image_enrichment"
+    api_feed_run_ticket_image_enrichment = "api_feed_run_ticket_image_enrichment"
+    recent_events_ticket_image_enrichment = "recent_events_ticket_image_enrichment"
     extract_crawl_run = "extract_crawl_run"
     approve_extracted_event_candidate = "approve_extracted_event_candidate"
     process_extracted_event_batch = "process_extracted_event_batch"
@@ -313,6 +316,7 @@ class BackgroundJobType(StrEnum):
     app_map_feed_export = "app_map_feed_export"
     app_filter_options_export = "app_filter_options_export"
     poi_inventory_snapshot_export = "poi_inventory_snapshot_export"
+    source_registry_snapshot_export = "source_registry_snapshot_export"
     poi_candidate_match = "poi_candidate_match"
     all_poi_candidate_match = "all_poi_candidate_match"
     poi_candidate_quality_rollup = "poi_candidate_quality_rollup"
@@ -349,6 +353,7 @@ class ScheduledTaskType(StrEnum):
     partner_report_export = "partner_report_export"
     rebuild_app_search_index = "rebuild_app_search_index"
     monthly_poi_inventory_snapshot = "monthly_poi_inventory_snapshot"
+    monthly_source_registry_snapshot = "monthly_source_registry_snapshot"
     itinerary_app_feed_export = "itinerary_app_feed_export"
 
 
@@ -438,6 +443,117 @@ class SourceQualityGrade(StrEnum):
     poor = "poor"
     blocked = "blocked"
     unknown = "unknown"
+
+
+class SourceScrapePlatformType(StrEnum):
+    """Detected source platform families for approved calendar sources."""
+
+    ics = "ics"
+    rss_atom = "rss_atom"
+    json_ld = "json_ld"
+    static_html = "static_html"
+    wordpress_events = "wordpress_events"
+    the_events_calendar = "the_events_calendar"
+    eventbrite_page = "eventbrite_page"
+    venue_calendar = "venue_calendar"
+    tourism_board_calendar = "tourism_board_calendar"
+    unknown = "unknown"
+    unsupported = "unsupported"
+
+
+class SourceScrapeExtractorType(StrEnum):
+    """Extractor strategies stored for source scrape profiles."""
+
+    ics = "ics"
+    json_ld_event = "json_ld_event"
+    rss_atom = "rss_atom"
+    html_event_list = "html_event_list"
+    generic_html_links = "generic_html_links"
+    unsupported = "unsupported"
+
+
+class SourceScrapeExtractorConfidence(StrEnum):
+    """Confidence bands for remembered source scrape recipes."""
+
+    high = "high"
+    medium = "medium"
+    low = "low"
+    unknown = "unknown"
+
+
+class SourceHealthStatus(StrEnum):
+    """Operational health states for approved source scrape profiles."""
+
+    healthy = "healthy"
+    watch = "watch"
+    needs_review = "needs_review"
+    failing = "failing"
+    paused = "paused"
+    unsupported = "unsupported"
+
+
+class CalendarSourceResearchBatchStatus(StrEnum):
+    """Workflow states for city/region calendar source research batches."""
+
+    draft = "draft"
+    preflight_ready = "preflight_ready"
+    preflighted = "preflighted"
+    approved_for_crawl = "approved_for_crawl"
+    crawl_running = "crawl_running"
+    crawl_complete = "crawl_complete"
+    review_complete = "review_complete"
+    archived = "archived"
+
+
+class CalendarSourceResearchSourceType(StrEnum):
+    """Source families used during calendar research intake."""
+
+    venue_calendar = "venue_calendar"
+    tourism_board_calendar = "tourism_board_calendar"
+    chamber_calendar = "chamber_calendar"
+    festival_calendar = "festival_calendar"
+    publication_calendar = "publication_calendar"
+    artist_calendar = "artist_calendar"
+    ticketing_calendar = "ticketing_calendar"
+    unknown = "unknown"
+
+
+class CalendarSourceResearchAuthorizationStatus(StrEnum):
+    """How a researched calendar URL was obtained."""
+
+    internal_research = "internal_research"
+    partner_supplied = "partner_supplied"
+    public_submission = "public_submission"
+    unknown = "unknown"
+
+
+class CalendarSourceResearchPreflightStatus(StrEnum):
+    """Safe URL preflight states for researched calendar URLs."""
+
+    pending = "pending"
+    success = "success"
+    warning = "warning"
+    failure = "failure"
+    blocked = "blocked"
+
+
+class CalendarSourceResearchDedupeStatus(StrEnum):
+    """Dedupe status for researched calendar URLs."""
+
+    new_source = "new_source"
+    existing_master_source = "existing_master_source"
+    possible_duplicate = "possible_duplicate"
+    invalid_url = "invalid_url"
+    blocked_url = "blocked_url"
+
+
+class CalendarSourceResearchReviewStatus(StrEnum):
+    """Admin review status for researched calendar source items."""
+
+    pending_review = "pending_review"
+    approved = "approved"
+    rejected = "rejected"
+    needs_research = "needs_research"
 
 
 class PartnerReportType(StrEnum):
@@ -561,6 +677,7 @@ class CrawlRun(Base):
         index=True,
     )
     source_url: Mapped[str] = mapped_column(Text, nullable=False)
+    final_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     http_status_code: Mapped[int | None] = mapped_column(Integer, nullable=True)
     fetched_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -3049,6 +3166,177 @@ class MasterCalendarSource(Base):
     region: Mapped[Region | None] = relationship(
         back_populates="master_calendar_sources",
     )
+    scrape_profile: Mapped["SourceScrapeProfile | None"] = relationship(
+        back_populates="master_calendar_source",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+
+
+class SourceScrapeProfile(Base):
+    """Remembered scrape recipe and health metrics for a master calendar source."""
+
+    __tablename__ = "source_scrape_profiles"
+    __table_args__ = (
+        UniqueConstraint(
+            "master_calendar_source_id",
+            name="uq_source_scrape_profiles_master_calendar_source_id",
+        ),
+        CheckConstraint(
+            "platform_type in ("
+            "'ics', 'rss_atom', 'json_ld', 'static_html', 'wordpress_events', "
+            "'the_events_calendar', 'eventbrite_page', 'venue_calendar', "
+            "'tourism_board_calendar', 'unknown', 'unsupported'"
+            ")",
+            name="ck_source_scrape_profiles_platform_type",
+        ),
+        CheckConstraint(
+            "extractor_type in ("
+            "'ics', 'json_ld_event', 'rss_atom', 'html_event_list', "
+            "'generic_html_links', 'unsupported'"
+            ")",
+            name="ck_source_scrape_profiles_extractor_type",
+        ),
+        CheckConstraint(
+            "extractor_confidence in ('high', 'medium', 'low', 'unknown')",
+            name="ck_source_scrape_profiles_extractor_confidence",
+        ),
+        CheckConstraint(
+            "source_health_status in ("
+            "'healthy', 'watch', 'needs_review', 'failing', 'paused', "
+            "'unsupported'"
+            ")",
+            name="ck_source_scrape_profiles_source_health_status",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    master_calendar_source_id: Mapped[int] = mapped_column(
+        ForeignKey("master_calendar_sources.id"),
+        nullable=False,
+        index=True,
+    )
+    source_url: Mapped[str] = mapped_column(Text, nullable=False)
+    canonical_url: Mapped[str] = mapped_column(Text, nullable=False)
+    platform_type: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        default=SourceScrapePlatformType.unknown.value,
+        index=True,
+    )
+    extractor_type: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        default=SourceScrapeExtractorType.unsupported.value,
+        index=True,
+    )
+    extractor_confidence: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default=SourceScrapeExtractorConfidence.unknown.value,
+        index=True,
+    )
+    last_working_extractor: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+    )
+    requires_javascript: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
+    supports_pagination: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
+    event_link_discovery_enabled: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
+    event_detail_link_pattern: Mapped[str | None] = mapped_column(Text, nullable=True)
+    title_selector_hint: Mapped[str | None] = mapped_column(Text, nullable=True)
+    date_selector_hint: Mapped[str | None] = mapped_column(Text, nullable=True)
+    venue_selector_hint: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ticket_selector_hint: Mapped[str | None] = mapped_column(Text, nullable=True)
+    image_selector_hint: Mapped[str | None] = mapped_column(Text, nullable=True)
+    timezone_assumption: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    last_content_type: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    last_final_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    last_response_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    last_successful_crawl_run_id: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        index=True,
+    )
+    last_failed_crawl_run_id: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        index=True,
+    )
+    total_crawl_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    successful_crawl_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+    )
+    failed_crawl_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    average_event_count: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0.0,
+    )
+    last_event_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    duplicate_rate: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    missing_ticket_rate: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0.0,
+    )
+    missing_image_rate: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0.0,
+    )
+    poi_candidate_rate: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0.0,
+    )
+    source_health_status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default=SourceHealthStatus.watch.value,
+        index=True,
+    )
+    developer_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    admin_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    recipe_version: Mapped[str] = mapped_column(String(32), nullable=False, default="1")
+    recipe_locked_by_admin: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
+    last_verified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=utc_now,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=utc_now,
+        onupdate=utc_now,
+    )
+
+    master_calendar_source: Mapped[MasterCalendarSource] = relationship(
+        back_populates="scrape_profile",
+    )
 
 
 class CalendarSourceSubmission(Base):
@@ -3103,6 +3391,184 @@ class CalendarSourceSubmission(Base):
         except json.JSONDecodeError:
             return []
         return [str(item) for item in parsed] if isinstance(parsed, list) else []
+
+
+class CalendarSourceResearchBatch(Base):
+    """City/region source-research batch before master source onboarding."""
+
+    __tablename__ = "calendar_source_research_batches"
+    __table_args__ = (
+        CheckConstraint(
+            "status in ("
+            "'draft', 'preflight_ready', 'preflighted', 'approved_for_crawl', "
+            "'crawl_running', 'crawl_complete', 'review_complete', 'archived'"
+            ")",
+            name="ck_calendar_source_research_batches_status",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    batch_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    region_id: Mapped[int | None] = mapped_column(
+        ForeignKey("regions.id"),
+        nullable=True,
+        index=True,
+    )
+    city: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    state: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    country: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    research_owner: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    source_goal_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default=CalendarSourceResearchBatchStatus.draft.value,
+        index=True,
+    )
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=utc_now,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=utc_now,
+        onupdate=utc_now,
+    )
+
+    items: Mapped[list["CalendarSourceResearchItem"]] = relationship(
+        back_populates="batch",
+        cascade="all, delete-orphan",
+    )
+    region: Mapped[Region | None] = relationship()
+
+
+class CalendarSourceResearchItem(Base):
+    """One researched calendar URL staged before master registry approval."""
+
+    __tablename__ = "calendar_source_research_items"
+    __table_args__ = (
+        CheckConstraint(
+            "source_type in ("
+            "'venue_calendar', 'tourism_board_calendar', 'chamber_calendar', "
+            "'festival_calendar', 'publication_calendar', 'artist_calendar', "
+            "'ticketing_calendar', 'unknown'"
+            ")",
+            name="ck_calendar_source_research_items_source_type",
+        ),
+        CheckConstraint(
+            "authorization_status in ("
+            "'internal_research', 'partner_supplied', 'public_submission', "
+            "'unknown'"
+            ")",
+            name="ck_calendar_source_research_items_authorization_status",
+        ),
+        CheckConstraint(
+            "preflight_status in ("
+            "'pending', 'success', 'warning', 'failure', 'blocked'"
+            ")",
+            name="ck_calendar_source_research_items_preflight_status",
+        ),
+        CheckConstraint(
+            "dedupe_status in ("
+            "'new_source', 'existing_master_source', 'possible_duplicate', "
+            "'invalid_url', 'blocked_url'"
+            ")",
+            name="ck_calendar_source_research_items_dedupe_status",
+        ),
+        CheckConstraint(
+            "review_status in ("
+            "'pending_review', 'approved', 'rejected', 'needs_research'"
+            ")",
+            name="ck_calendar_source_research_items_review_status",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    batch_id: Mapped[int] = mapped_column(
+        ForeignKey("calendar_source_research_batches.id"),
+        nullable=False,
+        index=True,
+    )
+    submitted_url: Mapped[str] = mapped_column(Text, nullable=False)
+    canonical_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    suggested_source_name: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+    organization_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    source_type: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        default=CalendarSourceResearchSourceType.unknown.value,
+        index=True,
+    )
+    city: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    state: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    country: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    contact_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    authorization_status: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        default=CalendarSourceResearchAuthorizationStatus.internal_research.value,
+    )
+    preflight_status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default=CalendarSourceResearchPreflightStatus.pending.value,
+        index=True,
+    )
+    preflight_http_status: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    preflight_content_type: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+    preflight_final_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    preflight_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    dedupe_status: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        default=CalendarSourceResearchDedupeStatus.new_source.value,
+        index=True,
+    )
+    matched_master_calendar_source_id: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        index=True,
+    )
+    risk_level: Mapped[str] = mapped_column(String(32), nullable=False, default="low")
+    risk_flags_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    review_status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default=CalendarSourceResearchReviewStatus.pending_review.value,
+        index=True,
+    )
+    created_master_calendar_source_id: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        index=True,
+    )
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=utc_now,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=utc_now,
+        onupdate=utc_now,
+    )
+
+    batch: Mapped[CalendarSourceResearchBatch] = relationship(back_populates="items")
+
+    @property
+    def risk_flags(self) -> list[str]:
+        return [str(item) for item in _json_list(self.risk_flags_json)]
 
 
 class ApiFeedRun(Base):
@@ -3694,13 +4160,17 @@ class BackgroundJob(Base):
             "'crawl_source', 'bulk_crawl', 'provider_sandbox_jambase', "
             "'provider_sandbox_cityspark', 'image_preflight', 'app_feed_export', "
             "'event_photo_rescue', 'api_feed_run_photo_rescue', "
-            "'recent_events_photo_rescue', 'poi_registry_import', "
+            "'recent_events_photo_rescue', "
+            "'ticket_page_image_enrichment', "
+            "'api_feed_run_ticket_image_enrichment', "
+            "'recent_events_ticket_image_enrichment', "
+            "'poi_registry_import', "
             "'extract_crawl_run', 'approve_extracted_event_candidate', "
             "'process_extracted_event_batch', 'scheduled_crawl_due_sources', "
             "'source_quality_rollup', 'region_partner_report', "
             "'all_source_quality_rollup', 'rebuild_app_search_index', "
             "'app_map_feed_export', 'app_filter_options_export', "
-            "'poi_inventory_snapshot_export', "
+            "'poi_inventory_snapshot_export', 'source_registry_snapshot_export', "
             "'poi_candidate_match', 'all_poi_candidate_match', "
             "'poi_candidate_quality_rollup', "
             "'rebuild_artist_registry', 'artist_genre_normalization', "
@@ -3801,7 +4271,7 @@ class ScheduledTask(Base):
             "'image_preflight', 'event_photo_rescue', "
             "'source_quality_rollup', 'partner_report_export', "
             "'rebuild_app_search_index', 'monthly_poi_inventory_snapshot', "
-            "'itinerary_app_feed_export'"
+            "'monthly_source_registry_snapshot', 'itinerary_app_feed_export'"
             ")",
             name="ck_scheduled_tasks_task_type",
         ),

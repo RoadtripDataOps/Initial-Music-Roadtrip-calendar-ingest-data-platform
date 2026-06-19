@@ -15,6 +15,9 @@
         <tr><th>Held</th><td>{{ run.held_count }}</td></tr>
         <tr><th>Rejected</th><td>{{ run.rejected_count }}</td></tr>
         <tr><th>Duplicate candidates</th><td>{{ run.duplicate_candidate_count }}</td></tr>
+        <tr><th>Ticket-page fallback eligible</th><td>{{ ticket_image_fallback_counts.events_needing_ticket_image_fallback }}</td></tr>
+        <tr><th>Ticket-page image candidates</th><td>{{ ticket_image_fallback_counts.ticket_page_candidates_found }}</td></tr>
+        <tr><th>Ticket-page images selected</th><td>{{ ticket_image_fallback_counts.fallback_selected }}</td></tr>
         <tr><th>Compliance expiration</th><td>{{ run.compliance_expiration_at.strftime("%Y-%m-%d %H:%M") if run.compliance_expiration_at else "n/a" }}</td></tr>
         <tr><th>Error</th><td>{{ run.error_message or "n/a" }}</td></tr>
         {% if run.request_preview_json and run.request_preview_json != "{}" %}
@@ -33,6 +36,14 @@
       <form method="post" action="/admin/api-feed-runs/{{ run.id }}/photo-rescue/background">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <button type="submit">Run photo rescue in background</button>
+      </form>
+      <form method="post" action="/admin/api-feed-runs/{{ run.id }}/ticket-image-fallback">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Find ticket-page images</button>
+      </form>
+      <form method="post" action="/admin/api-feed-runs/{{ run.id }}/ticket-image-fallback/background">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Find ticket-page images in background</button>
       </form>
     </div>
   </section>

@@ -20,6 +20,7 @@ from app.db.models import (
     PoiLocation,
     Region,
     SourceExtractedEventCandidate,
+    SourceHealthStatus,
     SourceQualityGrade,
     SourceQualityScore,
     SourceQualitySourceKind,
@@ -89,6 +90,20 @@ def build_source_recommendations(inputs: dict[str, object]) -> list[str]:
     """Generate deterministic highest-impact source cleanup recommendations."""
 
     recommendations: list[tuple[int, str]] = []
+    source_health_status = str(inputs.get("source_health_status") or "")
+    if source_health_status in {
+        SourceHealthStatus.failing.value,
+        SourceHealthStatus.needs_review.value,
+        SourceHealthStatus.watch.value,
+        SourceHealthStatus.unsupported.value,
+    }:
+        recommendations.append(
+            (98, "Review scrape profile health before increasing crawl cadence.")
+        )
+    if int_value(inputs, "event_count_drops") > 0:
+        recommendations.append(
+            (96, "Investigate the latest crawl because event yield dropped to zero.")
+        )
     if int_value(inputs, "extraction_failure_count") > 0:
         recommendations.append(
             (95, "Review extraction failures and update the source parser or cadence.")
@@ -228,6 +243,10 @@ def compute_source_quality_for_master_source(
         ).all()
     )
     inputs = metrics_for_events(session, events)
+    profile = source.scrape_profile
+    event_count_dropped = bool(
+        profile and profile.last_event_count == 0 and profile.average_event_count > 0
+    )
     inputs.update(
         {
             "source_kind": SourceQualitySourceKind.master_calendar_source.value,
@@ -260,6 +279,34 @@ def compute_source_quality_for_master_source(
             "source_claim_count": len(claims),
             "trusted_source": source.review_status == SourceReviewStatus.approved.value
             and source.status == "approved",
+            "source_health_status": (
+                profile.source_health_status
+                if profile
+                else SourceHealthStatus.watch.value
+            ),
+            "scrape_profile_status": "profiled" if profile else "missing",
+            "extractor_type": (
+                profile.extractor_type if profile else source.last_extractor_type
+            ),
+            "platform_type": profile.platform_type if profile else None,
+            "event_yield_trend": "dropped" if event_count_dropped else "stable",
+            "sources_needing_review": int(
+                profile is None
+                or (
+                    profile.source_health_status
+                    in {
+                        SourceHealthStatus.watch.value,
+                        SourceHealthStatus.needs_review.value,
+                        SourceHealthStatus.failing.value,
+                        SourceHealthStatus.unsupported.value,
+                    }
+                )
+            ),
+            "unsupported_sources": int(
+                profile is not None
+                and profile.source_health_status == SourceHealthStatus.unsupported.value
+            ),
+            "event_count_drops": int(event_count_dropped),
         }
     )
     score = persist_source_quality_score(session, inputs)
@@ -380,6 +427,32 @@ def compute_source_quality_for_region(
         ).all()
     )
     inputs = metrics_for_events(session, events)
+    sources_needing_review = sum(
+        1
+        for source in sources
+        if source.scrape_profile is None
+        or source.scrape_profile.source_health_status
+        in {
+            SourceHealthStatus.watch.value,
+            SourceHealthStatus.needs_review.value,
+            SourceHealthStatus.failing.value,
+            SourceHealthStatus.unsupported.value,
+        }
+    )
+    unsupported_sources = sum(
+        1
+        for source in sources
+        if source.scrape_profile
+        and source.scrape_profile.source_health_status
+        == SourceHealthStatus.unsupported.value
+    )
+    event_count_drops = sum(
+        1
+        for source in sources
+        if source.scrape_profile
+        and source.scrape_profile.last_event_count == 0
+        and source.scrape_profile.average_event_count > 0
+    )
     inputs.update(
         {
             "source_kind": SourceQualitySourceKind.region.value,
@@ -412,6 +485,9 @@ def compute_source_quality_for_region(
                 if source.extraction_failure_count > 0
             ),
             "last_failure_reason": latest_source_failure_reason(sources),
+            "sources_needing_review": sources_needing_review,
+            "unsupported_sources": unsupported_sources,
+            "event_count_drops": event_count_drops,
         }
     )
     return persist_source_quality_score(session, inputs)

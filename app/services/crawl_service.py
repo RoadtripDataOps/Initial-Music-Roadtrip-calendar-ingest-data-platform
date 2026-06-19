@@ -37,6 +37,7 @@ class FetchResult:
     content_type: str | None
     raw_response_body: str | None
     error_message: str | None = None
+    final_url: str | None = None
 
 
 class Fetcher(Protocol):
@@ -75,6 +76,7 @@ def fetch_calendar_url(
                     content_type=None,
                     raw_response_body=None,
                     error_message="Crawler redirect limit exceeded.",
+                    final_url=current_url,
                 )
     except httpx.HTTPError as exc:
         return FetchResult(
@@ -107,6 +109,7 @@ def fetch_calendar_url(
                 content_type=content_type,
                 raw_response_body=None,
                 error_message=f"Unsupported response content type: {content_type}.",
+                final_url=current_url,
             )
     if len(response.content) > active_settings.crawler_max_response_bytes:
         return FetchResult(
@@ -114,12 +117,14 @@ def fetch_calendar_url(
             content_type=content_type,
             raw_response_body=None,
             error_message="Crawler response size limit exceeded.",
+            final_url=current_url,
         )
     return FetchResult(
         http_status_code=response.status_code,
         content_type=content_type,
         raw_response_body=response.text,
         error_message=None,
+        final_url=current_url,
     )
 
 
@@ -168,6 +173,7 @@ def run_manual_crawl(
     crawl_run = CrawlRun(
         source_id=source.id,
         source_url=source.calendar_url,
+        final_url=result.final_url or source.calendar_url,
         http_status_code=result.http_status_code,
         content_type=result.content_type[:255] if result.content_type else None,
         raw_response_body=result.raw_response_body,
@@ -192,6 +198,10 @@ def run_manual_crawl(
         if extraction.extractor_type == "ics":
             save_ics_events_for_crawl_run(session, crawl_run)
         session.refresh(crawl_run)
+    from app.services.source_intelligence_service import update_profile_from_crawl_run
+
+    update_profile_from_crawl_run(session, crawl_run)
+    session.refresh(crawl_run)
     return crawl_run
 
 

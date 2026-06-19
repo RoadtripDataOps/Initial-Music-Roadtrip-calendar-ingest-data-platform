@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .metric-card {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--admin-card);
+    }
+
+    .metric-card strong {
+      display: block;
+      color: var(--admin-primary-dark);
+      font-size: 1.5rem;
+    }
+
+    @media (max-width: 960px) {
+      .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+
+  <section class="actions">
+    <a class="button" href="/admin/source-research/new">New research batch</a>
+    <a class="button secondary" href="/templates/calendar-source-research-template.csv">Download CSV template</a>
+    <a class="button secondary" href="/templates/calendar-source-research-template.xlsx">Download XLSX template</a>
+  </section>
+
+  <section class="metric-grid">
+    <article class="metric-card"><strong>{{ dashboard_counts.batch_count }}</strong>Source Research Batches</article>
+    <article class="metric-card"><strong>{{ dashboard_counts.pending_items }}</strong>Pending research items</article>
+    <article class="metric-card"><strong>{{ dashboard_counts.ready_for_preflight }}</strong>Batches ready for preflight</article>
+    <article class="metric-card"><strong>{{ dashboard_counts.ready_for_crawl }}</strong>Batches ready for crawl</article>
+    <article class="metric-card"><strong>{{ dashboard_counts.needs_research_after_crawl }}</strong>Sources needing research after crawl</article>
+  </section>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Batch</th>
+        <th>City / State</th>
+        <th>Items</th>
+        <th>New</th>
+        <th>Existing</th>
+        <th>Possible duplicate</th>
+        <th>Approved</th>
+        <th>Status</th>
+        <th>Report</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for batch in batches %}
+        {% set summary = batch_summaries[batch.id] %}
+        <tr>
+          <td><a href="/admin/source-research/{{ batch.id }}">{{ batch.batch_name }}</a></td>
+          <td>{{ batch.city or "-" }}{% if batch.state %}, {{ batch.state }}{% endif %}</td>
+          <td>{{ summary.total_items }}</td>
+          <td>{{ summary.new_sources }}</td>
+          <td>{{ summary.existing_sources }}</td>
+          <td>{{ summary.possible_duplicates }}</td>
+          <td>{{ summary.approved }}</td>
+          <td><span class="badge">{{ batch.status }}</span></td>
+          <td><a href="/admin/source-research/{{ batch.id }}/report">Report</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="9">No source research batches yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

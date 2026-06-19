@@ -355,6 +355,7 @@ def get_or_create_calendar_source_for_master(
             risk_level=source.risk_level,
             risk_flags_json=source.risk_flags_json,
             submitted_domain=source.domain or url_domain(source.canonical_url),
+            claimed_source_id=source.id,
             submitted_via="master-calendar-source",
         )
     else:
@@ -365,6 +366,7 @@ def get_or_create_calendar_source_for_master(
         existing.risk_score = source.risk_score
         existing.risk_level = source.risk_level
         existing.risk_flags_json = source.risk_flags_json
+        existing.claimed_source_id = source.id
     session.add(existing)
     session.commit()
     session.refresh(existing)

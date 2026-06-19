@@ -43,6 +43,7 @@ Strategic docs:
 - `docs/regions-and-search-seeds.md`
 - `docs/source-trust-and-partner-reporting.md`
 - `docs/event-quality-workbench.md`
+- `docs/ticket-page-image-fallback.md`
 - `docs/security-hardening.md`
 - `docs/current-poi-inventory-snapshots.md`
 - `docs/app-search-and-map-contract.md`
@@ -120,6 +121,10 @@ future app/map feed.
 - Professional image QA review board at `/admin/image-candidates` with scored
   event and venue image candidates, clearance workflow, filter chips, manual QA
   toggles, and explicit preflight metadata actions.
+- Ticket-page image fallback that can safely extract `og:image`,
+  `twitter:image`, and JSON-LD image candidates from event-specific ticket
+  pages when an event is missing a good image or has a blocked/generic provider
+  image.
 - Destination/region layer with `/admin/regions`, region detail tabs, regional
   source coverage, region quality snapshots, and private regional app-feed JSON.
 - Search seed registry at `/admin/search-seeds` for internal city, region,
@@ -532,6 +537,7 @@ claims, duplicate group, and app-feed JSON preview.
 Safe bulk actions:
 
 - Run photo rescue for selected.
+- Find ticket-page images for selected.
 - Mark selected needs image review.
 - Recompute event quality for selected.
 - Send selected to duplicate review if suspicious.
@@ -545,6 +551,29 @@ Dashboard cards show Events needing photos, Events needing tickets, Events with
 duplicate risk, Events not app-feed ready, and Events ready for app feed.
 
 More detail: `docs/event-quality-workbench.md`.
+
+## Ticket Page Image Fallback
+
+Milestone 5.6B adds a controlled image fallback for events whose provider image
+is missing, generic, blocked, evidence-only, or otherwise weak. When an admin
+or background job explicitly runs the fallback, the system safely fetches the
+event-specific ticket page, requires `text/html`, and extracts only public
+image metadata from `og:image`, `twitter:image`, and JSON-LD `image` fields.
+
+Created candidates use `source_type=ticket_page` and
+`rescue_source=ticketing_page_image`. They remain Image QA candidates with
+`needs_approval` clearance; the workflow does not auto-approve, auto-publish,
+fetch during normal page render, make provider API calls, scrape social
+platforms, or use Music Roadtrip logo assets as event images.
+
+Image QA also hard-blocks or downgrades provider stock/evidence signals such as
+JamBase `x-promoImage` promo/admat images, CitySpark `links[].logoUrl` logo
+evidence, placeholder/default/no-image URLs, repeated generic provider images,
+thumbnails, logos, posters, flyers, admats, and social-graphic evidence.
+
+Admins can trigger ticket-page fallback from event detail, Image QA, Event
+Quality, API feed run detail, or background jobs. More detail:
+`docs/ticket-page-image-fallback.md`.
 
 ## App Search, Map Markers, And Filter Contract
 
@@ -953,6 +982,66 @@ Admin review:
 
 Approving staged calendar-source rows creates only pending master registry rows
 or attaches duplicate claims. It does not auto-crawl or schedule anything.
+
+## Calendar Source Intelligence
+
+Each approved master calendar source can have a scrape profile that remembers
+how the source was crawled and extracted. Open `/admin/source-intelligence` or a
+master source detail page to review:
+
+- platform type and extractor type
+- extractor confidence and last working extractor
+- final URL, content type, and response hash
+- total, successful, and failed crawl counts
+- average and latest event yield
+- duplicate, missing-ticket, missing-image, and POI-candidate rates
+- source health, recipe lock state, and developer notes
+
+Source health states are `healthy`, `watch`, `needs_review`, `failing`,
+`paused`, and `unsupported`. They are operational QA signals only. They do not
+auto-publish data or bypass source approval, crawler safety, dedupe, image QA,
+ticket QA, POI candidate review, or app-feed readiness.
+
+The `source_registry_snapshot_export` background job writes local generated
+JSON snapshots under `data/generated/source_registry/`:
+
+- `current_approved_calendar_sources.json`
+- `current_source_scrape_profiles.json`
+
+These generated files are ignored from git. The scheduled task key is
+`monthly_source_registry_snapshot`. See
+`docs/calendar-source-intelligence.md` for the full operating model.
+
+## Calendar Source Research And City Crawl Shakedown
+
+Use `/admin/source-research` to organize real city-by-city calendar collection
+before sources are approved into the master registry. Scott can create a
+research batch for a city or region, paste researched URLs, upload a CSV/XLSX,
+dedupe URLs, safely preflight them, approve good sources, run a controlled
+batch crawl, and review the shakedown report.
+
+Download source-research templates:
+
+- `/templates/calendar-source-research-template.csv`
+- `/templates/calendar-source-research-template.xlsx`
+
+The workflow keeps public and researched sources gated:
+
+1. Gather URLs from tourism boards, venues, festivals, chambers, publications,
+   partners, and internal research.
+2. Canonicalize and dedupe each URL against `master_calendar_sources` and other
+   items in the same batch.
+3. Run preflight with the existing URL safety, timeout, redirect, content-type,
+   and private-network protections.
+4. Approve good items into the master source registry.
+5. Run crawl only for approved master sources in the batch.
+6. Review source intelligence, event extraction, event quality, ticket/image
+   issues, and POI candidates in the shakedown report.
+
+Batch crawls do not auto-publish events and do not auto-create POIs. Discovered
+venues or locations are staged as POI candidates for admin review. See
+`docs/calendar-source-research-and-city-crawl-shakedown.md` for the full
+operating checklist.
 
 ## Admin Review UI
 

@@ -269,6 +269,7 @@ def ensure_sqlite_schema(engine: Engine) -> None:
             connection,
             "crawl_runs",
             {
+                "final_url": "TEXT",
                 "extractor_type": "VARCHAR(64)",
                 "extraction_status": "VARCHAR(32)",
                 "event_candidates_count": "INTEGER NOT NULL DEFAULT 0",
@@ -640,7 +641,7 @@ def relax_background_jobs_job_type_constraint(connection: Connection) -> None:
             "WHERE type = 'table' AND name = 'background_jobs'"
         )
     ).scalar()
-    if isinstance(table_sql, str) and "poi_candidate_match" in table_sql:
+    if isinstance(table_sql, str) and "ticket_page_image_enrichment" in table_sql:
         return
 
     connection.execute(text("DROP TABLE IF EXISTS background_jobs_rebuilt"))
@@ -677,6 +678,9 @@ def relax_background_jobs_job_type_constraint(connection: Connection) -> None:
                         'event_photo_rescue',
                         'api_feed_run_photo_rescue',
                         'recent_events_photo_rescue',
+                        'ticket_page_image_enrichment',
+                        'api_feed_run_ticket_image_enrichment',
+                        'recent_events_ticket_image_enrichment',
                         'extract_crawl_run',
                         'approve_extracted_event_candidate',
                         'process_extracted_event_batch',
@@ -690,6 +694,7 @@ def relax_background_jobs_job_type_constraint(connection: Connection) -> None:
                         'app_map_feed_export',
                         'app_filter_options_export',
                         'poi_inventory_snapshot_export',
+                        'source_registry_snapshot_export',
                         'poi_candidate_match',
                         'all_poi_candidate_match',
                         'poi_candidate_quality_rollup',
@@ -795,7 +800,10 @@ def relax_scheduled_tasks_task_type_constraint(connection: Connection) -> None:
             "WHERE type = 'table' AND name = 'scheduled_tasks'"
         )
     ).scalar()
-    if isinstance(table_sql, str) and "monthly_poi_inventory_snapshot" in table_sql:
+    if (
+        isinstance(table_sql, str)
+        and "monthly_source_registry_snapshot" in table_sql
+    ):
         return
 
     connection.execute(text("DROP TABLE IF EXISTS scheduled_tasks_rebuilt"))
@@ -827,6 +835,7 @@ def relax_scheduled_tasks_task_type_constraint(connection: Connection) -> None:
                         'partner_report_export',
                         'rebuild_app_search_index',
                         'monthly_poi_inventory_snapshot',
+                        'monthly_source_registry_snapshot',
                         'itinerary_app_feed_export'
                     )
                 ),

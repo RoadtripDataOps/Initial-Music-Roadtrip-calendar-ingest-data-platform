@@ -34,6 +34,71 @@
     </table>
   </section>
 
+  <section class="panel">
+    <h2>Source Intelligence</h2>
+    <table>
+      <tbody>
+        <tr>
+          <th>Platform type</th>
+          <td><span class="badge info">{{ scrape_profile.platform_type | replace("_", " ") | title }}</span></td>
+        </tr>
+        <tr>
+          <th>Extractor type</th>
+          <td>
+            <span class="badge">{{ scrape_profile.extractor_type | replace("_", " ") | title }}</span>
+            <span class="badge">{{ scrape_profile.extractor_confidence | title }}</span>
+          </td>
+        </tr>
+        <tr>
+          <th>Last working extractor</th>
+          <td>{{ scrape_profile.last_working_extractor or "n/a" }}</td>
+        </tr>
+        <tr>
+          <th>Source health</th>
+          <td>
+            {% if scrape_profile.source_health_status == "healthy" %}
+              <span class="badge success">Healthy</span>
+            {% elif scrape_profile.source_health_status in ["failing", "unsupported"] %}
+              <span class="badge failure">{{ scrape_profile.source_health_status | replace("_", " ") | title }}</span>
+            {% else %}
+              <span class="badge warning">{{ scrape_profile.source_health_status | replace("_", " ") | title }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        <tr><th>Total crawls</th><td>{{ scrape_profile.total_crawl_count }}</td></tr>
+        <tr><th>Successful crawls</th><td>{{ scrape_profile.successful_crawl_count }}</td></tr>
+        <tr><th>Failed crawls</th><td>{{ scrape_profile.failed_crawl_count }}</td></tr>
+        <tr>
+          <th>Last successful crawl</th>
+          <td>
+            {% if scrape_profile.last_successful_crawl_run_id %}
+              <a href="/admin/crawl-runs/{{ scrape_profile.last_successful_crawl_run_id }}">#{{ scrape_profile.last_successful_crawl_run_id }}</a>
+            {% else %}
+              n/a
+            {% endif %}
+          </td>
+        </tr>
+        <tr><th>Average events found</th><td>{{ "%.1f"|format(scrape_profile.average_event_count) }}</td></tr>
+        <tr><th>Last event count</th><td>{{ scrape_profile.last_event_count }}</td></tr>
+        <tr><th>Duplicate rate</th><td>{{ "%.0f"|format(scrape_profile.duplicate_rate * 100) }}%</td></tr>
+        <tr><th>Missing ticket rate</th><td>{{ "%.0f"|format(scrape_profile.missing_ticket_rate * 100) }}%</td></tr>
+        <tr><th>Missing image rate</th><td>{{ "%.0f"|format(scrape_profile.missing_image_rate * 100) }}%</td></tr>
+        <tr><th>Last final URL</th><td class="url">{{ scrape_profile.last_final_url or "n/a" }}</td></tr>
+        <tr><th>Last content type</th><td>{{ scrape_profile.last_content_type or "n/a" }}</td></tr>
+        <tr><th>Last response hash</th><td>{{ scrape_profile.last_response_hash or "n/a" }}</td></tr>
+        <tr><th>Requires JavaScript</th><td>{{ "Yes" if scrape_profile.requires_javascript else "No" }}</td></tr>
+        <tr><th>Supports pagination</th><td>{{ "Yes" if scrape_profile.supports_pagination else "No" }}</td></tr>
+        <tr><th>Recipe locked</th><td>{{ "Yes" if scrape_profile.recipe_locked_by_admin else "No" }}</td></tr>
+        <tr><th>Recipe version</th><td>{{ scrape_profile.recipe_version }}</td></tr>
+        <tr><th>Last verified</th><td>{{ scrape_profile.last_verified_at.strftime("%Y-%m-%d %H:%M") if scrape_profile.last_verified_at else "n/a" }}</td></tr>
+        <tr><th>Developer notes</th><td>{{ scrape_profile.developer_notes or developer_summary.message or "n/a" }}</td></tr>
+      </tbody>
+    </table>
+    <div class="actions">
+      <a class="button" href="/admin/source-intelligence">Open Source Intelligence</a>
+    </div>
+  </section>
+
   <section>
     <h2>Submitting Organizations</h2>
     {% if submissions %}

@@ -82,6 +82,16 @@ DEFAULT_SCHEDULED_TASKS = (
         },
     },
     {
+        "task_key": "monthly_source_registry_snapshot",
+        "task_type": ScheduledTaskType.monthly_source_registry_snapshot.value,
+        "schedule_type": ScheduledTaskScheduleType.monthly.value,
+        "enabled": False,
+        "payload": {
+            "job_type": BackgroundJobType.source_registry_snapshot_export.value,
+            "output_dir": "data/generated/source_registry",
+        },
+    },
+    {
         "task_key": "poi_candidate_quality_rollup",
         "task_type": ScheduledTaskType.source_quality_rollup.value,
         "schedule_type": ScheduledTaskScheduleType.manual.value,
@@ -825,6 +835,73 @@ def _handle_recent_events_photo_rescue(
     return {"since_hours": since_hours, "limit": limit, **summary}
 
 
+def _handle_ticket_page_image_enrichment(
+    session: Session,
+    settings: Settings,
+    job: BackgroundJob,
+    fetcher: Fetcher | None,
+) -> dict[str, object]:
+    from app.services.ticket_page_image_service import (
+        run_ticket_page_image_fallback,
+    )
+
+    payload = _job_payload(job)
+    event_id = _int_payload_value(payload, "event_id")
+    result = run_ticket_page_image_fallback(
+        session,
+        event_id,
+        settings=settings,
+        fetcher=fetcher,
+        commit=False,
+    )
+    if result is None:
+        raise SkipJob(f"Event #{event_id} was not found.")
+    return result.as_dict()
+
+
+def _handle_api_feed_run_ticket_image_enrichment(
+    session: Session,
+    settings: Settings,
+    job: BackgroundJob,
+    fetcher: Fetcher | None,
+) -> dict[str, object]:
+    from app.db.models import ApiFeedRun
+    from app.services.ticket_page_image_service import (
+        run_ticket_page_image_fallback_for_api_feed_run,
+    )
+
+    payload = _job_payload(job)
+    run_id = _int_payload_value(payload, "api_feed_run_id")
+    if session.get(ApiFeedRun, run_id) is None:
+        raise SkipJob(f"API feed run #{run_id} was not found.")
+    return run_ticket_page_image_fallback_for_api_feed_run(
+        session,
+        run_id,
+        settings=settings,
+        fetcher=fetcher,
+    )
+
+
+def _handle_recent_events_ticket_image_enrichment(
+    session: Session,
+    settings: Settings,
+    job: BackgroundJob,
+    fetcher: Fetcher | None,
+) -> dict[str, object]:
+    from app.services.ticket_page_image_service import (
+        run_recent_events_ticket_page_image_fallback,
+    )
+
+    payload = _job_payload(job)
+    limit = max(1, min(_int_payload_value(payload, "limit", default=100), 500))
+    return run_recent_events_ticket_page_image_fallback(
+        session,
+        settings=settings,
+        fetcher=fetcher,
+        limit=limit,
+    )
+
+
 def _handle_extract_crawl_run(
     session: Session, job: BackgroundJob
 ) -> dict[str, object]:
@@ -832,6 +909,7 @@ def _handle_extract_crawl_run(
     from app.services.event_service import save_ics_events_for_crawl_run
     from app.services.extracted_event_service import persist_extraction_result
     from app.services.source_extraction_service import extract_source_content
+    from app.services.source_intelligence_service import update_profile_from_crawl_run
 
     payload = _job_payload(job)
     crawl_run_id = _int_payload_value(payload, "crawl_run_id")
@@ -847,6 +925,7 @@ def _handle_extract_crawl_run(
     events_saved = 0
     if extraction.extractor_type == "ics":
         events_saved = save_ics_events_for_crawl_run(session, crawl_run)
+    update_profile_from_crawl_run(session, crawl_run)
     return {
         "crawl_run_id": crawl_run.id,
         "extractor_type": extraction.extractor_type,
@@ -1104,6 +1183,26 @@ def _handle_poi_inventory_snapshot_export(
     }
 
 
+def _handle_source_registry_snapshot_export(
+    session: Session,
+    job: BackgroundJob,
+) -> dict[str, object]:
+    from app.services.source_intelligence_service import (
+        DEFAULT_SOURCE_REGISTRY_OUTPUT_DIR,
+        export_source_registry_snapshot,
+    )
+
+    payload = _job_payload(job)
+    output_dir = str(payload.get("output_dir") or DEFAULT_SOURCE_REGISTRY_OUTPUT_DIR)
+    return {
+        key: value
+        for key, value in export_source_registry_snapshot(
+            session,
+            output_dir,
+        ).items()
+    }
+
+
 def _handle_poi_candidate_match(
     session: Session,
     job: BackgroundJob,
@@ -1310,6 +1409,33 @@ def execute_job(
             result = _handle_api_feed_run_photo_rescue(session, job)
         elif job.job_type == BackgroundJobType.recent_events_photo_rescue.value:
             result = _handle_recent_events_photo_rescue(session, job)
+        elif job.job_type == BackgroundJobType.ticket_page_image_enrichment.value:
+            result = _handle_ticket_page_image_enrichment(
+                session,
+                settings,
+                job,
+                fetcher,
+            )
+        elif (
+            job.job_type
+            == BackgroundJobType.api_feed_run_ticket_image_enrichment.value
+        ):
+            result = _handle_api_feed_run_ticket_image_enrichment(
+                session,
+                settings,
+                job,
+                fetcher,
+            )
+        elif (
+            job.job_type
+            == BackgroundJobType.recent_events_ticket_image_enrichment.value
+        ):
+            result = _handle_recent_events_ticket_image_enrichment(
+                session,
+                settings,
+                job,
+                fetcher,
+            )
         elif job.job_type == BackgroundJobType.extract_crawl_run.value:
             result = _handle_extract_crawl_run(session, job)
         elif job.job_type == (
@@ -1332,6 +1458,8 @@ def execute_job(
             result = _handle_app_filter_options_export(session, job)
         elif job.job_type == BackgroundJobType.poi_inventory_snapshot_export.value:
             result = _handle_poi_inventory_snapshot_export(session, job)
+        elif job.job_type == BackgroundJobType.source_registry_snapshot_export.value:
+            result = _handle_source_registry_snapshot_export(session, job)
         elif job.job_type == BackgroundJobType.poi_candidate_match.value:
             result = _handle_poi_candidate_match(session, job)
         elif job.job_type in {
@@ -1481,6 +1609,8 @@ def job_type_for_scheduled_task(task: ScheduledTask) -> str:
         return BackgroundJobType.rebuild_app_search_index.value
     if task.task_type == ScheduledTaskType.monthly_poi_inventory_snapshot.value:
         return BackgroundJobType.poi_inventory_snapshot_export.value
+    if task.task_type == ScheduledTaskType.monthly_source_registry_snapshot.value:
+        return BackgroundJobType.source_registry_snapshot_export.value
     if task.task_type == ScheduledTaskType.provider_sandbox.value:
         provider_key = str(payload.get("provider_key") or "")
         if provider_key == "jambase":

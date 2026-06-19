@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Literal, cast
+from urllib.parse import urlencode
 
 from fastapi import (
     Depends,
@@ -44,7 +45,11 @@ from app.db.database import create_all, make_engine, make_session_factory
 from app.db.models import (
     ApiFeedRun,
     BackgroundJobType,
+    SourceHealthStatus,
     SourceReviewStatus,
+    SourceScrapeExtractorType,
+    SourceScrapePlatformType,
+    SourceScrapeProfile,
     SourceStatus,
     utc_now,
 )
@@ -116,6 +121,26 @@ from app.services.bulk_crawl_service import (
     run_bulk_crawl_for_master_ids,
     update_selected_crawl_frequency,
 )
+from app.services.calendar_source_research_service import (
+    RESEARCH_AUTHORIZATION_STATUSES,
+    RESEARCH_SOURCE_TYPES,
+    RESEARCH_TEMPLATE_HEADERS,
+    add_items_from_csv,
+    add_items_from_pasted_urls,
+    approve_valid_batch_items,
+    batch_summary,
+    build_batch_shakedown_report,
+    canonicalize_and_dedupe_items,
+    create_research_batch,
+    get_research_batch,
+    items_for_batch,
+    list_research_batches,
+    mark_needs_research,
+    preflight_batch,
+    reject_item,
+    run_crawl_for_approved_research_batch_sources,
+    source_research_dashboard_counts,
+)
 from app.services.cityspark_live_service import (
     CitysparkSandboxContext,
     cityspark_sandbox_context,
@@ -150,6 +175,11 @@ from app.services.event_quality_service import (
     apply_event_quality_bulk_action,
     event_quality_dashboard_counts,
     event_quality_workbench,
+)
+from app.services.event_review_service import (
+    EventReviewFilters,
+    event_review_dashboard_counts,
+    event_review_workbench,
 )
 from app.services.event_service import (
     appears_to_be_ics,
@@ -352,6 +382,18 @@ from app.services.security_service import (
     validate_public_upload_file,
     verify_turnstile_token,
 )
+from app.services.source_intelligence_service import (
+    SourceIntelligenceFilters,
+    append_note,
+    build_source_developer_summary,
+    get_or_create_scrape_profile,
+    latest_crawl_for_profile,
+    list_source_intelligence,
+    lock_profile_recipe,
+    mark_profile_needs_review,
+    unlock_profile_recipe,
+    update_profile_from_crawl_run,
+)
 from app.services.source_quality_service import (
     SourceQualityFilters,
     compute_all_source_quality,
@@ -371,6 +413,12 @@ from app.services.source_service import (
     update_source_status,
 )
 from app.services.source_taxonomy_service import source_display_name, source_docs_status
+from app.services.ticket_page_image_service import (
+    run_ticket_page_image_fallback,
+    run_ticket_page_image_fallback_for_api_feed_run,
+    ticket_page_fallback_counts_for_api_feed_run,
+    ticket_page_fallback_decision,
+)
 
 templates = Jinja2Templates(directory="app/web/templates")
 DEMO_ICS_PATH = Path("tests/fixtures/sample_calendar.ics")
@@ -588,6 +636,62 @@ def app_poi_filters_from_values(
     )
 
 
+def event_review_filters_from_values(
+    tab: str | None = None,
+    search: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    location_text: str | None = None,
+    radius_miles: str | None = None,
+    latitude: str | None = None,
+    longitude: str | None = None,
+    city: str | None = None,
+    state_value: str | None = None,
+    genre: str | None = None,
+    source_type: str | None = None,
+    provider: str | None = None,
+    review_status: str | None = None,
+    image_status: str | None = None,
+    ticket_status: str | None = None,
+    venue_status: str | None = None,
+    duplicate_status: str | None = None,
+    app_feed_readiness: str | None = None,
+    quality_issue: str | None = None,
+    sort: str | None = None,
+    sort_direction: str | None = None,
+    page: str | None = None,
+    per_page: str | None = None,
+    show_full_descriptions: str | None = None,
+) -> EventReviewFilters:
+    return EventReviewFilters(
+        tab=tab or "all",
+        search=search or None,
+        date_from=parse_date_filter(date_from),
+        date_to=parse_date_filter(date_to),
+        location_text=location_text or None,
+        radius_miles=parse_float_filter(radius_miles),
+        latitude=parse_float_filter(latitude),
+        longitude=parse_float_filter(longitude),
+        city=city or None,
+        state=state_value or None,
+        genre=genre or None,
+        source_type=source_type or None,
+        provider=provider or None,
+        review_status=review_status or None,
+        image_status=image_status or None,
+        ticket_status=ticket_status or None,
+        venue_status=venue_status or None,
+        duplicate_status=duplicate_status or None,
+        app_feed_readiness=app_feed_readiness or None,
+        quality_issue=quality_issue or None,
+        sort=sort or "start_datetime",
+        sort_direction=sort_direction or "asc",
+        page=parse_int_query(page) or 1,
+        per_page=parse_int_query(per_page) or 25,
+        show_full_descriptions=parse_bool_query(show_full_descriptions),
+    )
+
+
 def app_search_filters_from_values(
     entity_type: str | None = None,
     category: str | None = None,
@@ -683,6 +787,17 @@ def selected_source_ids_from_form(form: FormData) -> list[int]:
     return parsed
 
 
+def selected_research_item_ids_from_form(form: FormData) -> list[int]:
+    values = form.getlist("item_ids")
+    parsed: list[int] = []
+    for value in values:
+        try:
+            parsed.append(int(str(value)))
+        except ValueError:
+            continue
+    return parsed
+
+
 def selected_event_ids_from_form(form: FormData) -> list[int]:
     values = form.getlist("event_ids")
     parsed: list[int] = []
@@ -713,6 +828,17 @@ def scalar_form_values(form: FormData) -> dict[str, object]:
             continue
         values[key] = str(value)
     return values
+
+
+def admin_page_url(request: Request, path: str, **updates: object) -> str:
+    params = dict(request.query_params)
+    for key, value in updates.items():
+        if value is None or value == "":
+            params.pop(key, None)
+        else:
+            params[key] = str(value)
+    query = urlencode(params)
+    return f"{path}?{query}" if query else path
 
 
 LiveSandboxContext = JambaseSandboxContext | CitysparkSandboxContext
@@ -1423,6 +1549,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
 
+    @app.get("/templates/calendar-source-research-template.csv")
+    def calendar_source_research_template_csv() -> Response:
+        return template_download(
+            csv_template(RESEARCH_TEMPLATE_HEADERS),
+            "calendar-source-research-template.csv",
+            "text/csv",
+        )
+
+    @app.get("/templates/calendar-source-research-template.xlsx")
+    def calendar_source_research_template_xlsx() -> Response:
+        return template_download(
+            xlsx_template(RESEARCH_TEMPLATE_HEADERS),
+            "calendar-source-research-template.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+
     @app.get("/templates/concert-events-template.csv")
     def concert_events_template_csv() -> Response:
         return template_download(
@@ -2111,7 +2253,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         background_job_counts = job_status_counts(db)
         source_quality_summary = source_quality_dashboard_summary(db)
         event_quality_counts = event_quality_dashboard_counts(db)
+        event_review_counts = event_review_dashboard_counts(db)
         poi_candidate_counts = poi_candidate_dashboard_counts(db)
+        source_research_counts = source_research_dashboard_counts(db)
         security_summary = security_dashboard_context(db)
         return admin_template_response(
             request,
@@ -2131,11 +2275,87 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 ),
                 "source_quality_summary": source_quality_summary,
                 "event_quality_counts": event_quality_counts,
+                "event_review_counts": event_review_counts,
                 "poi_candidate_counts": poi_candidate_counts,
+                "source_research_counts": source_research_counts,
                 "security_summary": security_summary,
                 "next_scheduled_crawl_task": next_scheduled_task(
                     db,
                     "crawl_due_sources",
+                ),
+            },
+        )
+
+    @app.get("/admin/event-review", response_class=HTMLResponse)
+    def admin_event_review(
+        request: Request,
+        db: Annotated[Session, Depends(get_db)],
+        _admin: Annotated[str, Depends(require_admin)],
+        tab: str | None = None,
+        search: str | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        location_text: str | None = None,
+        radius_miles: str | None = None,
+        latitude: str | None = None,
+        longitude: str | None = None,
+        city: str | None = None,
+        state_value: Annotated[str | None, Query(alias="state")] = None,
+        genre: str | None = None,
+        source_type: str | None = None,
+        provider: str | None = None,
+        review_status: str | None = None,
+        image_status: str | None = None,
+        ticket_status: str | None = None,
+        venue_status: str | None = None,
+        duplicate_status: str | None = None,
+        app_feed_readiness: str | None = None,
+        quality_issue: str | None = None,
+        sort: str | None = None,
+        sort_direction: str | None = None,
+        page: str | None = None,
+        per_page: str | None = None,
+        show_full_descriptions: str | None = None,
+    ) -> Response:
+        filters = event_review_filters_from_values(
+            tab=tab,
+            search=search,
+            date_from=date_from,
+            date_to=date_to,
+            location_text=location_text,
+            radius_miles=radius_miles,
+            latitude=latitude,
+            longitude=longitude,
+            city=city,
+            state_value=state_value,
+            genre=genre,
+            source_type=source_type,
+            provider=provider,
+            review_status=review_status,
+            image_status=image_status,
+            ticket_status=ticket_status,
+            venue_status=venue_status,
+            duplicate_status=duplicate_status,
+            app_feed_readiness=app_feed_readiness,
+            quality_issue=quality_issue,
+            sort=sort,
+            sort_direction=sort_direction,
+            page=page,
+            per_page=per_page,
+            show_full_descriptions=show_full_descriptions,
+        )
+        workbench = event_review_workbench(db, filters)
+        return admin_template_response(
+            request,
+            "event_review.html",
+            {
+                "page_title": "Event Review Workbench",
+                "workbench": workbench,
+                "filters": workbench.filters,
+                "page_url": lambda **updates: admin_page_url(
+                    request,
+                    "/admin/event-review",
+                    **updates,
                 ),
             },
         )
@@ -2194,6 +2414,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not event_ids:
             return RedirectResponse(
                 url="/admin/event-quality?error=Select at least one event.",
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+        if action == "ticket_image_fallback":
+            updated_count = 0
+            for event_id in event_ids:
+                result = run_ticket_page_image_fallback(
+                    db,
+                    event_id,
+                    settings=request.app.state.settings,
+                    fetcher=request.app.state.fetch_calendar_url,
+                    commit=False,
+                )
+                if result is not None and result.fallback_triggered:
+                    updated_count += result.created_candidate_count
+            db.commit()
+            return RedirectResponse(
+                url=(
+                    "/admin/event-quality"
+                    f"?success=Created {updated_count} ticket-page image candidate(s)."
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
         if action not in {
@@ -4640,6 +4880,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "run": run,
                 "provider": get_provider_config(app_settings, run.provider_key),
                 "records": list_api_feed_records(db, filters, run_id=run.id),
+                "ticket_image_fallback_counts": (
+                    ticket_page_fallback_counts_for_api_feed_run(
+                        db,
+                        run.id,
+                        settings=settings,
+                    )
+                ),
                 "filters": {
                     "ingestion_provider": ingestion_provider or "",
                     "upstream_event_source": upstream_event_source or "",
@@ -4705,6 +4952,57 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         return RedirectResponse(
             url=f"/admin/jobs/{job.id}?success=Queued API feed photo rescue job",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    @app.post("/admin/api-feed-runs/{run_id}/ticket-image-fallback")
+    def admin_api_feed_run_ticket_image_fallback(
+        request: Request,
+        run_id: int,
+        db: Annotated[Session, Depends(get_db)],
+        _admin: Annotated[str, Depends(require_admin_csrf)],
+    ) -> Response:
+        run = get_api_feed_run(db, run_id)
+        if run is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="API feed run not found.",
+            )
+        result = run_ticket_page_image_fallback_for_api_feed_run(
+            db,
+            run_id,
+            settings=request.app.state.settings,
+            fetcher=request.app.state.fetch_calendar_url,
+        )
+        return RedirectResponse(
+            url=(
+                f"/admin/api-feed-runs/{run_id}"
+                f"?success=Created {result['created_candidate_count']} "
+                "ticket-page image candidate(s)"
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    @app.post("/admin/api-feed-runs/{run_id}/ticket-image-fallback/background")
+    def admin_api_feed_run_ticket_image_fallback_background(
+        run_id: int,
+        db: Annotated[Session, Depends(get_db)],
+        admin_user: Annotated[str, Depends(require_admin_csrf)],
+    ) -> Response:
+        run = get_api_feed_run(db, run_id)
+        if run is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="API feed run not found.",
+            )
+        job = enqueue_job(
+            db,
+            "api_feed_run_ticket_image_enrichment",
+            {"api_feed_run_id": run_id},
+            created_by=admin_user,
+        )
+        return RedirectResponse(
+            url=f"/admin/jobs/{job.id}?success=Queued ticket-page image fallback job",
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
@@ -5104,6 +5402,391 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             },
         )
 
+    @app.get("/admin/source-intelligence", response_class=HTMLResponse)
+    def admin_source_intelligence(
+        request: Request,
+        db: Annotated[Session, Depends(get_db)],
+        _admin: Annotated[str, Depends(require_admin)],
+        health_status: str | None = None,
+        extractor_type: str | None = None,
+        platform_type: str | None = None,
+        requires_javascript: str | None = None,
+        no_successful_crawl: str | None = None,
+        event_count_dropped: str | None = None,
+        high_duplicate_rate: str | None = None,
+        high_missing_ticket_rate: str | None = None,
+        high_missing_image_rate: str | None = None,
+    ) -> Response:
+        filters = SourceIntelligenceFilters(
+            health_status=health_status or None,
+            extractor_type=extractor_type or None,
+            platform_type=platform_type or None,
+            requires_javascript=parse_optional_bool_query(requires_javascript),
+            no_successful_crawl=parse_bool_query(no_successful_crawl),
+            event_count_dropped=parse_bool_query(event_count_dropped),
+            high_duplicate_rate=parse_bool_query(high_duplicate_rate),
+            high_missing_ticket_rate=parse_bool_query(high_missing_ticket_rate),
+            high_missing_image_rate=parse_bool_query(high_missing_image_rate),
+        )
+        rows = list_source_intelligence(db, filters)
+        all_rows = list_source_intelligence(db)
+        return admin_template_response(
+            request,
+            "source_intelligence.html",
+            {
+                "page_title": "Source Intelligence",
+                "rows": rows,
+                "summary": {
+                    "total": len(all_rows),
+                    "healthy": sum(
+                        1
+                        for row in all_rows
+                        if row.profile.source_health_status
+                        == SourceHealthStatus.healthy.value
+                    ),
+                    "needs_review": sum(
+                        1
+                        for row in all_rows
+                        if row.profile.source_health_status
+                        in {
+                            SourceHealthStatus.watch.value,
+                            SourceHealthStatus.needs_review.value,
+                        }
+                    ),
+                    "failing": sum(
+                        1
+                        for row in all_rows
+                        if row.profile.source_health_status
+                        == SourceHealthStatus.failing.value
+                    ),
+                    "unsupported": sum(
+                        1
+                        for row in all_rows
+                        if row.profile.source_health_status
+                        == SourceHealthStatus.unsupported.value
+                    ),
+                },
+                "filters": {
+                    "health_status": health_status or "",
+                    "extractor_type": extractor_type or "",
+                    "platform_type": platform_type or "",
+                    "requires_javascript": requires_javascript or "",
+                    "no_successful_crawl": no_successful_crawl or "",
+                    "event_count_dropped": event_count_dropped or "",
+                    "high_duplicate_rate": high_duplicate_rate or "",
+                    "high_missing_ticket_rate": high_missing_ticket_rate or "",
+                    "high_missing_image_rate": high_missing_image_rate or "",
+                },
+                "health_statuses": [item.value for item in SourceHealthStatus],
+                "extractor_types": [item.value for item in SourceScrapeExtractorType],
+                "platform_types": [item.value for item in SourceScrapePlatformType],
+            },
+        )
+
+    @app.post("/admin/source-intelligence/{profile_id}/action")
+    def admin_source_intelligence_action(
+        profile_id: int,
+        action: Annotated[str, Form(...)],
+        db: Annotated[Session, Depends(get_db)],
+        _admin: Annotated[str, Depends(require_admin_csrf)],
+        developer_note: Annotated[str, Form()] = "",
+    ) -> Response:
+        profile = db.get(SourceScrapeProfile, profile_id)
+        if profile is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Source scrape profile not found.",
+            )
+        if action == "mark_needs_review":
+            mark_profile_needs_review(
+                profile,
+                developer_note or "Marked needs review by admin.",
+            )
+        elif action == "mark_unsupported":
+            profile.source_health_status = SourceHealthStatus.unsupported.value
+            profile.extractor_type = SourceScrapeExtractorType.unsupported.value
+            profile.platform_type = SourceScrapePlatformType.unsupported.value
+            if developer_note:
+                profile.developer_notes = append_note(
+                    profile.developer_notes,
+                    developer_note,
+                )
+        elif action == "lock_recipe":
+            lock_profile_recipe(profile)
+        elif action == "unlock_recipe":
+            unlock_profile_recipe(profile)
+        elif action == "add_developer_note":
+            if developer_note:
+                profile.developer_notes = append_note(
+                    profile.developer_notes,
+                    developer_note,
+                )
+        elif action == "recompute":
+            latest = latest_crawl_for_profile(db, profile.master_calendar_source)
+            if latest is not None:
+                update_profile_from_crawl_run(db, latest)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Unsupported source intelligence action.",
+            )
+        db.add(profile)
+        db.commit()
+        return RedirectResponse(
+            url="/admin/source-intelligence?success=Updated source profile",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    @app.get("/admin/source-research", response_class=HTMLResponse)
+    def admin_source_research(
+        request: Request,
+        db: Annotated[Session, Depends(get_db)],
+        _admin: Annotated[str, Depends(require_admin)],
+    ) -> Response:
+        batches = list_research_batches(db)
+        return admin_template_response(
+            request,
+            "source_research.html",
+            {
+                "page_title": "Source Research Batches",
+                "batches": batches,
+                "batch_summaries": {
+                    batch.id: batch_summary(db, batch.id) for batch in batches
+                },
+                "dashboard_counts": source_research_dashboard_counts(db),
+            },
+        )
+
+    @app.get("/admin/source-research/new", response_class=HTMLResponse)
+    def admin_source_research_new(
+        request: Request,
+        _admin: Annotated[str, Depends(require_admin)],
+    ) -> Response:
+        return admin_template_response(
+            request,
+            "source_research_new.html",
+            {"page_title": "New Source Research Batch"},
+        )
+
+    @app.post("/admin/source-research/new")
+    def admin_source_research_create(
+        batch_name: Annotated[str, Form(...)],
+        db: Annotated[Session, Depends(get_db)],
+        _admin: Annotated[str, Depends(require_admin_csrf)],
+        region_id: Annotated[str, Form()] = "",
+        city: Annotated[str, Form()] = "",
+        state_value: Annotated[str, Form(alias="state")] = "",
+        country: Annotated[str, Form()] = "US",
+        research_owner: Annotated[str, Form()] = "",
+        source_goal_count: Annotated[str, Form()] = "0",
+        notes: Annotated[str, Form()] = "",
+    ) -> Response:
+        batch = create_research_batch(
+            db,
+            batch_name=batch_name,
+            region_id=parse_int_query(region_id),
+            city=city,
+            state=state_value,
+            country=country,
+            research_owner=research_owner,
+            source_goal_count=parse_int_query(source_goal_count) or 0,
+            notes=notes,
+        )
+        return RedirectResponse(
+            url=f"/admin/source-research/{batch.id}?success=Research batch created",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    @app.get("/admin/source-research/{batch_id}", response_class=HTMLResponse)
+    def admin_source_research_detail(
+        request: Request,
+        batch_id: int,
+        db: Annotated[Session, Depends(get_db)],
+        _admin: Annotated[str, Depends(require_admin)],
+    ) -> Response:
+        batch = get_research_batch(db, batch_id)
+        if batch is None:
+            raise HTTPException(status_code=404, detail="Research batch not found.")
+        return admin_template_response(
+            request,
+            "source_research_detail.html",
+            {
+                "page_title": batch.batch_name,
+                "batch": batch,
+                "items": items_for_batch(db, batch.id),
+                "summary": batch_summary(db, batch.id),
+                "source_types": RESEARCH_SOURCE_TYPES,
+                "authorization_statuses": RESEARCH_AUTHORIZATION_STATUSES,
+            },
+        )
+
+    @app.get("/admin/source-research/{batch_id}/items", response_class=HTMLResponse)
+    def admin_source_research_items(
+        request: Request,
+        batch_id: int,
+        db: Annotated[Session, Depends(get_db)],
+        _admin: Annotated[str, Depends(require_admin)],
+    ) -> Response:
+        batch = get_research_batch(db, batch_id)
+        if batch is None:
+            raise HTTPException(status_code=404, detail="Research batch not found.")
+        return admin_template_response(
+            request,
+            "source_research_detail.html",
+            {
+                "page_title": f"{batch.batch_name} Items",
+                "batch": batch,
+                "items": items_for_batch(db, batch.id),
+                "summary": batch_summary(db, batch.id),
+                "source_types": RESEARCH_SOURCE_TYPES,
+                "authorization_statuses": RESEARCH_AUTHORIZATION_STATUSES,
+            },
+        )
+
+    @app.get("/admin/source-research/{batch_id}/report", response_class=HTMLResponse)
+    def admin_source_research_report(
+        request: Request,
+        batch_id: int,
+        db: Annotated[Session, Depends(get_db)],
+        _admin: Annotated[str, Depends(require_admin)],
+    ) -> Response:
+        batch = get_research_batch(db, batch_id)
+        if batch is None:
+            raise HTTPException(status_code=404, detail="Research batch not found.")
+        return admin_template_response(
+            request,
+            "source_research_report.html",
+            {
+                "page_title": f"{batch.batch_name} Shakedown Report",
+                "batch": batch,
+                "report": build_batch_shakedown_report(db, batch.id),
+            },
+        )
+
+    @app.post("/admin/source-research/{batch_id}/paste-urls")
+    async def admin_source_research_paste_urls(
+        batch_id: int,
+        request: Request,
+        db: Annotated[Session, Depends(get_db)],
+        _admin: Annotated[str, Depends(require_admin_csrf)],
+    ) -> Response:
+        form = await request.form()
+        added = add_items_from_pasted_urls(
+            db,
+            batch_id=batch_id,
+            pasted_urls=str(form.get("pasted_urls") or ""),
+            settings=settings,
+        )
+        return RedirectResponse(
+            url=f"/admin/source-research/{batch_id}?success=Added {added} URLs",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    @app.post("/admin/source-research/{batch_id}/upload")
+    async def admin_source_research_upload(
+        batch_id: int,
+        request: Request,
+        db: Annotated[Session, Depends(get_db)],
+        _admin: Annotated[str, Depends(require_admin_csrf)],
+    ) -> Response:
+        form = await request.form()
+        upload = cast(UploadFile | None, form.get("upload_file"))
+        if upload is None:
+            raise HTTPException(status_code=400, detail="Upload file is required.")
+        content = await upload.read()
+        try:
+            validate_public_upload_file(upload.filename, content, settings)
+            added = add_items_from_csv(
+                db,
+                batch_id=batch_id,
+                filename=upload.filename or "calendar-source-research-upload",
+                content=content,
+                settings=settings,
+                max_rows=settings.public_file_upload_max_rows,
+            )
+        except (PublicUploadSecurityError, ImportValidationError) as exc:
+            return RedirectResponse(
+                url=f"/admin/source-research/{batch_id}?error={str(exc)}",
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+        return RedirectResponse(
+            url=f"/admin/source-research/{batch_id}?success=Uploaded {added} URLs",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    @app.post("/admin/source-research/{batch_id}/preflight")
+    def admin_source_research_preflight(
+        batch_id: int,
+        request: Request,
+        db: Annotated[Session, Depends(get_db)],
+        _admin: Annotated[str, Depends(require_admin_csrf)],
+    ) -> Response:
+        preflight_batch(
+            db,
+            batch_id,
+            settings=settings,
+            fetcher=request.app.state.fetch_calendar_url,
+        )
+        return RedirectResponse(
+            url=f"/admin/source-research/{batch_id}?success=Preflight complete",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    @app.post("/admin/source-research/{batch_id}/dedupe")
+    def admin_source_research_dedupe(
+        batch_id: int,
+        db: Annotated[Session, Depends(get_db)],
+        _admin: Annotated[str, Depends(require_admin_csrf)],
+    ) -> Response:
+        canonicalize_and_dedupe_items(db, batch_id, settings)
+        return RedirectResponse(
+            url=f"/admin/source-research/{batch_id}?success=Dedupe refreshed",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    @app.post("/admin/source-research/{batch_id}/items-action")
+    async def admin_source_research_items_action(
+        batch_id: int,
+        request: Request,
+        db: Annotated[Session, Depends(get_db)],
+        _admin: Annotated[str, Depends(require_admin_csrf)],
+    ) -> Response:
+        form = await request.form()
+        item_ids = selected_research_item_ids_from_form(form)
+        action = str(form.get("action") or "")
+        if action == "approve-selected":
+            approve_valid_batch_items(db, batch_id, item_ids=item_ids)
+        elif action == "reject-selected":
+            for item_id in item_ids:
+                reject_item(db, item_id, "Rejected from research batch review.")
+        elif action == "needs-research-selected":
+            for item_id in item_ids:
+                mark_needs_research(db, item_id, "Needs more source research.")
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported research action.")
+        return RedirectResponse(
+            url=f"/admin/source-research/{batch_id}?success=Research items updated",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    @app.post("/admin/source-research/{batch_id}/crawl-approved-sources")
+    def admin_source_research_crawl_approved(
+        request: Request,
+        batch_id: int,
+        db: Annotated[Session, Depends(get_db)],
+        _admin: Annotated[str, Depends(require_admin_csrf)],
+    ) -> Response:
+        summary = run_crawl_for_approved_research_batch_sources(
+            db,
+            batch_id,
+            fetcher=request.app.state.fetch_calendar_url,
+        )
+        return admin_template_response(
+            request,
+            "bulk_crawl_summary.html",
+            {"page_title": summary.title, "summary": summary},
+        )
+
     @app.post("/admin/master-calendar-sources/bulk-crawl")
     async def admin_bulk_crawl_master_sources(
         request: Request,
@@ -5202,6 +5885,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Master calendar source not found.",
             )
+        scrape_profile = get_or_create_scrape_profile(db, source)
         return admin_template_response(
             request,
             "master_calendar_source_detail.html",
@@ -5209,6 +5893,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "page_title": source.source_name,
                 "source": source,
                 "crawl_metadata": metadata_for_master_source(db, source),
+                "scrape_profile": scrape_profile,
+                "developer_summary": build_source_developer_summary(source),
                 "submissions": list_master_submissions(db, source.id),
                 "submission_count": count_master_submissions(db, source.id),
             },
@@ -5916,6 +6602,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
+    @app.post("/admin/image-candidates/ticket-image-fallback/recent/background")
+    def admin_image_candidates_ticket_image_fallback_recent_background(
+        db: Annotated[Session, Depends(get_db)],
+        admin_user: Annotated[str, Depends(require_admin_csrf)],
+    ) -> Response:
+        job = enqueue_job(
+            db,
+            "recent_events_ticket_image_enrichment",
+            {"limit": 100},
+            created_by=admin_user,
+        )
+        return RedirectResponse(
+            url=(
+                f"/admin/jobs/{job.id}"
+                "?success=Queued recent ticket-page image fallback job"
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
     @app.post("/admin/image-candidates/{candidate_id}/accept")
     def admin_image_candidate_accept(
         request: Request,
@@ -6187,6 +6892,52 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
+    @app.post("/admin/image-candidates/{candidate_id}/ticket-image-fallback")
+    def admin_image_candidate_ticket_image_fallback(
+        request: Request,
+        candidate_id: int,
+        db: Annotated[Session, Depends(get_db)],
+        _admin: Annotated[str, Depends(require_admin_csrf)],
+    ) -> Response:
+        candidate = get_image_candidate(db, candidate_id)
+        if candidate and candidate.event_id:
+            run_ticket_page_image_fallback(
+                db,
+                candidate.event_id,
+                settings=request.app.state.settings,
+                fetcher=request.app.state.fetch_calendar_url,
+            )
+        return RedirectResponse(
+            url=request.headers.get("referer") or "/admin/image-candidates",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    @app.post("/admin/image-candidates/{candidate_id}/ticket-image-fallback/background")
+    def admin_image_candidate_ticket_image_fallback_background(
+        candidate_id: int,
+        db: Annotated[Session, Depends(get_db)],
+        admin_user: Annotated[str, Depends(require_admin_csrf)],
+    ) -> Response:
+        candidate = get_image_candidate(db, candidate_id)
+        if candidate is None or candidate.event_id is None:
+            return RedirectResponse(
+                url="/admin/image-candidates?error=Candidate has no linked event.",
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+        job = enqueue_job(
+            db,
+            "ticket_page_image_enrichment",
+            {"event_id": candidate.event_id, "image_candidate_id": candidate.id},
+            created_by=admin_user,
+        )
+        return RedirectResponse(
+            url=(
+                f"/admin/jobs/{job.id}"
+                "?success=Queued ticket-page image fallback job"
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
     @app.post("/admin/events/{event_id}/select-best-image")
     def admin_event_select_best_image(
         request: Request,
@@ -6232,6 +6983,54 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         return RedirectResponse(
             url=f"/admin/jobs/{job.id}?success=Queued event photo rescue job",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    @app.post("/admin/events/{event_id}/ticket-image-fallback")
+    def admin_event_ticket_image_fallback(
+        request: Request,
+        event_id: int,
+        db: Annotated[Session, Depends(get_db)],
+        _admin: Annotated[str, Depends(require_admin_csrf)],
+    ) -> Response:
+        result = run_ticket_page_image_fallback(
+            db,
+            event_id,
+            settings=request.app.state.settings,
+            fetcher=request.app.state.fetch_calendar_url,
+        )
+        created = result.created_candidate_count if result is not None else 0
+        return RedirectResponse(
+            url=(
+                f"/admin/events/{event_id}"
+                f"?success=Created {created} ticket-page image candidate(s)."
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    @app.post("/admin/events/{event_id}/ticket-image-fallback/background")
+    def admin_event_ticket_image_fallback_background(
+        event_id: int,
+        db: Annotated[Session, Depends(get_db)],
+        admin_user: Annotated[str, Depends(require_admin_csrf)],
+    ) -> Response:
+        event = get_event(db, event_id)
+        if event is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Event not found.",
+            )
+        job = enqueue_job(
+            db,
+            "ticket_page_image_enrichment",
+            {"event_id": event_id},
+            created_by=admin_user,
+        )
+        return RedirectResponse(
+            url=(
+                f"/admin/jobs/{job.id}"
+                "?success=Queued ticket-page image fallback job"
+            ),
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
@@ -6924,6 +7723,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 ),
                 "blocked_image_candidate_count": blocked_image_candidate_count,
                 "image_badges": event_image_badges(event),
+                "ticket_image_fallback_decision": ticket_page_fallback_decision(
+                    event,
+                    request.app.state.settings,
+                ),
+                "ticket_page_image_candidate_count": sum(
+                    candidate.source_type == "ticket_page"
+                    or candidate.rescue_source == "ticketing_page_image"
+                    for candidate in image_candidates
+                ),
                 "image_roles": IMAGE_ROLES,
                 "source_claims": source_claims_for_event(db, event.id),
                 "raw_event_preview": raw_json[:5000],

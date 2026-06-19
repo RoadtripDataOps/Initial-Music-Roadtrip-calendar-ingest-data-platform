@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <style>
+    .event-review-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 18px 0;
+    }
+
+    .event-review-tab {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: var(--admin-text);
+      text-decoration: none;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .event-review-tab.active {
+      border-color: var(--admin-primary);
+      box-shadow: 0 0 0 1px rgba(40, 184, 111, 0.32);
+    }
+
+    .event-review-filter-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .event-review-filter-grid .field {
+      margin-bottom: 0;
+    }
+
+    .event-review-filter {
+      max-width: none;
+      margin-bottom: 18px;
+    }
+
+    .event-review-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .event-review-table {
+      min-width: 1680px;
+      margin: 0;
+    }
+
+    .event-review-thumb {
+      width: 86px;
+      height: 58px;
+      object-fit: cover;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #0c0f13;
+    }
+
+    .event-review-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-width: 230px;
+    }
+
+    .event-review-actions form {
+      margin: 0;
+      max-width: none;
+    }
+
+    .event-review-action {
+      min-height: 32px;
+      padding: 5px 8px;
+      font-size: 0.82rem;
+    }
+
+    .event-review-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .event-review-description {
+      min-width: 260px;
+      max-width: 360px;
+    }
+
+    .event-review-url {
+      max-width: 220px;
+      overflow-wrap: anywhere;
+    }
+
+    .pagination-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    @media (max-width: 960px) {
+      .event-review-filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .event-review-filter-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .event-review-table {
+        min-width: 0;
+      }
+    }
+  </style>
+
+  <h1>Event Review Workbench</h1>
+  <p class="notice">Calendar, API-feed, extracted, and staged upload records in one admin-only review queue.</p>
+
+  <nav class="event-review-tabs" aria-label="Event review tabs">
+    {% for tab in workbench.tabs %}
+      <a class="event-review-tab {{ 'active' if filters.tab == tab.key else '' }}" href="{{ page_url(tab=tab.key, page=1) }}">
+        {{ tab.label }} {{ tab.count }}
+      </a>
+    {% endfor %}
+  </nav>
+
+  <form method="get" action="/admin/event-review" class="panel event-review-filter">
+    <input type="hidden" name="tab" value="{{ filters.tab }}">
+    <div class="event-review-filter-grid">
+      <div class="field"><label for="search">Search text</label><input id="search" name="search" value="{{ filters.search or '' }}"></div>
+      <div class="field"><label for="date_from">Date from</label><input id="date_from" name="date_from" type="date" value="{{ filters.date_from.isoformat() if filters.date_from else '' }}"></div>
+      <div class="field"><label for="date_to">Date to</label><input id="date_to" name="date_to" type="date" value="{{ filters.date_to.isoformat() if filters.date_to else '' }}"></div>
+      <div class="field"><label for="location_text">Location text</label><input id="location_text" name="location_text" value="{{ filters.location_text or '' }}"></div>
+      <div class="field"><label for="radius_miles">Radius miles</label><input id="radius_miles" name="radius_miles" value="{{ filters.radius_miles if filters.radius_miles is not none else '' }}"></div>
+      <div class="field"><label for="latitude">Latitude</label><input id="latitude" name="latitude" value="{{ filters.latitude if filters.latitude is not none else '' }}"></div>
+      <div class="field"><label for="longitude">Longitude</label><input id="longitude" name="longitude" value="{{ filters.longitude if filters.longitude is not none else '' }}"></div>
+      <div class="field"><label for="city">City</label><input id="city" name="city" value="{{ filters.city or '' }}"></div>
+      <div class="field"><label for="state">State</label><input id="state" name="state" value="{{ filters.state or '' }}"></div>
+      <div class="field"><label for="genre">Genre</label><input id="genre" name="genre" value="{{ filters.genre or '' }}"></div>
+      <div class="field"><label for="source_type">Source type</label><input id="source_type" name="source_type" value="{{ filters.source_type or '' }}"></div>
+      <div class="field"><label for="provider">Provider/source</label><input id="provider" name="provider" value="{{ filters.provider or '' }}"></div>
+      <div class="field">
+        <label for="review_status">Review status</label>
+        <select id="review_status" name="review_status">
+          <option value="">Default visible</option>
+          {% for value in ["pending_review", "needs_review", "held", "approved", "published", "rejected", "blocked", "quarantined"] %}
+            <option value="{{ value }}" {{ "selected" if filters.review_status == value else "" }}>{{ value | replace("_", " ") }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="image_status">Image status</label>
+        <select id="image_status" name="image_status">
+          <option value="">Any</option>
+          {% for value, label in [("missing", "Missing"), ("needs_approval", "Needs approval"), ("generic_blocked", "Generic blocked"), ("present", "Present")] %}
+            <option value="{{ value }}" {{ "selected" if filters.image_status == value else "" }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="ticket_status">Ticket status</label>
+        <select id="ticket_status" name="ticket_status">
+          <option value="">Any</option>
+          {% for value, label in [("missing", "Missing"), ("bad", "Bad/generic"), ("present", "Present")] %}
+            <option value="{{ value }}" {{ "selected" if filters.ticket_status == value else "" }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="venue_status">Venue/POI status</label>
+        <select id="venue_status" name="venue_status">
+          <option value="">Any</option>
+          {% for value, label in [("linked poi", "Linked POI"), ("poi candidate", "POI Candidate"), ("event venue only", "Event Venue Only"), ("missing venue", "Missing Venue"), ("missing coordinates", "Missing Coordinates")] %}
+            <option value="{{ value }}" {{ "selected" if filters.venue_status == value else "" }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field"><label for="duplicate_status">Duplicate status</label><input id="duplicate_status" name="duplicate_status" value="{{ filters.duplicate_status or '' }}"></div>
+      <div class="field">
+        <label for="app_feed_readiness">App-feed readiness</label>
+        <select id="app_feed_readiness" name="app_feed_readiness">
+          <option value="">Any</option>
+          {% for value, label in [("ready", "Ready"), ("not_ready", "Not ready"), ("pending_review", "Pending review")] %}
+            <option value="{{ value }}" {{ "selected" if filters.app_feed_readiness == value else "" }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field"><label for="quality_issue">Quality issue</label><input id="quality_issue" name="quality_issue" value="{{ filters.quality_issue or '' }}"></div>
+      <div class="field">
+        <label for="sort">Sort by</label>
+        <select id="sort" name="sort">
+          {% for value, label in [("start_datetime", "Start date"), ("event_title", "Event title"), ("venue", "Venue"), ("source", "Source"), ("image_status", "Image status"), ("ticket_status", "Ticket status"), ("app_feed_readiness", "App-feed readiness")] %}
+            <option value="{{ value }}" {{ "selected" if filters.sort == value else "" }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="sort_direction">Sort direction</label>
+        <select id="sort_direction" name="sort_direction">
+          <option value="asc" {{ "selected" if filters.sort_direction == "asc" else "" }}>Ascending</option>
+          <option value="desc" {{ "selected" if filters.sort_direction == "desc" else "" }}>Descending</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="per_page">Rows per page</label>
+        <select id="per_page" name="per_page">
+          {% for value in [25, 50, 100] %}
+            <option value="{{ value }}" {{ "selected" if workbench.per_page == value else "" }}>{{ value }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <label class="checkbox" style="margin-top: 30px;">
+        <input type="checkbox" name="show_full_descriptions" value="1" {{ "checked" if filters.show_full_descriptions else "" }}>
+        <span>Show full descriptions</span>
+      </label>
+    </div>
+    <div class="actions">
+      <button type="submit">Apply filters</button>
+      <a class="button secondary" href="/admin/event-review">Reset filters</a>
+    </div>
+  </form>
+
+  <div class="pagination-bar">
+    <p class="notice">
+      Showing page {{ workbench.page }} of {{ workbench.page_count }} · {{ workbench.total_count }} matching records
+    </p>
+    <div class="actions">
+      {% if workbench.has_previous %}
+        <a class="button secondary" href="{{ page_url(page=workbench.page - 1) }}">Previous</a>
+      {% else %}
+        <span class="notice">Previous</span>
+      {% endif %}
+      {% if workbench.has_next %}
+        <a class="button secondary" href="{{ page_url(page=workbench.page + 1) }}">Next</a>
+      {% else %}
+        <span class="notice">Next</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="event-review-table-wrap">
+    <table class="event-review-table">
+      <thead>
+        <tr>
+          <th>Actions</th>
+          <th>Status</th>
+          <th>Image thumbnail</th>
+          <th>Event Title</th>
+          <th>Start date/time</th>
+          <th>Venue / Location</th>
+          <th>Address</th>
+          <th>Description</th>
+          <th>Genre</th>
+          <th>Ticket URL</th>
+          <th>Website / Event URL</th>
+          <th>Source</th>
+          <th>Quality Flags</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in workbench.rows %}
+          <tr>
+            <td data-label="Actions">
+              <div class="event-review-actions">
+                <a class="button secondary event-review-action" href="{{ row.detail_url }}">View detail</a>
+                {% if row.preview_url %}<a class="button secondary event-review-action" href="{{ row.preview_url }}">View preview</a>{% endif %}
+                {% if row.app_json_url %}<a class="button secondary event-review-action" href="{{ row.app_json_url }}">View app-feed JSON</a>{% endif %}
+                {% if row.photo_rescue_action_url %}
+                  <form method="post" action="{{ row.photo_rescue_action_url }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button class="event-review-action" type="submit">Run photo rescue</button>
+                  </form>
+                {% endif %}
+                {% if row.image_candidates_url %}<a class="button secondary event-review-action" href="{{ row.image_candidates_url }}">View image candidates</a>{% endif %}
+                {% if row.source_claims_url %}<a class="button secondary event-review-action" href="{{ row.source_claims_url }}">View source claims</a>{% endif %}
+                {% if row.duplicate_group_url %}<a class="button secondary event-review-action" href="{{ row.duplicate_group_url }}">View duplicate group</a>{% endif %}
+                <a class="button secondary event-review-action" href="{{ row.poi_candidates_url }}">View POI candidates</a>
+                {% if row.approve_action_url %}
+                  <form method="post" action="{{ row.approve_action_url }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="event-review-action" type="submit">Approve</button></form>
+                {% endif %}
+                {% if row.hold_action_url %}
+                  <form method="post" action="{{ row.hold_action_url }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="event-review-action" type="submit">Hold</button></form>
+                {% endif %}
+                {% if row.reject_action_url %}
+                  <form method="post" action="{{ row.reject_action_url }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="event-review-action" type="submit">Reject</button></form>
+                {% endif %}
+              </div>
+            </td>
+            <td data-label="Status">
+              <span class="badge">{{ row.record_label }}</span>
+              <span class="badge">{{ row.status_label }}</span>
+              <span class="badge {{ 'success' if row.app_feed_ready else 'warning' }}">{{ "Ready for app" if row.app_feed_ready else row.app_feed_readiness | replace("_", " ") }}</span>
+            </td>
+            <td data-label="Image thumbnail">
+              {% if row.image_url %}
+                <img class="event-review-thumb" src="{{ row.image_url }}" alt="">
+              {% endif %}
+              <div class="event-review-badges">
+                {% for badge in row.image_badges %}<span class="badge">{{ badge }}</span>{% endfor %}
+              </div>
+            </td>
+            <td data-label="Event Title">
+              <strong>{{ row.title }}</strong>
+            </td>
+            <td data-label="Start date/time">
+              {{ row.start_datetime.strftime("%Y-%m-%d %H:%M") if row.start_datetime else "Missing date" }}
+            </td>
+            <td data-label="Venue / Location">
+              {{ row.venue_name or "Missing venue" }}
+              <div class="event-review-badges">
+                {% for badge in row.venue_badges %}<span class="badge">{{ badge }}</span>{% endfor %}
+              </div>
+            </td>
+            <td data-label="Address">{{ row.address or "n/a" }}</td>
+            <td data-label="Description" class="event-review-description">
+              {% if row.description %}
+                {% if filters.show_full_descriptions or row.description|length <= 180 %}
+                  {{ row.description }}
+                {% else %}
+                  {{ row.description[:180] }}...
+                {% endif %}
+              {% else %}
+                n/a
+              {% endif %}
+            </td>
+            <td data-label="Genre">{{ row.genre or "n/a" }}</td>
+            <td data-label="Ticket URL" class="event-review-url">
+              {% if row.ticket_url %}
+                <a href="{{ row.ticket_url }}" rel="noreferrer">{{ row.ticket_url }}</a>
+              {% else %}
+                n/a
+              {% endif %}
+              <div class="event-review-badges">
+                {% for badge in row.ticket_badges %}<span class="badge">{{ badge }}</span>{% endfor %}
+              </div>
+            </td>
+            <td data-label="Website / Event URL" class="event-review-url">
+              {% if row.website_url %}
+                <a href="{{ row.website_url }}" rel="noreferrer">{{ row.website_url }}</a>
+              {% else %}
+                n/a
+              {% endif %}
+            </td>
+            <td data-label="Source">
+              {{ row.source_label }}
+              <div class="event-review-badges">
+                {% for badge in row.source_badges %}<span class="badge">{{ badge }}</span>{% endfor %}
+                <span class="badge">{{ row.source_claim_count }} claim(s)</span>
+              </div>
+            </td>
+            <td data-label="Quality Flags">
+              {% if row.quality_flags %}
+                <div class="event-review-badges">
+                  {% for flag in row.quality_flags %}<span class="badge warning">{{ flag }}</span>{% endfor %}
+                </div>
+              {% else %}
+                <span class="badge success">none</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="13">No records match these filters.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

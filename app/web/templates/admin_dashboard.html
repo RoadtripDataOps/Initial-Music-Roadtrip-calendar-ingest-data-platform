@@ -40,7 +40,9 @@
   <p class="notice">Internal crawl operations for approved Music Roadtrip calendar sources.</p>
 
   <section class="actions">
+    <a class="button" href="/admin/event-review">Event Review Workbench</a>
     <a class="button" href="/admin/master-calendar-sources">Master Calendar Sources</a>
+    <a class="button secondary" href="/admin/source-research">Source Research Batches</a>
     <a class="button secondary" href="/admin/crawl-queue">Crawl Queue</a>
     <a class="button secondary" href="/admin/jobs">Jobs</a>
     <a class="button secondary" href="/admin/scheduled-tasks">Scheduled Tasks</a>
@@ -51,6 +53,18 @@
     <a class="button secondary" href="/admin/app-feed">App Feed</a>
     <a class="button secondary" href="/admin/security">Security</a>
     <a class="button secondary" href="/preview">Preview Sandbox</a>
+  </section>
+
+  <section class="summary-card" style="margin-top: 24px;">
+    <h2>Event Review Workbench</h2>
+    <div class="summary-grid">
+      <article><span class="summary-number">{{ event_review_counts.events_needing_images }}</span>Events needing images</article>
+      <article><span class="summary-number">{{ event_review_counts.events_needing_ticket_links }}</span>Events needing ticket links</article>
+      <article><span class="summary-number">{{ event_review_counts.pending_api_feed_records }}</span>Pending API feed records</article>
+      <article><span class="summary-number">{{ event_review_counts.pending_extracted_candidates }}</span>Pending extracted candidates</article>
+      <article><span class="summary-number">{{ event_review_counts.events_ready_for_app_feed }}</span>Events ready for app feed</article>
+      <article><span class="summary-number">{{ event_review_counts.poi_candidates_from_events }}</span>POI candidates from events</article>
+    </div>
   </section>
 
   <section class="summary-grid" style="margin-top: 24px;">
@@ -85,6 +99,11 @@
     <article class="summary-card"><span class="summary-number">{{ event_quality_counts.duplicate_risk_count }}</span>Events with duplicate risk</article>
     <article class="summary-card"><span class="summary-number">{{ event_quality_counts.not_app_feed_ready_count }}</span>Events not app-feed ready</article>
     <article class="summary-card"><span class="summary-number">{{ event_quality_counts.app_feed_ready_count }}</span>Events ready for app feed</article>
+    <article class="summary-card"><span class="summary-number">{{ source_research_counts.batch_count }}</span>Source Research Batches</article>
+    <article class="summary-card"><span class="summary-number">{{ source_research_counts.pending_items }}</span>Pending research items</article>
+    <article class="summary-card"><span class="summary-number">{{ source_research_counts.ready_for_preflight }}</span>Batches ready for preflight</article>
+    <article class="summary-card"><span class="summary-number">{{ source_research_counts.ready_for_crawl }}</span>Batches ready for crawl</article>
+    <article class="summary-card"><span class="summary-number">{{ source_research_counts.needs_research_after_crawl }}</span>Sources needing research after crawl</article>
     <article class="summary-card"><span class="summary-number">{{ poi_candidate_counts.pending }}</span>Pending POI candidates</article>
     <article class="summary-card"><span class="summary-number">{{ poi_candidate_counts.possible_duplicates }}</span>Possible POI duplicates</article>
     <article class="summary-card"><span class="summary-number">{{ poi_candidate_counts.missing_images }}</span>POI candidates missing images</article>

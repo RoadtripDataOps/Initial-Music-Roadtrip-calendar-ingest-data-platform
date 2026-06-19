@@ -22,8 +22,11 @@ from app.db.models import (
     BackgroundJob,
     BlockedSubmitter,
     CalendarSource,
+    CalendarSourceResearchBatch,
+    CalendarSourceResearchItem,
     CalendarSourceSubmission,
     CanonicalArtist,
+    CrawlRun,
     DestinationPartner,
     Event,
     EventArtist,
@@ -43,6 +46,7 @@ from app.db.models import (
     SearchSeedLocation,
     SourceExtractedEventCandidate,
     SourceQualityScore,
+    SourceScrapeProfile,
     StagedCalendarSource,
     StagedEvent,
     SubmissionAttempt,
@@ -89,6 +93,14 @@ from app.services.bulk_crawl_service import (
     is_due_for_crawl,
     next_crawl_due_at,
     normalize_crawl_frequency,
+)
+from app.services.calendar_source_research_service import (
+    RESEARCH_TEMPLATE_HEADERS,
+    add_research_item,
+    build_batch_shakedown_report,
+    create_research_batch,
+    preflight_research_item,
+    run_crawl_for_approved_research_batch_sources,
 )
 from app.services.crawl_service import FetchResult, get_crawl_run
 from app.services.event_photo_rescue_service import (
@@ -176,6 +188,7 @@ from app.services.security_service import (
     redact_sensitive_payload as redact_security_payload,
 )
 from app.services.source_extraction_service import extract_source_content
+from app.services.source_intelligence_service import export_source_registry_snapshot
 from app.services.source_quality_service import (
     compute_source_quality_for_api_provider,
     compute_source_quality_for_master_source,
@@ -188,6 +201,11 @@ from app.services.source_taxonomy_service import (
     provider_key_for_value,
 )
 from app.services.ticket_link_service import classify_ticket_link
+from app.services.ticket_page_image_service import (
+    extract_ticket_page_metadata,
+    run_ticket_page_image_fallback,
+    ticket_page_fallback_decision,
+)
 from app.services.ticketmaster_classification_service import (
     map_ticketmaster_classification,
 )
@@ -202,6 +220,29 @@ SAMPLE_HTML_EVENTS = (FIXTURE_DIR / "sample_event_cards.html").read_text(
     encoding="utf-8"
 )
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+TICKET_PAGE_HTML = """
+<!doctype html>
+<html>
+  <head>
+    <title>Ticket Page Demo Event</title>
+    <link rel="canonical" href="https://tickets.example/events/demo">
+    <meta property="og:image" content="https://cdn.ticket.example/images/demo-og.jpg">
+    <meta name="twitter:image" content="https://cdn.ticket.example/images/demo-twitter.jpg">
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Event",
+        "name": "Ticket Page Demo Event",
+        "image": [
+          "https://cdn.ticket.example/images/demo-jsonld.jpg",
+          "https://tickets.example/events/not-an-image"
+        ]
+      }
+    </script>
+  </head>
+  <body>Ticket page fixture</body>
+</html>
+"""
 
 
 def json_fixture(filename: str) -> object:
@@ -1662,6 +1703,8 @@ def test_event_quality_workbench_requires_login_and_renders_buckets(tmp_path):
     assert "Duplicate Risk Concert" in response.text
     assert "Not A Concert Row" not in response.text
     assert "/admin/app-feed/events.json?event_id=" in response.text
+    assert "Find ticket-page images for selected" in response.text
+    assert "Find ticket image" in response.text
 
 
 def test_event_quality_buckets_scores_and_dashboard_counts(tmp_path):
@@ -4614,6 +4657,338 @@ def test_cityspark_photo_rescue_discovers_primary_media_and_logo_evidence():
     assert paths["cityspark.links[0].logoUrl"].image_role == "logo"
 
 
+def test_ticket_page_metadata_extracts_meta_and_jsonld_images():
+    metadata = extract_ticket_page_metadata(TICKET_PAGE_HTML)
+    paths = {image.source_payload_path: image.image_url for image in metadata.images}
+
+    assert metadata.canonical_url == "https://tickets.example/events/demo"
+    assert metadata.page_title == "Ticket Page Demo Event"
+    assert paths["meta.og:image"] == "https://cdn.ticket.example/images/demo-og.jpg"
+    assert paths["meta.twitter:image"] == (
+        "https://cdn.ticket.example/images/demo-twitter.jpg"
+    )
+    assert paths["jsonld[0].image[0]"] == (
+        "https://cdn.ticket.example/images/demo-jsonld.jpg"
+    )
+    assert "https://tickets.example/events/not-an-image" not in paths.values()
+
+
+def test_ticket_page_fallback_blocks_suspicious_ticket_links(tmp_path):
+    with make_client(tmp_path) as client:
+        event_id = create_preview_event(
+            client,
+            title="Suspicious Ticket Image Event",
+            tickets_link="https://eventbrite.com/checkout-external?eid=123",
+        )
+        with client.app.state.SessionLocal() as session:
+            event = session.get(Event, event_id)
+            assert event is not None
+            decision = ticket_page_fallback_decision(
+                event,
+                client.app.state.settings,
+            )
+
+    assert decision.should_run is False
+    assert decision.reason == "ticket_link_not_usable:platform_generic_or_app"
+
+
+def test_ticket_page_fallback_does_not_override_manual_or_artist_images(tmp_path):
+    with make_client(tmp_path) as client:
+        manual_event_id = create_preview_event(
+            client,
+            title="Manual Accepted Ticket Fallback Event",
+        )
+        manual_candidate_id = create_image_candidate_for_test(
+            client,
+            event_id=manual_event_id,
+            image_url="https://images.example/manual-accepted.jpg",
+            source_type="manual",
+            image_role="artist_live",
+            clearance_status="approved",
+            candidate_status="accepted",
+        )
+        artist_event_id = create_preview_event(
+            client,
+            title="Artist Accepted Ticket Fallback Event",
+            venue_key="artist-accepted-ticket-fallback",
+        )
+        create_image_candidate_for_test(
+            client,
+            event_id=artist_event_id,
+            image_url="https://images.example/accepted-artist.jpg",
+            image_role="artist_press",
+            rescue_source="provider_artist_image",
+            clearance_status="approved",
+            candidate_status="accepted",
+        )
+        with client.app.state.SessionLocal() as session:
+            manual_event = session.get(Event, manual_event_id)
+            assert manual_event is not None
+            manual_event.selected_image_candidate_id = manual_candidate_id
+            manual_event.selected_main_image_url = "https://images.example/manual-accepted.jpg"
+            session.commit()
+
+            manual_decision = ticket_page_fallback_decision(
+                manual_event,
+                client.app.state.settings,
+            )
+            artist_event = session.get(Event, artist_event_id)
+            assert artist_event is not None
+            artist_decision = ticket_page_fallback_decision(
+                artist_event,
+                client.app.state.settings,
+            )
+
+    assert manual_decision.should_run is False
+    assert manual_decision.reason == "manual_accepted_image_exists"
+    assert artist_decision.should_run is False
+    assert artist_decision.reason == "accepted_artist_image_exists"
+
+
+def test_ticket_page_fallback_creates_candidates_from_html_and_selects(tmp_path):
+    def fetcher(url: str) -> FetchResult:
+        return FetchResult(
+            http_status_code=200,
+            content_type="text/html; charset=utf-8",
+            raw_response_body=TICKET_PAGE_HTML,
+            final_url=url,
+        )
+
+    with make_client(tmp_path) as client:
+        event_id = create_preview_event(
+            client,
+            title="Ticket Fallback Event",
+            tickets_link="https://ticketmaster.com/event/abc123",
+            main_image_url=None,
+        )
+        with client.app.state.SessionLocal() as session:
+            result = run_ticket_page_image_fallback(
+                session,
+                event_id,
+                settings=client.app.state.settings,
+                fetcher=fetcher,
+            )
+            event = session.get(Event, event_id)
+            candidates = list(
+                session.scalars(
+                    select(ImageCandidate).where(ImageCandidate.event_id == event_id)
+                )
+            )
+
+    assert result is not None
+    assert result.fetch_status == "success"
+    assert result.extracted_image_count == 3
+    assert result.created_candidate_count == 3
+    assert event is not None
+    assert event.image_source_type == "ticket_page"
+    assert event.image_status == "selected_pending_approval"
+    assert event.image_selection_reason.startswith("photo_rescue_selected_ticket_page")
+    assert any(
+        candidate.rescue_source == "ticketing_page_image"
+        for candidate in candidates
+    )
+    assert all(
+        candidate.clearance_status == "needs_approval" for candidate in candidates
+    )
+    assert {candidate.source_payload_path for candidate in candidates} == {
+        "meta.og:image",
+        "meta.twitter:image",
+        "jsonld[0].image[0]",
+    }
+
+
+def test_ticket_page_fallback_rejects_non_html_and_oversized_responses(tmp_path):
+    def non_html_fetcher(url: str) -> FetchResult:
+        return FetchResult(
+            http_status_code=200,
+            content_type="application/json",
+            raw_response_body='{"image":"https://cdn.ticket.example/image.jpg"}',
+            final_url=url,
+        )
+
+    def oversized_fetcher(url: str) -> FetchResult:
+        return FetchResult(
+            http_status_code=200,
+            content_type="text/html",
+            raw_response_body="<html>" + ("x" * 200) + "</html>",
+            final_url=url,
+        )
+
+    with make_client_with_settings(
+        tmp_path,
+        crawler_max_response_bytes=64,
+    ) as client:
+        non_html_event_id = create_preview_event(
+            client,
+            title="Non HTML Ticket Fallback Event",
+            tickets_link="https://ticketmaster.com/event/nonhtml",
+        )
+        oversized_event_id = create_preview_event(
+            client,
+            title="Oversized Ticket Fallback Event",
+            tickets_link="https://ticketmaster.com/event/oversized",
+            venue_key="oversized-ticket-fallback",
+        )
+        with client.app.state.SessionLocal() as session:
+            non_html_result = run_ticket_page_image_fallback(
+                session,
+                non_html_event_id,
+                settings=client.app.state.settings,
+                fetcher=non_html_fetcher,
+            )
+            oversized_result = run_ticket_page_image_fallback(
+                session,
+                oversized_event_id,
+                settings=client.app.state.settings,
+                fetcher=oversized_fetcher,
+            )
+            candidate_count = len(
+                list(
+                    session.scalars(
+                        select(ImageCandidate).where(
+                            ImageCandidate.source_type == "ticket_page"
+                        )
+                    )
+                )
+            )
+
+    assert non_html_result is not None
+    assert non_html_result.fetch_status == "blocked"
+    assert oversized_result is not None
+    assert oversized_result.fetch_status == "blocked"
+    assert candidate_count == 0
+
+
+def test_ticket_page_fallback_job_uses_mocked_fetcher(tmp_path):
+    def fetcher(url: str) -> FetchResult:
+        return FetchResult(
+            http_status_code=200,
+            content_type="text/html",
+            raw_response_body=TICKET_PAGE_HTML,
+            final_url=url,
+        )
+
+    with make_client(tmp_path) as client:
+        event_id = create_preview_event(
+            client,
+            title="Ticket Fallback Job Event",
+            tickets_link="https://ticketmaster.com/event/job",
+        )
+        with client.app.state.SessionLocal() as session:
+            job = enqueue_job(
+                session,
+                "ticket_page_image_enrichment",
+                {"event_id": event_id},
+                created_by="tester",
+            )
+            processed = process_next_job(
+                session,
+                client.app.state.settings,
+                "ticket-image-worker",
+                fetcher=fetcher,
+            )
+            event = session.get(Event, event_id)
+            candidate = session.scalars(select(ImageCandidate)).first()
+
+    assert processed is not None
+    assert processed.id == job.id
+    assert processed.status == "success"
+    assert processed.result["created_candidate_count"] == 3
+    assert event is not None
+    assert event.image_source_type == "ticket_page"
+    assert candidate is not None
+    assert candidate.rescue_source == "ticketing_page_image"
+
+
+def test_admin_event_ticket_fallback_requires_csrf_and_creates_candidate(tmp_path):
+    def fetcher(url: str) -> FetchResult:
+        return FetchResult(
+            http_status_code=200,
+            content_type="text/html",
+            raw_response_body=TICKET_PAGE_HTML,
+            final_url=url,
+        )
+
+    with make_client(tmp_path) as client:
+        event_id = create_preview_event(
+            client,
+            title="Admin Ticket Fallback Event",
+            tickets_link="https://ticketmaster.com/event/admin",
+        )
+        client.app.state.fetch_calendar_url = fetcher
+        login_admin(client)
+        no_csrf = client.post(
+            f"/admin/events/{event_id}/ticket-image-fallback",
+            follow_redirects=False,
+        )
+        token = csrf_token(client)
+        response = client.post(
+            f"/admin/events/{event_id}/ticket-image-fallback",
+            data={"csrf_token": token},
+            follow_redirects=False,
+        )
+        detail = client.get(f"/admin/events/{event_id}")
+        with client.app.state.SessionLocal() as session:
+            candidate = session.scalars(
+                select(ImageCandidate).where(
+                    ImageCandidate.event_id == event_id,
+                    ImageCandidate.source_type == "ticket_page",
+                )
+            ).first()
+
+    assert no_csrf.status_code == 403
+    assert response.status_code == 303
+    assert candidate is not None
+    assert candidate.rescue_source == "ticketing_page_image"
+    assert "Ticket-page fallback" in detail.text
+    assert "ticket-page image candidate" in detail.text.lower()
+
+
+def test_ticket_page_image_provenance_is_app_safe(tmp_path):
+    def fetcher(url: str) -> FetchResult:
+        return FetchResult(
+            http_status_code=200,
+            content_type="text/html",
+            raw_response_body=TICKET_PAGE_HTML,
+            final_url=url,
+        )
+
+    with make_client(tmp_path) as client:
+        event_id = create_preview_event(
+            client,
+            title="Ticket Fallback App Feed Event",
+            tickets_link="https://ticketmaster.com/event/feed",
+        )
+        with client.app.state.SessionLocal() as session:
+            result = run_ticket_page_image_fallback(
+                session,
+                event_id,
+                settings=client.app.state.settings,
+                fetcher=fetcher,
+            )
+            event = session.get(Event, event_id)
+            assert event is not None
+            event.publish_status = "approved"
+            session.commit()
+        response = admin_get(
+            client,
+            f"/admin/app-feed/events.json?event_id={event_id}",
+        )
+
+    assert result is not None
+    payload = response.json()
+    assert payload["count"] == 1
+    feed_event = payload["records"][0]
+    assert feed_event["image"]["source_type"] == "ticket_page"
+    assert feed_event["image"]["selection_reason"].startswith(
+        "photo_rescue_selected_ticket_page",
+    )
+    assert feed_event["image"]["needs_approval"] is True
+    assert "ticket_page_image_candidate" in feed_event["image"]["quality_flags"]
+    assert "Ticket Page Demo Event" not in json.dumps(feed_event)
+    assert "<html" not in json.dumps(feed_event).lower()
+
+
 def test_photo_rescue_prefers_artist_image_over_provider_admat(tmp_path):
     with make_client(tmp_path) as client:
         event_id = create_preview_event(client, title="Photo Rescue Artist Event")
@@ -4733,6 +5108,8 @@ def test_admin_image_candidates_page_renders_review_board(tmp_path):
     assert "Selected pending approval" in response.text
     assert "Generic provider photos" in response.text
     assert "Photo Rescue" in response.text
+    assert "Ticket-page fallback" in response.text
+    assert "Find recent ticket-page images in background" in response.text
     assert "review-board" in response.text
     assert "Accept visual" in response.text
     assert "Approve clearance" in response.text
@@ -5503,6 +5880,21 @@ def test_event_photo_rescue_service_does_not_make_live_api_calls_or_use_keys():
     assert "apikey" not in service_source.lower()
 
 
+def test_ticket_page_image_service_has_no_provider_api_calls_or_keys():
+    service_source = Path("app/services/ticket_page_image_service.py").read_text(
+        encoding="utf-8",
+    )
+    lowered = service_source.lower()
+
+    assert "api.jambase.com" not in lowered
+    assert "cityspark" not in lowered
+    assert "spotify.com" not in lowered
+    assert "serpapi.com" not in lowered
+    assert "api_key" not in lowered
+    assert "apikey" not in lowered
+    assert "client_secret" not in lowered
+
+
 def test_preview_ics_events_create_venue_profiles(tmp_path):
     def fetcher(url: str) -> FetchResult:
         return FetchResult(
@@ -5850,6 +6242,303 @@ def test_master_calendar_sources_page_shows_crawl_metadata(tmp_path):
     assert "success" in response.text
     assert "3" in response.text
     assert "Run crawl for selected sources" in response.text
+
+
+def test_scrape_profile_created_after_first_crawl(tmp_path):
+    with make_client(tmp_path) as client:
+        client.post(
+            "/submit-concerts/calendar-url",
+            data={
+                "organization_name": "Profile Venue",
+                "contact_email": "profile@example.com",
+                "calendar_url": "https://profile.example/events.ics",
+                "permission_confirmed": "true",
+            },
+        )
+        approve_master_source(client)
+        client.app.state.fetch_calendar_url = lambda url: FetchResult(
+            http_status_code=200,
+            content_type="text/calendar; charset=utf-8",
+            raw_response_body=SAMPLE_ICS,
+            final_url="https://profile.example/live.ics",
+        )
+        admin_post_with_source_ids(
+            client,
+            "/admin/master-calendar-sources/bulk-crawl",
+            [1],
+        )
+        with client.app.state.SessionLocal() as session:
+            profile = session.scalars(select(SourceScrapeProfile)).first()
+
+    assert profile is not None
+    assert profile.platform_type == "ics"
+    assert profile.extractor_type == "ics"
+    assert profile.last_content_type == "text/calendar; charset=utf-8"
+    assert profile.last_final_url == "https://profile.example/live.ics"
+    assert profile.last_response_hash is not None
+    assert len(profile.last_response_hash) == 64
+    assert profile.total_crawl_count == 1
+    assert profile.successful_crawl_count == 1
+    assert profile.last_event_count == 3
+    assert profile.average_event_count == 3
+    assert profile.source_health_status in {"healthy", "needs_review"}
+
+
+def test_scrape_profile_zero_event_drop_marks_watch(tmp_path):
+    with make_client(tmp_path) as client:
+        client.post(
+            "/submit-concerts/calendar-url",
+            data={
+                "organization_name": "Drop Venue",
+                "contact_email": "drop@example.com",
+                "calendar_url": "https://drop.example/events.ics",
+                "permission_confirmed": "true",
+            },
+        )
+        approve_master_source(client)
+        responses = [
+            FetchResult(200, "text/calendar", SAMPLE_ICS),
+            FetchResult(200, "text/calendar", "BEGIN:VCALENDAR\nEND:VCALENDAR"),
+        ]
+        client.app.state.fetch_calendar_url = lambda url: responses.pop(0)
+        admin_post_with_source_ids(
+            client,
+            "/admin/master-calendar-sources/bulk-crawl",
+            [1],
+        )
+        admin_post_with_source_ids(
+            client,
+            "/admin/master-calendar-sources/bulk-crawl",
+            [1],
+        )
+        with client.app.state.SessionLocal() as session:
+            profile = session.scalars(select(SourceScrapeProfile)).first()
+
+    assert profile is not None
+    assert profile.last_event_count == 0
+    assert profile.average_event_count > 0
+    assert profile.source_health_status in {"watch", "needs_review"}
+    assert "zero events" in (profile.developer_notes or "").lower()
+
+
+def test_scrape_profile_repeated_failure_marks_failing(tmp_path):
+    with make_client(tmp_path) as client:
+        client.post(
+            "/submit-concerts/calendar-url",
+            data={
+                "organization_name": "Failing Venue",
+                "contact_email": "failing@example.com",
+                "calendar_url": "https://failing.example/events.ics",
+                "permission_confirmed": "true",
+            },
+        )
+        approve_master_source(client)
+        client.app.state.fetch_calendar_url = lambda url: FetchResult(
+            http_status_code=None,
+            content_type=None,
+            raw_response_body=None,
+            error_message="timeout",
+        )
+        for _ in range(3):
+            admin_post_with_source_ids(
+                client,
+                "/admin/master-calendar-sources/bulk-crawl",
+                [1],
+            )
+        with client.app.state.SessionLocal() as session:
+            profile = session.scalars(select(SourceScrapeProfile)).first()
+
+    assert profile is not None
+    assert profile.failed_crawl_count == 3
+    assert profile.source_health_status == "failing"
+
+
+def test_scrape_profile_unsupported_content_marks_unsupported(tmp_path):
+    with make_client(tmp_path) as client:
+        client.post(
+            "/submit-concerts/calendar-url",
+            data={
+                "organization_name": "Unsupported Venue",
+                "contact_email": "unsupported@example.com",
+                "calendar_url": "https://unsupported.example/events.pdf",
+                "permission_confirmed": "true",
+            },
+        )
+        approve_master_source(client)
+        client.app.state.fetch_calendar_url = lambda url: FetchResult(
+            http_status_code=200,
+            content_type="application/pdf",
+            raw_response_body=None,
+            error_message="Unsupported response content type: application/pdf.",
+            final_url="https://unsupported.example/events.pdf",
+        )
+        admin_post_with_source_ids(
+            client,
+            "/admin/master-calendar-sources/bulk-crawl",
+            [1],
+        )
+        with client.app.state.SessionLocal() as session:
+            profile = session.scalars(select(SourceScrapeProfile)).first()
+
+    assert profile is not None
+    assert profile.platform_type == "unsupported"
+    assert profile.source_health_status == "unsupported"
+
+
+def test_scrape_profile_recipe_lock_prevents_extractor_overwrite(tmp_path):
+    with make_client(tmp_path) as client:
+        client.post(
+            "/submit-concerts/calendar-url",
+            data={
+                "organization_name": "Locked Recipe Venue",
+                "contact_email": "locked@example.com",
+                "calendar_url": "https://locked.example/events.ics",
+                "permission_confirmed": "true",
+            },
+        )
+        approve_master_source(client)
+        with client.app.state.SessionLocal() as session:
+            source = session.get(MasterCalendarSource, 1)
+            assert source is not None
+            profile = SourceScrapeProfile(
+                master_calendar_source_id=source.id,
+                source_url=source.original_url,
+                canonical_url=source.canonical_url,
+                platform_type="json_ld",
+                extractor_type="json_ld_event",
+                extractor_confidence="high",
+                source_health_status="healthy",
+                recipe_locked_by_admin=True,
+            )
+            session.add(profile)
+            session.commit()
+        client.app.state.fetch_calendar_url = lambda url: FetchResult(
+            http_status_code=200,
+            content_type="text/calendar",
+            raw_response_body=SAMPLE_ICS,
+        )
+        admin_post_with_source_ids(
+            client,
+            "/admin/master-calendar-sources/bulk-crawl",
+            [1],
+        )
+        with client.app.state.SessionLocal() as session:
+            profile = session.scalars(select(SourceScrapeProfile)).first()
+
+    assert profile is not None
+    assert profile.recipe_locked_by_admin is True
+    assert profile.platform_type == "json_ld"
+    assert profile.extractor_type == "json_ld_event"
+    assert profile.total_crawl_count == 1
+
+
+def test_source_intelligence_admin_page_detail_panel_and_csrf(tmp_path):
+    with make_client(tmp_path) as client:
+        client.post(
+            "/submit-concerts/calendar-url",
+            data={
+                "organization_name": "Admin Intelligence Venue",
+                "contact_email": "admin-intel@example.com",
+                "calendar_url": "https://admin-intel.example/events.ics",
+                "permission_confirmed": "true",
+            },
+        )
+        approve_master_source(client)
+        login_admin(client)
+        other_db_dir = tmp_path / "other"
+        other_db_dir.mkdir()
+        unauthenticated = make_client(other_db_dir)
+        try:
+            blocked = unauthenticated.get(
+                "/admin/source-intelligence",
+                follow_redirects=False,
+            )
+        finally:
+            unauthenticated.close()
+        page = client.get("/admin/source-intelligence")
+        detail = client.get("/admin/master-calendar-sources/1")
+        with client.app.state.SessionLocal() as session:
+            profile_id = session.scalar(select(SourceScrapeProfile.id))
+        assert profile_id is not None
+        no_csrf = client.post(
+            f"/admin/source-intelligence/{profile_id}/action",
+            data={"action": "lock_recipe"},
+            follow_redirects=False,
+        )
+        response = client.post(
+            f"/admin/source-intelligence/{profile_id}/action",
+            data={
+                "csrf_token": csrf_token(client),
+                "action": "lock_recipe",
+                "developer_note": "",
+            },
+            follow_redirects=False,
+        )
+        with client.app.state.SessionLocal() as session:
+            profile = session.get(SourceScrapeProfile, profile_id)
+
+    assert blocked.status_code == 303
+    assert page.status_code == 200
+    assert "Source Intelligence" in page.text
+    assert detail.status_code == 200
+    assert "Source Intelligence" in detail.text
+    assert no_csrf.status_code == 403
+    assert response.status_code == 303
+    assert profile is not None
+    assert profile.recipe_locked_by_admin is True
+
+
+def test_monthly_source_registry_snapshot_job_writes_ignored_files(tmp_path):
+    with make_client(tmp_path) as client:
+        client.post(
+            "/submit-concerts/calendar-url",
+            data={
+                "organization_name": "Snapshot Venue",
+                "contact_email": "snapshot@example.com",
+                "calendar_url": "https://snapshot.example/events.ics",
+                "crawl_frequency": "monthly",
+                "permission_confirmed": "true",
+            },
+        )
+        approve_master_source(client)
+        output_dir = tmp_path / "source_registry"
+        with client.app.state.SessionLocal() as session:
+            direct_result = export_source_registry_snapshot(session, output_dir)
+            job = enqueue_job(
+                session,
+                "source_registry_snapshot_export",
+                {"output_dir": str(output_dir / "job")},
+            )
+            processed = process_next_job(
+                session,
+                client.app.state.settings,
+                worker_id="test-worker",
+            )
+            scheduled = ScheduledTask(
+                task_key="monthly_source_registry_snapshot_test",
+                task_type="monthly_source_registry_snapshot",
+                enabled=True,
+                schedule_type="monthly",
+                next_run_at=utc_now() - timedelta(minutes=1),
+                payload_json=json.dumps(
+                    {
+                        "job_type": "source_registry_snapshot_export",
+                        "output_dir": str(output_dir / "scheduled"),
+                    }
+                ),
+            )
+            session.add(scheduled)
+            session.commit()
+            scheduled_result = enqueue_due_scheduled_tasks(session)
+
+    assert (output_dir / "current_approved_calendar_sources.json").exists()
+    assert (output_dir / "current_source_scrape_profiles.json").exists()
+    assert direct_result["approved_source_count"] == 1
+    assert job.job_type == "source_registry_snapshot_export"
+    assert processed is not None
+    assert processed.status == "success"
+    assert scheduled_result.enqueued_job_ids
+    assert "data/" in Path(".gitignore").read_text(encoding="utf-8")
 
 
 def test_trusted_submitter_badge_displays_on_master_sources(tmp_path):
@@ -9503,6 +10192,448 @@ def test_admin_job_detail_shows_redacted_payload(tmp_path) -> None:
             )
 
         response = admin_get(client, f"/admin/jobs/{job.id}")
-        assert response.status_code == 200
-        assert "SECRET_TOKEN" not in response.text
-        assert "[REDACTED]" in response.text
+    assert response.status_code == 200
+    assert "SECRET_TOKEN" not in response.text
+    assert "[REDACTED]" in response.text
+
+
+def test_source_research_pages_templates_upload_and_csrf(tmp_path) -> None:
+    csv_content = csv_upload(
+        RESEARCH_TEMPLATE_HEADERS,
+        [
+            {
+                "Calendar URL": "https://research-upload.example/events",
+                "Source Name": "Research Upload Calendar",
+                "Organization Name": "Research Upload Org",
+                "Source Type": "venue_calendar",
+                "City": "Memphis",
+                "State": "TN",
+                "Country": "US",
+                "Contact Email": "research@example.com",
+                "Authorization Status": "internal_research",
+                "Notes": "Gathered by Scott.",
+            }
+        ],
+    )
+    with make_client(tmp_path) as client:
+        login_required = client.get("/admin/source-research", follow_redirects=False)
+        login_admin(client)
+        page = client.get("/admin/source-research")
+        csv_template = client.get("/templates/calendar-source-research-template.csv")
+        xlsx_template = client.get("/templates/calendar-source-research-template.xlsx")
+        missing_csrf_create = client.post(
+            "/admin/source-research/new",
+            data={"batch_name": "Memphis Research"},
+            follow_redirects=False,
+        )
+        create_response = client.post(
+            "/admin/source-research/new",
+            data={
+                "csrf_token": csrf_token(client),
+                "batch_name": "Memphis Research",
+                "city": "Memphis",
+                "state": "TN",
+                "country": "US",
+                "research_owner": "Scott",
+                "source_goal_count": "25",
+            },
+            follow_redirects=False,
+        )
+        missing_csrf_paste = client.post(
+            "/admin/source-research/1/paste-urls",
+            data={"pasted_urls": "https://research-paste.example/events"},
+            follow_redirects=False,
+        )
+        paste_response = client.post(
+            "/admin/source-research/1/paste-urls",
+            data={
+                "csrf_token": csrf_token(client),
+                "pasted_urls": "https://research-paste.example/events",
+            },
+            follow_redirects=False,
+        )
+        missing_csrf_upload = client.post(
+            "/admin/source-research/1/upload",
+            files={
+                "upload_file": (
+                    "research.csv",
+                    csv_content,
+                    "text/csv",
+                )
+            },
+            follow_redirects=False,
+        )
+        upload_response = client.post(
+            "/admin/source-research/1/upload",
+            data={"csrf_token": csrf_token(client)},
+            files={
+                "upload_file": (
+                    "research.csv",
+                    csv_content,
+                    "text/csv",
+                )
+            },
+            follow_redirects=False,
+        )
+        detail = client.get("/admin/source-research/1")
+        with client.app.state.SessionLocal() as session:
+            batches = list(session.scalars(select(CalendarSourceResearchBatch)).all())
+            items = list(session.scalars(select(CalendarSourceResearchItem)).all())
+
+    assert login_required.status_code == 303
+    assert page.status_code == 200
+    assert "Source Research Batches" in page.text
+    assert csv_template.status_code == 200
+    assert "Calendar URL" in csv_template.text
+    assert xlsx_template.status_code == 200
+    assert xlsx_template.content.startswith(b"PK")
+    assert missing_csrf_create.status_code == 403
+    assert create_response.status_code == 303
+    assert missing_csrf_paste.status_code == 403
+    assert paste_response.status_code == 303
+    assert missing_csrf_upload.status_code == 403
+    assert upload_response.status_code == 303
+    assert detail.status_code == 200
+    assert "Research Upload Calendar" in detail.text
+    assert len(batches) == 1
+    assert len(items) == 2
+
+
+def test_source_research_dedupes_against_master_and_batch(tmp_path) -> None:
+    with make_client(tmp_path) as client:
+        client.post(
+            "/submit-concerts/calendar-url",
+            data={
+                "organization_name": "Existing Research Source",
+                "contact_email": "existing@example.com",
+                "calendar_url": "https://existing-research.example/events/",
+                "permission_confirmed": "true",
+            },
+        )
+        with client.app.state.SessionLocal() as session:
+            batch = create_research_batch(
+                session,
+                batch_name="Dedupe Research",
+                city="Memphis",
+                state="TN",
+            )
+            add_research_item(
+                session,
+                batch_id=batch.id,
+                submitted_url=(
+                    "https://existing-research.example/events/?utm_source=email"
+                ),
+                settings=client.app.state.settings,
+            )
+            add_research_item(
+                session,
+                batch_id=batch.id,
+                submitted_url=(
+                    "https://new-research.example/calendar/?utm_campaign=test"
+                ),
+                settings=client.app.state.settings,
+            )
+            add_research_item(
+                session,
+                batch_id=batch.id,
+                submitted_url="https://new-research.example/calendar/",
+                settings=client.app.state.settings,
+            )
+            items = list(
+                session.scalars(
+                    select(CalendarSourceResearchItem).order_by(
+                        CalendarSourceResearchItem.id.asc()
+                    )
+                ).all()
+            )
+
+    assert len(items) == 3
+    assert items[0].dedupe_status == "existing_master_source"
+    assert items[0].matched_master_calendar_source_id == 1
+    assert items[0].canonical_url == "https://existing-research.example/events"
+    assert items[1].dedupe_status == "new_source"
+    assert items[1].canonical_url == "https://new-research.example/calendar"
+    assert items[2].dedupe_status == "possible_duplicate"
+    assert "duplicate_within_batch" in items[2].risk_flags
+
+
+def test_source_research_invalid_and_private_urls_are_flagged(tmp_path) -> None:
+    with make_client(tmp_path, environment="production") as client:
+        with client.app.state.SessionLocal() as session:
+            batch = create_research_batch(
+                session,
+                batch_name="Blocked URL Research",
+                city="Memphis",
+                state="TN",
+            )
+            invalid = add_research_item(
+                session,
+                batch_id=batch.id,
+                submitted_url="ftp://example.com/events",
+                settings=client.app.state.settings,
+            )
+            blocked = add_research_item(
+                session,
+                batch_id=batch.id,
+                submitted_url="http://localhost/events",
+                settings=client.app.state.settings,
+            )
+
+    assert invalid.dedupe_status == "invalid_url"
+    assert invalid.risk_level == "blocked"
+    assert blocked.dedupe_status == "blocked_url"
+    assert blocked.risk_level == "blocked"
+    assert "internal_hostname_blocked" in blocked.risk_flags
+
+
+def test_source_research_preflight_stores_response_metadata(tmp_path) -> None:
+    with make_client(tmp_path) as client:
+        with client.app.state.SessionLocal() as session:
+            batch = create_research_batch(
+                session,
+                batch_name="Preflight Research",
+                city="Memphis",
+                state="TN",
+            )
+            item = add_research_item(
+                session,
+                batch_id=batch.id,
+                submitted_url="https://preflight-research.example/events.ics",
+                settings=client.app.state.settings,
+            )
+            preflighted = preflight_research_item(
+                session,
+                item.id,
+                settings=client.app.state.settings,
+                fetcher=lambda url: FetchResult(
+                    http_status_code=200,
+                    content_type="text/calendar; charset=utf-8",
+                    raw_response_body="BEGIN:VCALENDAR\nEND:VCALENDAR",
+                    final_url="https://preflight-research.example/live.ics",
+                ),
+            )
+            failing = add_research_item(
+                session,
+                batch_id=batch.id,
+                submitted_url="https://preflight-failure.example/events",
+                settings=client.app.state.settings,
+            )
+            failed = preflight_research_item(
+                session,
+                failing.id,
+                settings=client.app.state.settings,
+                fetcher=lambda url: FetchResult(
+                    http_status_code=None,
+                    content_type=None,
+                    raw_response_body=None,
+                    error_message="Connection timed out.",
+                ),
+            )
+
+    assert preflighted.preflight_status == "success"
+    assert preflighted.preflight_http_status == 200
+    assert preflighted.preflight_content_type == "text/calendar; charset=utf-8"
+    assert preflighted.preflight_final_url == (
+        "https://preflight-research.example/live.ics"
+    )
+    assert failed.preflight_status == "failure"
+    assert failed.preflight_error == "Connection timed out."
+
+
+def test_source_research_approval_creates_or_links_master_source(tmp_path) -> None:
+    with make_client(tmp_path) as client:
+        with client.app.state.SessionLocal() as session:
+            batch = create_research_batch(
+                session,
+                batch_name="Approval Research",
+                city="Memphis",
+                state="TN",
+                research_owner="Scott",
+            )
+            item = add_research_item(
+                session,
+                batch_id=batch.id,
+                submitted_url="https://approval-research.example/events",
+                suggested_source_name="Approval Research Calendar",
+                organization_name="Approval Research Org",
+                source_type="venue_calendar",
+                contact_email="approval@example.com",
+                settings=client.app.state.settings,
+            )
+        login_admin(client)
+        no_csrf = client.post(
+            f"/admin/source-research/{batch.id}/items-action",
+            data={"action": "approve-selected", "item_ids": str(item.id)},
+            follow_redirects=False,
+        )
+        approve = client.post(
+            f"/admin/source-research/{batch.id}/items-action",
+            data={
+                "csrf_token": csrf_token(client),
+                "action": "approve-selected",
+                "item_ids": str(item.id),
+            },
+            follow_redirects=False,
+        )
+        approve_again = client.post(
+            f"/admin/source-research/{batch.id}/items-action",
+            data={
+                "csrf_token": csrf_token(client),
+                "action": "approve-selected",
+                "item_ids": str(item.id),
+            },
+            follow_redirects=False,
+        )
+        with client.app.state.SessionLocal() as session:
+            masters = list(session.scalars(select(MasterCalendarSource)).all())
+            submissions = list(session.scalars(select(CalendarSourceSubmission)).all())
+            profile = session.scalars(select(SourceScrapeProfile)).one_or_none()
+            refreshed = session.get(CalendarSourceResearchItem, item.id)
+
+    assert no_csrf.status_code == 403
+    assert approve.status_code == 303
+    assert approve_again.status_code == 303
+    assert len(masters) == 1
+    assert masters[0].status == "approved"
+    assert masters[0].review_status == "approved"
+    assert len(submissions) == 1
+    assert profile is not None
+    assert refreshed is not None
+    assert refreshed.review_status == "approved"
+    assert refreshed.created_master_calendar_source_id == masters[0].id
+
+
+def test_source_research_batch_crawl_and_report_use_approved_sources_only(
+    tmp_path,
+) -> None:
+    with make_client(tmp_path) as client:
+        with client.app.state.SessionLocal() as session:
+            batch = create_research_batch(
+                session,
+                batch_name="Memphis Shakedown",
+                city="Memphis",
+                state="TN",
+            )
+            approved_item = add_research_item(
+                session,
+                batch_id=batch.id,
+                submitted_url="https://batch-approved.example/events/jsonld",
+                suggested_source_name="Batch Approved Calendar",
+                organization_name="Batch Approved Org",
+                source_type="venue_calendar",
+                contact_email="batch-approved@example.com",
+                settings=client.app.state.settings,
+            )
+            pending_item = add_research_item(
+                session,
+                batch_id=batch.id,
+                submitted_url="https://batch-pending.example/events/jsonld",
+                suggested_source_name="Batch Pending Calendar",
+                organization_name="Batch Pending Org",
+                source_type="venue_calendar",
+                contact_email="batch-pending@example.com",
+                settings=client.app.state.settings,
+            )
+        login_admin(client)
+        client.post(
+            f"/admin/source-research/{batch.id}/items-action",
+            data={
+                "csrf_token": csrf_token(client),
+                "action": "approve-selected",
+                "item_ids": str(approved_item.id),
+            },
+            follow_redirects=False,
+        )
+        client.app.state.fetch_calendar_url = lambda url: FetchResult(
+            http_status_code=200,
+            content_type="text/html; charset=utf-8",
+            raw_response_body=SAMPLE_JSONLD_HTML,
+            final_url="https://batch-approved.example/events/jsonld",
+        )
+        crawl_response = client.post(
+            f"/admin/source-research/{batch.id}/crawl-approved-sources",
+            data={"csrf_token": csrf_token(client)},
+            follow_redirects=False,
+        )
+        report_response = client.get(f"/admin/source-research/{batch.id}/report")
+        with client.app.state.SessionLocal() as session:
+            crawl_runs = list(session.scalars(select(CrawlRun)).all())
+            event_candidates = list(
+                session.scalars(select(SourceExtractedEventCandidate)).all()
+            )
+            poi_candidates = list(session.scalars(select(PoiCandidate)).all())
+            pois = list(session.scalars(select(PoiLocation)).all())
+            profile = session.scalars(select(SourceScrapeProfile)).one_or_none()
+            report = build_batch_shakedown_report(session, batch.id)
+            pending = session.get(CalendarSourceResearchItem, pending_item.id)
+
+    assert crawl_response.status_code == 200
+    assert "Research Batch #1 Crawl Summary" in crawl_response.text
+    assert "1 attempted" in crawl_response.text
+    assert "Batch Pending Calendar" not in crawl_response.text
+    assert report_response.status_code == 200
+    assert "Source counts" in report_response.text
+    assert len(crawl_runs) == 1
+    assert crawl_runs[0].status == "success"
+    assert crawl_runs[0].extractor_type == "json_ld_event"
+    assert len(event_candidates) == 1
+    assert len(poi_candidates) == 1
+    assert pois == []
+    assert profile is not None
+    assert profile.last_successful_crawl_run_id == crawl_runs[0].id
+    assert pending is not None
+    assert pending.review_status == "pending_review"
+    assert report["source_counts"]["approved_to_master_registry"] == 1
+    assert report["crawl_counts"]["successful_crawls"] == 1
+    assert report["event_counts"]["extracted_event_candidates_pending_review"] == 1
+    assert report["poi_counts"]["poi_candidates_created"] == 1
+
+
+def test_source_research_service_batch_crawl_can_be_invoked_directly(
+    tmp_path,
+) -> None:
+    with make_client(tmp_path) as client:
+        with client.app.state.SessionLocal() as session:
+            batch = create_research_batch(
+                session,
+                batch_name="Direct Service Crawl",
+                city="Memphis",
+                state="TN",
+            )
+            item = add_research_item(
+                session,
+                batch_id=batch.id,
+                submitted_url="https://direct-service.example/events.ics",
+                suggested_source_name="Direct Service Calendar",
+                organization_name="Direct Service Org",
+                contact_email="direct-service@example.com",
+                settings=client.app.state.settings,
+            )
+            batch_id = batch.id
+            item_id = item.id
+        # Route coverage above exercises CSRF. This service call ensures the
+        # batch crawl helper remains usable by jobs or future admin actions.
+        login_admin(client)
+        client.post(
+            f"/admin/source-research/{batch_id}/items-action",
+            data={
+                "csrf_token": csrf_token(client),
+                "action": "approve-selected",
+                "item_ids": str(item_id),
+            },
+            follow_redirects=False,
+        )
+        with client.app.state.SessionLocal() as session:
+            summary = run_crawl_for_approved_research_batch_sources(
+                session,
+                batch_id,
+                fetcher=lambda url: FetchResult(
+                    http_status_code=200,
+                    content_type="text/calendar",
+                    raw_response_body="BEGIN:VCALENDAR\nEND:VCALENDAR",
+                ),
+            )
+
+    assert summary.selected_count == 1
+    assert summary.attempted_count == 1
+    assert summary.successful_count == 1

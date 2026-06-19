@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="panel">
+    <p class="notice">
+      Create a city or region batch for calendar URLs gathered from tourism
+      boards, venues, festivals, chambers, publications, partners, and internal
+      research.
+    </p>
+
+    <form method="post" action="/admin/source-research/new">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label for="batch_name">Batch name</label>
+      <input id="batch_name" name="batch_name" type="text" required placeholder="Memphis source research - June">
+
+      <div class="form-grid">
+        <label>City
+          <input name="city" type="text" placeholder="Memphis">
+        </label>
+        <label>State
+          <input name="state" type="text" placeholder="TN">
+        </label>
+        <label>Country
+          <input name="country" type="text" value="US">
+        </label>
+        <label>Region ID
+          <input name="region_id" type="number" min="1">
+        </label>
+      </div>
+
+      <div class="form-grid">
+        <label>Research owner
+          <input name="research_owner" type="text" placeholder="Scott">
+        </label>
+        <label>Source goal count
+          <input name="source_goal_count" type="number" min="0" value="25">
+        </label>
+      </div>
+
+      <label for="notes">Notes</label>
+      <textarea id="notes" name="notes" rows="4" placeholder="Target tourism board calendars, venue calendars, festival calendars, and chambers."></textarea>
+
+      <button type="submit">Create research batch</button>
+      <a class="button secondary" href="/admin/source-research">Cancel</a>
+    </form>
+  </section>
+{% endblock %}
